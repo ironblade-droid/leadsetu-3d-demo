@@ -10,9 +10,20 @@ From the [Innerscene Drawing Library](https://www.innerscene.com/tools/library/d
 - [Three-bedroom apartment — 105 m²](https://www.innerscene.com/tools/library/drawings/three-bedroom-apartment-105-m2-73915b15)
 - [3BHK house first floor plan](https://www.innerscene.com/tools/library/drawings/3bhk-house-first-floor-plan-60-x-120-ft-north-facing-plot-dc0667a4) (used as the penthouse, with a terrace approximation)
 
-## Furniture models (glTF)
+## Furniture (v3)
 
-From [Poly Haven](https://polyhaven.com/models), CC0. Downloaded as 1K glTF, packed with Draco geometry and WebP textures (KTX2 was skipped because the `ktx` encoder is not in this environment). Self-hosted in `public/models/`. Retrieved 13 November 2026, Asia/Calcutta.
+Show-flat furniture is **original procedural PBR geometry** written for this demo (`src/furniture.ts`, placements in `src/planner.ts`): bevelled and rounded boxes (`RoundedBoxGeometry` from three.js examples), cylindrical legs, fabric / velvet (`MeshPhysicalMaterial` sheen) / leather-style and wood materials, a canvas-tile kitchen backsplash, a modular handleless kitchen with chimney and hob, a platform bed with an upholstered headboard, a sliding-door laminate wardrobe, and bathroom ceramics. Modern and Minimal use clean contemporary Indian-apartment pieces. Luxury uses the same contemporary silhouettes with velvet, brass and marble tops — not carved Victorian. Traditional Indian may add a wood-framed sofa, fluted legs and a small mandir.
+
+A programmatic AABB check (`src/occupancy.ts`, `npm run check:layout`) fails the build if furniture overlaps, blocks a 60 cm doorway, or sits the coffee table outside a 40–45 cm gap from the sofa front.
+
+### Still used from Poly Haven (CC0)
+
+- `potted_plant_04.glb` — [Potted Plant 04](https://polyhaven.com/a/potted_plant_04) by James Ray Cock. Instanced as corner plants.
+
+### Poly Haven glTF catalog (CC0, on disk, not placed in v3)
+
+The files below remain in `public/models/` from an earlier pass (1K glTF, Draco + WebP, ~5.4 MB, retrieved 13 November 2026, Asia/Calcutta). They are **not** used for Modern, Minimal or Luxury: several read as Victorian / Gothic (notably `sofa_03`, `Sofa_01`, `sofa_02`, `GothicBed_01`, `ornate_mirror_01`, `painted_wooden_cabinet`). They are kept for possible Traditional accents or a later swap, and are listed for licence completeness.
+
 
 | File | Asset | Author |
 | --- | --- | --- |
@@ -40,7 +51,7 @@ From [Poly Haven](https://polyhaven.com/models), CC0. Downloaded as 1K glTF, pac
 | `electric_stove.glb` | [Electric Stove](https://polyhaven.com/a/electric_stove) | Kuutti Siitonen |
 | `potted_plant_04.glb` | [Potted Plant 04](https://polyhaven.com/a/potted_plant_04) | James Ray Cock |
 
-The packed catalog is about **5.4 MB** and is shared by every flat (lazy-loaded once, then instanced). Fitted kitchen cabinets, a modern show-flat bed, and bathroom ceramics (WC, basin, shower, tub) are original procedural pieces with Poly Haven PBR materials — there was no suitable modern CC0 glTF for a fitted kitchen run or a contemporary bathroom set that would sit next to these models.
+The packed catalog on disk is about **5.4 MB**. Only the potted plant is instantiated in v3; kitchens, beds, sofas, bathrooms and the rest of the furniture are the procedural set above, tinted with the same Poly Haven PBR wood / marble / fabric materials.
 
 ## Textures and HDRI
 

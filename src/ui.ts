@@ -132,6 +132,10 @@ export class HUD {
     this.render();
   }
 
+  setPrefs(p: Prefs) {
+    this.prefs = p;
+  }
+
   setSheet(open: boolean) {
     this.sheetOpen = open;
     this.render();

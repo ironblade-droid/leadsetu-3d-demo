@@ -2,7 +2,9 @@ import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { Materials } from "./materials";
 import { applyKitchen, applyStyleLook, applyWorldXZUVs, flooringSet, makeFloorMaterial, tuneFloorMaterial } from "./materials";
-import { furnishRoom, aabb, addCurtains, type Anchor } from "./furniture";
+import { furnishFromPlacements, aabb, addCurtains, type Anchor } from "./furniture";
+import { planUnit } from "./planner";
+import { assertLayout } from "./occupancy";
 import { type Catalog, retintFurniture } from "./catalog";
 import { buildRoomStops, defaultSpawn, type RoomStop } from "./rooms";
 import type { Collision, Prefs, TimeOfDay, Transform, UnitPlan, Wall } from "./types";
@@ -251,15 +253,19 @@ export function buildInterior(
   furn.visible = prefs.furniture;
   const anchorsByRoom = new Map<string, Anchor[]>();
   if (prefs.furniture) {
-    const worldRooms = plan.rooms.map((room) => t
-      ? { ...room, polygon: worldPoly(room.polygon, t) }
-      : room);
-    for (const r of worldRooms) {
-      const avoid = worldRooms.filter((o) => o.id !== r.id).map((o) => o.polygon);
-      const fg = new THREE.Group();
-      const anchors = furnishRoom(r, fg, mats, prefs, opts.catalog ?? null, avoid);
-      anchorsByRoom.set(r.id, anchors);
-      furn.add(fg);
+    const planned = planUnit(plan, prefs, t);
+    assertLayout(planned.issues, `${plan.id}/${prefs.style}`);
+    const fg = new THREE.Group();
+    const anchors = furnishFromPlacements(planned.placements, fg, mats, prefs, opts.catalog ?? null);
+    for (const a of anchors) {
+      const id = a.roomId ?? "";
+      if (!anchorsByRoom.has(id)) anchorsByRoom.set(id, []);
+      anchorsByRoom.get(id)!.push(a);
+    }
+    furn.add(fg);
+    for (const f of planned.footprints) {
+      if (f.ghost) continue;
+      collisions.push({ minX: f.minX, maxX: f.maxX, minZ: f.minZ, maxZ: f.maxZ });
     }
   }
   group.add(furn);

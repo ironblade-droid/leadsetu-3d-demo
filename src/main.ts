@@ -204,15 +204,18 @@ class App {
     const interiors = this.interiors;
     if (!interiors.length) return;
     const compact = document.body.classList.contains("compact");
+    const walking = this.view.kind === "flat" && this.view.cam === "walk";
     const cam = this.engine.camera;
     const w = window.innerWidth;
     const h = window.innerHeight;
     const chrome = this.chromeRects();
     for (const built of interiors) {
       for (const hs of built.hotspots) {
+        // Dollhouse pins: hide in first-person walk so they don't sit in show-flat photos.
+        if (hs.mesh) hs.mesh.visible = !walking;
         const el = hs.labelEl;
         if (!el) continue;
-        if (compact) {
+        if (compact || walking) {
           el.classList.add("is-hidden");
           continue;
         }
@@ -290,11 +293,12 @@ class App {
 
   setPrefs(p: Prefs) {
     this.prefs = p;
+    this.hud.setPrefs(p);
     for (const i of this.interiors) i.applyPrefs(p);
     if (this.view.kind === "flat") {
       const { floor, unitId, cam } = this.view;
       const keepRoom = this.currentRoom;
-      void this.showFlat(floor, unitId, cam, true).then(() => {
+      return this.showFlat(floor, unitId, cam, true).then(() => {
         if (keepRoom) this.hud.setCurrentRoom(keepRoom);
       });
     } else if (this.view.kind === "floor") {
@@ -316,6 +320,7 @@ class App {
     this.hud.spec = null;
     this.view = { kind: "tower", hoverFloor: null };
     this.engine.setHudLift(0);
+    this.engine.setWalkFov(null);
     this.hud.setView(this.view);
     this.applySceneTime();
     const [cx, cz] = plateCenter();
@@ -522,7 +527,13 @@ class App {
         );
       }
     }
-    this.engine.setHudLift(cam === "walk" ? 0.24 : 0);
+    this.engine.setHudLift(cam === "walk" ? 0.08 : 0);
+    if (cam === "walk") {
+      const fovStop = this.roomStops.find((r) => r.id === this.currentRoom) ?? this.roomStops.find((r) => r.type === "living") ?? this.roomStops[0];
+      this.engine.setWalkFov(fovStop?.fov ?? 70);
+    } else {
+      this.engine.setWalkFov(null);
+    }
   }
 
   cameraYaw(): number {
@@ -556,6 +567,8 @@ class App {
 
   async flyToStop(stop: RoomStop) {
     if (this.view.kind !== "flat") return;
+    this.engine.setWalkFov(stop.fov ?? 70);
+    this.engine.setHudLift(0.08);
     cancelFly();
     this.flying = true;
     this.walker.enabled = false;

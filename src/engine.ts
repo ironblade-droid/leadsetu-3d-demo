@@ -18,6 +18,8 @@ export interface Engine {
   resize: () => void;
   /** Shift the look-at upward in portrait walk mode so furniture sits above the HUD. */
   setHudLift: (frac: number) => void;
+  /** Walk-mode vertical FOV, or null to restore the dollhouse default. */
+  setWalkFov: (fov: number | null) => void;
   dispose: () => void;
 }
 
@@ -116,17 +118,33 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   }
 
   let hudLift = 0;
+  let walkFov: number | null = null;
 
   function applyProjection() {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const portrait = h > w * 1.05;
     camera.aspect = w / h;
-    camera.fov = isMobileViewport() ? 58 : 50;
+    if (walkFov != null) {
+      // walkFov is the desired *horizontal* room FOV (70 typical, 85 small).
+      // Three.js PerspectiveCamera.fov is vertical, so in a tall portrait
+      // viewport we convert: otherwise 70° vertical is only ~34° across and
+      // every room looks like a product close-up.
+      const desiredH = (walkFov * Math.PI) / 180;
+      if (portrait) {
+        const v = 2 * Math.atan(Math.tan(desiredH / 2) / Math.max(camera.aspect, 0.15));
+        camera.fov = Math.min(108, Math.max(70, (v * 180) / Math.PI));
+      } else {
+        // Landscape: ~60° vertical ≈ similar horizontal on 1280x800 (aspect 1.6).
+        camera.fov = walkFov >= 80 ? 75 : 60;
+      }
+    } else {
+      camera.fov = isMobileViewport() ? 58 : 50;
+    }
     camera.near = 0.05;
-    // Portrait walk: shift the frustum down so the look-at sits in the
-    // visible band above the bottom sheet (positive offsetY raises world points).
-    if (hudLift > 0.05 && h > w * 1.05) {
-      const shift = Math.min(0.2, hudLift * 0.5);
+    // Very modest lift — a wide portrait FOV already keeps the floor in frame.
+    if (hudLift > 0.04 && portrait) {
+      const shift = Math.min(0.05, hudLift * 0.4);
       camera.setViewOffset(w, h, 0, h * shift, w, h);
     } else {
       camera.clearViewOffset();
@@ -158,6 +176,10 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
       const next = Math.max(0, Math.min(0.4, frac));
       if (Math.abs(next - hudLift) < 0.01) return;
       hudLift = next;
+      applyProjection();
+    },
+    setWalkFov(fov: number | null) {
+      walkFov = fov;
       applyProjection();
     },
     dispose() {

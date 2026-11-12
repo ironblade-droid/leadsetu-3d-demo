@@ -1,0 +1,2194 @@
+{
+  "overlaps": [],
+  "errors": [],
+  "all": [
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/2bhk/living",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-living-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/2bhk/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-kitchen-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/2bhk/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-master-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/2bhk/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-bathroom-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/2bhk/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-balcony-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/2bhk/living",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-living-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/2bhk/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-kitchen-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/2bhk/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-master-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/2bhk/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-bathroom-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/2bhk/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-balcony-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/ph/lounge",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-lounge-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/ph/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-kitchen-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/ph/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-master-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/ph/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-bathroom-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/ph/terrace",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-terrace-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/modern/ph/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-balcony-412-modern.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/ph/lounge",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-lounge-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/ph/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-kitchen-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/ph/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-master-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/ph/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-bathroom-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/ph/terrace",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-terrace-412-luxury.png"
+    },
+    {
+      "vw": 412,
+      "vh": 915,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 412,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 0,
+          "y": 671,
+          "w": 412,
+          "h": 244
+        },
+        {
+          "name": "room-dock",
+          "x": 14,
+          "y": 743,
+          "w": 384,
+          "h": 58
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 14,
+          "y": 745,
+          "w": 384,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 14,
+          "y": 801,
+          "w": 384,
+          "h": 73
+        },
+        {
+          "name": "joy-wrap",
+          "x": 12,
+          "y": 546,
+          "w": 112,
+          "h": 112
+        }
+      ],
+      "tag": "412x915/luxury/ph/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-ph-balcony-412-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 658,
+          "y": 344,
+          "w": 67,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/2bhk/living",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-living-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 588,
+          "y": 619,
+          "w": 67,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/2bhk/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-kitchen-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/modern/2bhk/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-master-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/2bhk/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-bathroom-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 591,
+          "y": 372,
+          "w": 98,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/2bhk/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-balcony-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 658,
+          "y": 344,
+          "w": 67,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/luxury/2bhk/living",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-living-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 588,
+          "y": 619,
+          "w": 67,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/luxury/2bhk/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-kitchen-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/luxury/2bhk/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-master-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/luxury/2bhk/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-bathroom-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 591,
+          "y": 372,
+          "w": 98,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/luxury/2bhk/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-balcony-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 562,
+          "y": 445,
+          "w": 157,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/ph/lounge",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-lounge-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 423,
+          "y": 513,
+          "w": 157,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/ph/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-kitchen-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/modern/ph/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-master-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 592,
+          "y": 635,
+          "w": 96,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/modern/ph/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-bathroom-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 592,
+          "y": 357,
+          "w": 95,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/ph/terrace",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-terrace-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/modern/ph/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-balcony-modern.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 562,
+          "y": 445,
+          "w": 157,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/luxury/ph/lounge",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-lounge-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 423,
+          "y": 513,
+          "w": 157,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/luxury/ph/kitchen",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-kitchen-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/luxury/ph/master",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-master-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 592,
+          "y": 635,
+          "w": 96,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 94
+        }
+      ],
+      "tag": "1280x800/luxury/ph/bathroom",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-bathroom-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 592,
+          "y": 357,
+          "w": 95,
+          "h": 25
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/luxury/ph/terrace",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-terrace-luxury.png"
+    },
+    {
+      "vw": 1280,
+      "vh": 800,
+      "overlaps": [],
+      "boxes": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 56
+        },
+        {
+          "name": "sheet",
+          "x": 934,
+          "y": 68,
+          "w": 330,
+          "h": 712
+        },
+        {
+          "name": "room-dock",
+          "x": 950,
+          "y": 128,
+          "w": 298,
+          "h": 62
+        },
+        {
+          "name": "chip-row.room-row",
+          "x": 950,
+          "y": 132,
+          "w": 298,
+          "h": 50
+        },
+        {
+          "name": "tour-card.room-info",
+          "x": 950,
+          "y": 190,
+          "w": 298,
+          "h": 73
+        }
+      ],
+      "tag": "1280x800/luxury/ph/balcony",
+      "file": "/workspace/leadsetu-3d-demo/screens/v3/after-desktop-ph-balcony-luxury.png"
+    }
+  ]
+}

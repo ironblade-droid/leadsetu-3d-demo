@@ -377,11 +377,36 @@ body.form-open .crosshair {
 }
 .sheet.open .sheet-body { display: block; }
 .sheet .disclaimer { flex: 0 0 auto; }
-.sheet-info { flex: 0 0 auto; padding: 2px 0 10px; min-width: 0; }
+.sheet-info {
+  flex: 0 0 auto;
+  padding: 0 0 6px;
+  min-width: 0;
+  max-height: 20vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .sheet-info .tour-card,
-.sheet-info .spec-card { margin: 0; }
-.sheet-info .spec-fin { font-size: 0.82rem; }
-.sheet:not(.open) .sheet-info { display: none !important; }
+.sheet-info .spec-card,
+.sheet-info .room-info {
+  margin: 0;
+  padding: 8px 12px 8px;
+  border-radius: 12px;
+}
+.sheet-info .tour-card h2,
+.sheet-info .spec-card h2,
+.sheet-info .room-info h2 { font-size: 1.05rem; margin: 0 2px 0 0; display: inline; }
+.sheet-info .tour-k { font-size: 0.62rem; }
+.sheet-info .spec-area { display: inline; margin: 0; font-size: 0.75rem; }
+.sheet-info .spec-fin {
+  display: inline-flex;
+  gap: 6px;
+  margin: 0 12px 0 0;
+  font-size: 0.75rem;
+}
+.sheet-info .spec-note { display: none; }
+.sheet-info .tour-nav { margin-top: 6px; }
+.sheet-info .spec-close { top: 2px; right: 2px; width: 36px; height: 36px; }
+/* sheet-info stays visible when the sheet is collapsed — only .sheet-body hides. */
 .floors-dock .chip-row button { min-width: 44px; padding: 6px 8px; }
 .prefs h2 {
   font-family: var(--serif); font-weight: 500; font-size: 1.15rem;

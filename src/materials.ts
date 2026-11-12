@@ -136,10 +136,16 @@ export async function loadMaterials(
     mattress: std("#ece6da", { roughness: 0.9 }),
     plant: std("#2d5a3d", { roughness: 0.8 }),
     soil: std("#3a2a1c", { roughness: 1 }),
-    counter: std("#d8d4cc", { roughness: 0.35, metalness: 0.1 }),
+    counter: new THREE.MeshPhysicalMaterial({
+      color: "#d8d4cc", roughness: 0.22, metalness: 0.04,
+      clearcoat: 0.7, clearcoatRoughness: 0.12, envMapIntensity: 1.05,
+    }),
     cabinet: std("#f3f1ec", { roughness: 0.55 }),
-    woodFur: std("#8b5a2b", { roughness: 0.55, map: wood.map, roughnessMap: wood.roughnessMap }),
-    ceramic: std("#f4f6f7", { roughness: 0.3, metalness: 0.05 }),
+    woodFur: std("#8b5a2b", { roughness: 0.58, metalness: 0.02, map: wood.map, roughnessMap: wood.roughnessMap, normalMap: wood.normalMap, normalScale: new THREE.Vector2(0.45, 0.45), envMapIntensity: 0.4 }),
+    ceramic: new THREE.MeshPhysicalMaterial({
+      color: "#f4f6f7", roughness: 0.2, metalness: 0.03,
+      clearcoat: 0.8, clearcoatRoughness: 0.14, envMapIntensity: 1.0,
+    }),
     water: new THREE.MeshPhysicalMaterial({
       color: "#6a9ab8",
       transparent: true,
@@ -190,7 +196,11 @@ export function applyKitchen(m: Materials, id: KitchenId) {
     m.cabinet.map = null;
     m.counter.color.set("#ece9e2");
     m.counter.map = null;
-    m.counter.roughness = 0.3;
+    m.counter.roughness = 0.18;
+    if ("clearcoat" in m.counter) {
+      (m.counter as THREE.MeshPhysicalMaterial).clearcoat = 0.85;
+      (m.counter as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.1;
+    }
   } else if (id === "walnut") {
     m.cabinet.color.set("#6b4324");
     m.cabinet.map = m.wood.map;
@@ -246,4 +256,39 @@ export function applyWorldXZUVs(geo: THREE.BufferGeometry, scale = 0.55): void {
     uv[i * 2 + 1] = z * scale;
   }
   geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+}
+
+
+export function makeFloorMaterial(
+  tex: TexSet,
+  kind: FlooringId | "tile-wet" | "terra",
+  tint = "#ffffff",
+): THREE.MeshPhysicalMaterial {
+  const map = tex.map.clone();
+  const normalMap = tex.normalMap.clone();
+  const roughnessMap = tex.roughnessMap.clone();
+  map.needsUpdate = normalMap.needsUpdate = roughnessMap.needsUpdate = true;
+  const marble = kind === "marble";
+  const wet = kind === "tile" || kind === "tile-wet";
+  return new THREE.MeshPhysicalMaterial({
+    color: tint,
+    map, normalMap, roughnessMap,
+    roughness: marble ? 0.12 : wet ? 0.32 : 0.62,
+    metalness: 0.02,
+    clearcoat: marble ? 1.0 : wet ? 0.28 : 0.0,
+    clearcoatRoughness: marble ? 0.06 : 0.35,
+    envMapIntensity: marble ? 1.25 : wet ? 0.7 : 0.35,
+    reflectivity: marble ? 0.55 : 0.2,
+    ior: 1.5,
+  });
+}
+
+export function tuneFloorMaterial(mat: THREE.MeshPhysicalMaterial, kind: FlooringId): void {
+  const marble = kind === "marble";
+  const tile = kind === "tile";
+  mat.roughness = marble ? 0.12 : tile ? 0.32 : 0.62;
+  mat.clearcoat = marble ? 1.0 : tile ? 0.28 : 0.0;
+  mat.clearcoatRoughness = marble ? 0.06 : 0.35;
+  mat.envMapIntensity = marble ? 1.25 : tile ? 0.7 : 0.35;
+  mat.needsUpdate = true;
 }

@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import type { Collision, Prefs, Room, RoomType, Transform, UnitPlan } from "./types";
 import { planToWorld } from "./layout";
-import { aabb } from "./furniture";
+import { aabb, type Anchor } from "./furniture";
 
 export const EYE = 1.6;
-export const LOOK_Y = 1.28;
+export const LOOK_Y = 0.92;
 
 export interface RoomStop {
   id: string;
@@ -17,6 +17,8 @@ export interface RoomStop {
   position: THREE.Vector3;
   lookAt: THREE.Vector3;
   yaw: number;
+  /** Slight downward pitch so furniture fills the frame, not the sky. */
+  pitch: number;
   walkX: number;
   walkZ: number;
 }
@@ -162,6 +164,7 @@ interface Viewpoint {
   camZ: number;
   lookX: number;
   lookZ: number;
+  lookY?: number;
 }
 
 /**
@@ -217,7 +220,9 @@ function canonicalView(
     return { camX: a.cx, camZ: a.minZ + iz, lookX: a.cx, lookZ: a.maxZ - 0.55 };
   }
   if (kind === "bathroom" || kind === "utility") {
-    return { camX: a.minX + 0.58, camZ: a.minZ + 0.58, lookX: a.maxX - 0.4, lookZ: a.maxZ - 0.4 };
+    // Stand in the open centre and look toward the far vanity wall — never
+    // a corner camera stuffed inside the shower.
+    return { camX: a.cx, camZ: a.cz, lookX: a.cx * 0.3 + (a.maxX - 0.35) * 0.7, lookZ: a.cz * 0.3 + (a.maxZ - 0.35) * 0.7, lookY: 1.1 };
   }
   if (kind === "foyer") {
     const tx = unitCenter?.x ?? a.cx;
@@ -319,6 +324,22 @@ function viewpointFor(
 }
 
 
+function pitchToward(camX: number, camZ: number, lookX: number, lookY: number, lookZ: number): number {
+  const horiz = Math.hypot(lookX - camX, lookZ - camZ) || 1;
+  return Math.atan2(lookY - EYE, horiz);
+}
+
+function pullInside(poly: [number, number][], x: number, z: number, pad = 0.34): { x: number; z: number } {
+  if (pointInPoly(poly, x, z) && distToPoly(poly, x, z) >= pad) return { x, z };
+  const b = aabb(poly);
+  for (let t = 0.08; t <= 1.01; t += 0.08) {
+    const nx = x + (b.cx - x) * t;
+    const nz = z + (b.cz - z) * t;
+    if (pointInPoly(poly, nx, nz) && distToPoly(poly, nx, nz) >= Math.min(pad, 0.22)) return { x: nx, z: nz };
+  }
+  return { x: b.cx, z: b.cz };
+}
+
 function makeStop(
   id: string,
   name: string,
@@ -330,24 +351,180 @@ function makeStop(
   walkRooms: { polygon: [number, number][] }[],
   note?: string,
 ): RoomStop {
-  const clear = findClearPoint({ x: vp.camX, z: vp.camZ }, cols, walkRooms);
+  let clear = findClearPoint({ x: vp.camX, z: vp.camZ }, cols, walkRooms);
+  const home = walkRooms.find((r) => pointInPoly(r.polygon, vp.lookX, vp.lookZ)) ?? walkRooms[0];
+  if (home) clear = pullInside(home.polygon, clear.x, clear.z, type === "bathroom" || type === "utility" ? 0.36 : 0.32);
   const look = { x: vp.lookX, z: vp.lookZ };
-  // If the clear point is far from the intended camera, keep looking at the same focal point.
+  const lookY = vp.lookY ?? LOOK_Y;
   const yaw = yawToward(clear.x, clear.z, look.x, look.z);
+  const pitch = pitchToward(clear.x, clear.z, look.x, lookY, look.z);
   return {
     id, name, short, type, area_m2, note,
     position: new THREE.Vector3(clear.x, EYE, clear.z),
-    lookAt: new THREE.Vector3(look.x, LOOK_Y, look.z),
+    lookAt: new THREE.Vector3(look.x, lookY, look.z),
     yaw,
+    pitch,
     walkX: clear.x,
     walkZ: clear.z,
   };
 }
 
+/**
+ * Stand in front of a piece of furniture and look back at it, so a wall or
+ * window sits behind the subject — never at empty sky, a blank wall, or
+ * the inside of the mesh.
+ */
+function viewpointFromAnchor(
+  a: Anchor,
+  poly: [number, number][],
+  cols: Collision[],
+  others: Anchor[] = [],
+): Viewpoint | null {
+  // A mild 3/4 from in front of the piece. Scoring prefers an ideal
+  // stand-back (not the farthest corner), stays strictly inside the room,
+  // and refuses to sit on another piece of furniture.
+  const isBed = a.kind === "bed";
+  const isKit = a.kind === "kitchen";
+  const isBath = a.kind === "basin" || a.kind === "bath";
+  const idealDist = isBed ? 2.35 : isKit ? 1.9 : isBath ? 1.45 : 2.05;
+  const idealSide = isBed ? 0.95 : isKit ? 1.0 : isBath ? 0.28 : 0.65;
+  const maxSide = isBed ? 1.45 : isKit ? 1.55 : isBath ? 0.55 : 1.05;
+  const minLen = isBed ? 1.65 : isKit ? 1.45 : isBath ? 0.5 : 1.25;
+  const maxLen = isBed ? 3.4 : isKit ? 2.55 : isBath ? 2.2 : 2.85;
+  const minFront = isBed ? 0.9 : isBath ? 0.35 : 0.8;
+  const sx = -a.fz, sz = a.fx;
+  const bounds = aabb(poly);
+  const rooms = [{ polygon: poly }];
+
+  type Try = { x: number; z: number };
+  const tries: Try[] = [];
+  const seen = new Set<string>();
+  const push = (x: number, z: number) => {
+    const k = `${x.toFixed(2)},${z.toFixed(2)}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    tries.push({ x, z });
+  };
+
+  const sides = isBath
+    ? [0.35, -0.35, 0.2, -0.2, 0.5, -0.5, 0]
+    : [1, -1, 0.7, -0.7, 0.45, -0.45, 1.2, -1.2, 0];
+  const dists = isBath ? [1, 0.85, 0.7, 1.15] : [1, 0.85, 1.15, 0.72, 0.6];
+  for (const sideMul of sides) {
+    for (const dMul of dists) {
+      push(
+        a.x + a.fx * idealDist * dMul + sx * idealSide * sideMul,
+        a.z + a.fz * idealDist * dMul + sz * idealSide * sideMul,
+      );
+    }
+  }
+  if (isBed) {
+    const inset = 0.58;
+    for (const cx of [bounds.minX + inset, bounds.maxX - inset]) {
+      for (const cz of [bounds.minZ + inset, bounds.maxZ - inset]) {
+        if ((cx - a.x) * a.fx + (cz - a.z) * a.fz > 0.8) push(cx, cz);
+      }
+    }
+  }
+  if (isBath) {
+    // Tiny bathrooms: stand in the open centre (or just in front of the
+    // vanity) and look at the basin + mirror. Never a corner inside the shower.
+    push(bounds.cx, bounds.cz);
+    const span = Math.min(1.35, Math.max(0.85, Math.min(bounds.w, bounds.d) * 0.55));
+    push(a.x + a.fx * span, a.z + a.fz * span);
+    push(bounds.cx - a.fx * 0.1, bounds.cz - a.fz * 0.1);
+  }
+  if (isKit) {
+    // Open floor of the kitchen (centre, and the corner opposite the counters).
+    push(bounds.cx, bounds.cz);
+    push(bounds.cx + a.fx * 0.4, bounds.cz + a.fz * 0.4);
+    const ox = a.fx > 0.4 ? bounds.maxX - 1.05 : a.fx < -0.4 ? bounds.minX + 1.05 : bounds.cx;
+    const oz = a.fz > 0.4 ? bounds.maxZ - 1.05 : a.fz < -0.4 ? bounds.minZ + 1.05 : bounds.cz;
+    push(ox, oz);
+    push((ox + bounds.cx) / 2, (oz + bounds.cz) / 2);
+  }
+
+  const blocked = (x: number, z: number): boolean => {
+    for (const o of others) {
+      if (o === a || (o.x === a.x && o.z === a.z && o.kind === a.kind)) continue;
+      const rad = Math.max(0.55, o.width * 0.42);
+      if (Math.hypot(x - o.x, z - o.z) < rad) return true;
+    }
+    return false;
+  };
+
+  let best: (Viewpoint & { score: number }) | null = null;
+  for (const t of tries) {
+    const clear = findClearPoint({ x: t.x, z: t.z }, cols, rooms, 0.32);
+    if (!pointInPoly(poly, clear.x, clear.z)) continue;
+    if (blocked(clear.x, clear.z)) continue;
+    // Never stand inside a wall or door leaf — 3 cm of clearance is not enough
+    // (the penthouse master bath used to fill the frame with wood grain).
+    if (distToPoly(poly, clear.x, clear.z) < (isBath ? 0.32 : 0.28)) continue;
+    const dx = a.x - clear.x, dz = a.z - clear.z;
+    const len = Math.hypot(dx, dz);
+    if (len < minLen || len > maxLen) continue;
+    const inFront = (clear.x - a.x) * a.fx + (clear.z - a.z) * a.fz;
+    if (inFront < minFront) continue;
+    const sideAmt = Math.abs((clear.x - a.x) * sx + (clear.z - a.z) * sz);
+    if (sideAmt > maxSide) continue;
+    const ux = dx / len, uz = dz / len;
+    const vis = sight(clear.x, clear.z, ux, uz, poly, cols);
+    if (vis < Math.min(len * 0.65, isBath ? 0.95 : 1.2)) continue;
+    const toCenter = Math.hypot(clear.x - bounds.cx, clear.z - bounds.cz);
+    const score =
+      4
+      - Math.abs(len - idealDist) * 1.15
+      - Math.abs(sideAmt - idealSide) * 0.9
+      + Math.min(vis, 4) * 0.08
+      + (isBath ? Math.max(0, 1.0 - toCenter) * 2.2 : 0)
+      + distToPoly(poly, clear.x, clear.z) * 0.35;
+    if (!best || score > best.score) {
+      const lookDist = Math.min(len, vis * 0.9);
+      best = {
+        camX: clear.x,
+        camZ: clear.z,
+        lookX: clear.x + ux * lookDist,
+        lookZ: clear.z + uz * lookDist,
+        lookY: a.height,
+        score,
+      };
+    }
+  }
+  if (!best) return null;
+  return { camX: best.camX, camZ: best.camZ, lookX: best.lookX, lookZ: best.lookZ, lookY: best.lookY };
+}
+
+function pickAnchor(anchors: Anchor[] | undefined, kind: RoomStop["type"]): Anchor | undefined {
+  if (!anchors || !anchors.length) return undefined;
+  const prefer: Record<string, Anchor["kind"][]> = {
+    living: ["sofa", "tv"],
+    dining: ["dining", "sofa"],
+    kitchen: ["kitchen"],
+    bedroom: ["bed"],
+    bathroom: ["basin", "bath"],
+    utility: ["bath", "basin"],
+    balcony: ["outdoor"],
+    terrace: ["outdoor"],
+    foyer: ["foyer"],
+    lobby: ["foyer"],
+    hall: ["foyer"],
+    dressing: ["wardrobe"],
+  };
+  const list = prefer[kind] ?? [];
+  for (const k of list) {
+    const hit = anchors.find((a) => a.kind === k);
+    if (hit) return hit;
+  }
+  return anchors[0];
+}
+
+
 export function buildRoomStops(
   plan: UnitPlan,
   t: Transform | undefined,
   cols: Collision[],
+  anchorsByRoom: Map<string, Anchor[]> = new Map(),
 ): RoomStop[] {
   const stops: RoomStop[] = [];
   const worldRooms = plan.rooms.map((r) => ({ ...r, polygon: worldPoly(r.polygon, t) }));
@@ -366,14 +543,22 @@ export function buildRoomStops(
 
   for (const room of worldRooms) {
     const meta = displayName(room);
-    const vp = viewpointFor(room, room.polygon, meta.type, cols, unitCenter);
+    // Halls and foyers look down their long axis toward the rest of the home,
+    // not at a side table or a door leaf.
+    const skipFurniture = meta.type === "foyer";
+    const aStop = skipFurniture ? undefined : pickAnchor(anchorsByRoom.get(room.id), meta.type);
+    const roomAnchors = anchorsByRoom.get(room.id) ?? [];
+    const fromFurniture = aStop ? viewpointFromAnchor(aStop, room.polygon, cols, roomAnchors) : null;
+    const vp = fromFurniture ?? viewpointFor(room, room.polygon, meta.type, cols, unitCenter);
     const note = room.notes;
     stops.push(makeStop(room.id, meta.name, meta.short, meta.type, room.area_m2, vp, cols, walkRooms, note));
 
     // Combined living / dining (2 BHK)
     if (room.type === "living" && /dining/i.test(room.name) && aabb(room.polygon).w * aabb(room.polygon).d > 18) {
       const a = aabb(room.polygon);
-      const dvp = viewpointFor(room, room.polygon, "dining", cols, unitCenter);
+      const dAnchor = pickAnchor(anchorsByRoom.get(room.id), "dining");
+      const dvp = (dAnchor && viewpointFromAnchor(dAnchor, room.polygon, cols, anchorsByRoom.get(room.id) ?? []))
+        ?? viewpointFor(room, room.polygon, "dining", cols, unitCenter);
       stops.push(makeStop(
         `${room.id}-dining`,
         "Dining",
@@ -392,7 +577,9 @@ export function buildRoomStops(
       (room.type === "living" && /kitchen/i.test(room.name)) ||
       (plan.id === "penthouse" && room.id === "lounge");
     if (wantsKitchen && !worldRooms.some((r) => r.type === "kitchen")) {
-      const kvp = viewpointFor(room, room.polygon, "kitchen", cols, unitCenter);
+      const kAnchor = pickAnchor(anchorsByRoom.get(room.id), "kitchen");
+      const kvp = (kAnchor && viewpointFromAnchor(kAnchor, room.polygon, cols, anchorsByRoom.get(room.id) ?? []))
+        ?? viewpointFor(room, room.polygon, "kitchen", cols, unitCenter);
       const noteK =
         plan.id === "penthouse"
           ? "The first-floor plan used for this penthouse has no kitchen; an open kitchen is shown in the family lounge as an approximation."
@@ -466,12 +653,13 @@ export function defaultSpawn(
   plan: UnitPlan,
   t: Transform | undefined,
   cols: Collision[],
-): { x: number; y: number; z: number; yaw: number } {
-  const stops = buildRoomStops(plan, t, cols);
+  anchorsByRoom: Map<string, Anchor[]> = new Map(),
+): { x: number; y: number; z: number; yaw: number; pitch?: number } {
+  const stops = buildRoomStops(plan, t, cols, anchorsByRoom);
   // Walk mode opens on a furnished room, not a narrow hall staring at a wall.
   const foyer = stops.find((s) => s.type === "living") ?? stops.find((s) => s.type === "foyer") ?? stops[0];
   if (!foyer) {
     return { x: 0, y: EYE, z: 0, yaw: 0 };
   }
-  return { x: foyer.walkX, y: EYE, z: foyer.walkZ, yaw: foyer.yaw };
+  return { x: foyer.walkX, y: EYE, z: foyer.walkZ, yaw: foyer.yaw, pitch: foyer.pitch };
 }

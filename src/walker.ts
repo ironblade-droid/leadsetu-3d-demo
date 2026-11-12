@@ -39,12 +39,12 @@ export class Walker {
     this.rooms = rooms ?? [];
   }
 
-  spawn(x: number, y: number, z: number, yaw: number) {
+  spawn(x: number, y: number, z: number, yaw: number, pitch = -0.18) {
     const clear = this.nearestClear(x, z);
     this.position.set(clear.x, y || EYE, clear.z);
     this.minY = y || EYE;
     this.yaw = yaw;
-    this.pitch = 0;
+    this.pitch = pitch;
     this.walkTarget = null;
   }
 

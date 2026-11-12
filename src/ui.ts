@@ -122,13 +122,13 @@ export class HUD {
   setCurrentRoom(id: string | null, reveal = true) {
     this.currentRoom = id;
     this.revealRoomCard = Boolean(id) && reveal;
-    if (this.revealRoomCard) this.sheetOpen = true;
+    // Room card lives in the collapsed sheet-info; never open the prefs body.
     this.render();
   }
 
   setTour(t: TourState | null) {
     this.tour = t;
-    if (t?.active) this.sheetOpen = true;
+    // Tour card lives in the collapsed sheet-info; leave prefs closed.
     this.render();
   }
 
@@ -141,7 +141,6 @@ export class HUD {
     this.spec = h;
     this.currentRoom = null;
     this.revealRoomCard = false;
-    if (this.view.kind === "flat") this.sheetOpen = true;
     this.render();
   }
 

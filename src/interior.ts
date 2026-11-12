@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { Materials } from "./materials";
-import { applyKitchen, applyStyleLook, applyWorldXZUVs, flooringSet } from "./materials";
-import { furnishRoom, aabb } from "./furniture";
+import { applyKitchen, applyStyleLook, applyWorldXZUVs, flooringSet, makeFloorMaterial, tuneFloorMaterial } from "./materials";
+import { furnishRoom, aabb, addCurtains, type Anchor } from "./furniture";
+import { type Catalog, retintFurniture } from "./catalog";
 import { buildRoomStops, defaultSpawn, type RoomStop } from "./rooms";
 import type { Collision, Prefs, TimeOfDay, Transform, UnitPlan, Wall } from "./types";
 import { planToWorld, transformPointDir, transformWall, wallCollision } from "./layout";
@@ -29,7 +30,7 @@ export interface Hotspot {
 export interface InteriorBuild {
   group: THREE.Group;
   collisions: Collision[];
-  spawn: { x: number; y: number; z: number; yaw: number };
+  spawn: { x: number; y: number; z: number; yaw: number; pitch?: number };
   floorMeshes: THREE.Mesh[];
   wallMat: THREE.MeshStandardMaterial;
   hotspots: Hotspot[];
@@ -42,16 +43,8 @@ export interface InteriorBuild {
 
 const FACE_YAW = { S: 0, N: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 };
 
-function pbrFloor(tex: { map: THREE.Texture; normalMap: THREE.Texture; roughnessMap: THREE.Texture }, tint = "#ffffff") {
-  const map = tex.map.clone();
-  const nor = tex.normalMap.clone();
-  const rough = tex.roughnessMap.clone();
-  map.needsUpdate = nor.needsUpdate = rough.needsUpdate = true;
-  return new THREE.MeshStandardMaterial({
-    color: tint,
-    map, normalMap: nor, roughnessMap: rough,
-    roughness: 0.6, metalness: 0.04,
-  });
+function pbrFloor(tex: { map: THREE.Texture; normalMap: THREE.Texture; roughnessMap: THREE.Texture }, kind: "marble" | "wood" | "tile" | "tile-wet" | "terra" = "wood", tint = "#ffffff") {
+  return makeFloorMaterial(tex, kind, tint);
 }
 
 function shapeFromPoly(poly: [number, number][]): THREE.Shape {
@@ -71,7 +64,7 @@ export function buildInterior(
   plan: UnitPlan,
   prefs: Prefs,
   mats: Materials,
-  opts: { transform?: Transform; showCeiling: boolean; y: number; cutaway: boolean; hotspots?: boolean } = {
+  opts: { transform?: Transform; showCeiling: boolean; y: number; cutaway: boolean; hotspots?: boolean; catalog?: Catalog | null } = {
     showCeiling: false,
     y: 0,
     cutaway: false,
@@ -91,11 +84,11 @@ export function buildInterior(
   applyKitchen(mats, prefs.kitchen);
   applyStyleLook(mats, prefs);
 
-  const livingFloor = pbrFloor(flooringSet(mats, prefs.flooring));
-  const bathFloor = pbrFloor(mats.tile, "#e8eef0");
-  const kitFloor = pbrFloor(mats.tile, "#efeae2");
-  const terrFloor = pbrFloor(mats.terra);
-  const woodFloor = pbrFloor(mats.wood);
+  const livingFloor = pbrFloor(flooringSet(mats, prefs.flooring), prefs.flooring);
+  const bathFloor = pbrFloor(mats.tile, "tile-wet", "#e8eef0");
+  const kitFloor = pbrFloor(mats.tile, "tile", "#efeae2");
+  const terrFloor = pbrFloor(mats.terra, "terra");
+  const woodFloor = pbrFloor(mats.wood, "wood");
   extraMats.push(livingFloor, bathFloor, kitFloor, terrFloor, woodFloor);
 
   const h = opts.cutaway ? Math.min(1.15, plan.wallHeight) : plan.wallHeight;
@@ -136,7 +129,7 @@ export function buildInterior(
   slabGeo.rotateX(-Math.PI / 2);
   applyWorldXZUVs(slabGeo, 0.4);
   geos.push(slabGeo);
-  const slab = new THREE.Mesh(slabGeo, mats.concfloor ? pbrFloor(mats.concfloor, "#d0cdc6") : livingFloor);
+  const slab = new THREE.Mesh(slabGeo, mats.concfloor ? pbrFloor(mats.concfloor, "wood", "#d0cdc6") : livingFloor);
   slab.position.y = -0.04;
   slab.receiveShadow = true;
   group.add(slab);
@@ -198,6 +191,14 @@ export function buildInterior(
     group.add(sillBox);
   }
 
+  // Curtains on every window
+  if (prefs.furniture && !opts.cutaway) {
+    for (const w0 of plan.windows) {
+      const w = t ? transformWall(w0, t) : w0;
+      addCurtains(w.x + w.w / 2, w.z + w.d / 2, w.w, w.d, plan.wallHeight, group, mats, prefs.style);
+    }
+  }
+
   // Doors — open leaf + frame
   for (const d of plan.doors) {
     const a = t ? planToWorld(d.ax, d.az, t) : [d.ax, d.az] as [number, number];
@@ -248,13 +249,16 @@ export function buildInterior(
   const furn = new THREE.Group();
   furn.name = "furniture";
   furn.visible = prefs.furniture;
+  const anchorsByRoom = new Map<string, Anchor[]>();
   if (prefs.furniture) {
-    for (const room of plan.rooms) {
-      const r = t
-        ? { ...room, polygon: worldPoly(room.polygon, t) }
-        : room;
+    const worldRooms = plan.rooms.map((room) => t
+      ? { ...room, polygon: worldPoly(room.polygon, t) }
+      : room);
+    for (const r of worldRooms) {
+      const avoid = worldRooms.filter((o) => o.id !== r.id).map((o) => o.polygon);
       const fg = new THREE.Group();
-      furnishRoom(r, fg, mats, prefs);
+      const anchors = furnishRoom(r, fg, mats, prefs, opts.catalog ?? null, avoid);
+      anchorsByRoom.set(r.id, anchors);
       furn.add(fg);
     }
   }
@@ -318,9 +322,9 @@ export function buildInterior(
     ...r,
     polygon: worldPoly(r.polygon, t),
   }));
-  const rooms = buildRoomStops(plan, t, collisions);
+  const rooms = buildRoomStops(plan, t, collisions, anchorsByRoom);
   // Spawn inside the foyer (or living) at eye height, facing in — never in a wall or outside.
-  const spawn0 = defaultSpawn(plan, t, collisions);
+  const spawn0 = defaultSpawn(plan, t, collisions, anchorsByRoom);
   const spawn = { ...spawn0, y: opts.y + 1.6 };
 
   function applyPrefs(p: Prefs) {
@@ -331,8 +335,10 @@ export function buildInterior(
     livingFloor.map = fl.map;
     livingFloor.normalMap = fl.normalMap;
     livingFloor.roughnessMap = fl.roughnessMap;
+    tuneFloorMaterial(livingFloor, p.flooring);
     livingFloor.needsUpdate = true;
     furn.visible = p.furniture;
+    retintFurniture(furn, p, mats);
   }
 
   function dispose() {

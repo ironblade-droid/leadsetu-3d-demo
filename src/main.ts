@@ -1,10 +1,11 @@
 import "./styles.css";
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, type Engine } from "./engine";
+import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadHdriEnvironment, type Engine } from "./engine";
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
+import { loadCatalog, type Catalog } from "./catalog";
 import { Walker, attachJoystick } from "./walker";
 import { HUD, storeLead, areaLabel, type TourState } from "./ui";
 import { installGestures, isUiEventTarget } from "./gestures";
@@ -42,6 +43,7 @@ async function loadPlans(): Promise<Record<string, UnitPlan>> {
 class App {
   engine!: Engine;
   mats!: Materials;
+  catalog: Catalog | null = null;
   plans!: Record<string, UnitPlan>;
   tower!: TowerBuild;
   walker!: Walker;
@@ -78,8 +80,12 @@ class App {
     setLoad(0.05);
 
     this.engine = createEngine(canvas, labels);
-    this.mats = await loadMaterials(this.engine.renderer, (p) => setLoad(0.05 + p * 0.75));
+    this.mats = await loadMaterials(this.engine.renderer, (p) => setLoad(0.05 + p * 0.55));
+    const catP = loadCatalog(this.engine.renderer, (p) => setLoad(0.6 + p * 0.2));
+    const hdriP = loadHdriEnvironment(this.engine, `${import.meta.env.BASE_URL}hdris/studio_small_08_1k.hdr`);
     this.plans = await loadPlans();
+    this.catalog = await catP;
+    await hdriP;
     setLoad(0.88);
 
     this.engine.scene.add(this.world);
@@ -309,6 +315,7 @@ class App {
     this.tower.highlight(null);
     this.hud.spec = null;
     this.view = { kind: "tower", hoverFloor: null };
+    this.engine.setHudLift(0);
     this.hud.setView(this.view);
     this.applySceneTime();
     const [cx, cz] = plateCenter();
@@ -347,6 +354,7 @@ class App {
         showCeiling: false,
         y,
         cutaway: true,
+        catalog: this.catalog,
       });
       built.group.userData.unitId = unitCode(floor, slot.suffix);
       built.group.userData.slot = slot;
@@ -420,6 +428,7 @@ class App {
       y: 0,
       cutaway: cam === "dollhouse",
       hotspots: true,
+      catalog: this.catalog,
     });
     this.interiorRoot.add(built.group);
     this.interiors.push(built);
@@ -476,12 +485,14 @@ class App {
         let sx = spawnAt?.x ?? built.spawn.x;
         let sz = spawnAt?.z ?? built.spawn.z;
         let yaw = spawnAt?.yaw ?? built.spawn.yaw;
+        let pitch = spawnAt?.yaw !== undefined ? -0.18 : (built.spawn.pitch ?? -0.18);
         if (keepCam && !spawnAt && prevPos.y > 0.5 && this.walker.isWalkable(prevPos.x, prevPos.z)) {
           sx = prevPos.x;
           sz = prevPos.z;
           yaw = prevYaw;
+          pitch = this.walker.pitch;
         }
-        this.walker.spawn(sx, 1.6, sz, yaw);
+        this.walker.spawn(sx, 1.6, sz, yaw, pitch);
         this.walker.apply(this.engine.camera);
         this.walker.enabled = true;
       } else {
@@ -511,6 +522,7 @@ class App {
         );
       }
     }
+    this.engine.setHudLift(cam === "walk" ? 0.24 : 0);
   }
 
   cameraYaw(): number {
@@ -552,8 +564,8 @@ class App {
     const fromYaw = this.cameraYaw();
     const fromPitch = this.cameraPitch();
     try {
-      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, 0, 1.15);
-      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw);
+      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, stop.pitch, 1.15);
+      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw, stop.pitch);
       this.walker.apply(this.engine.camera);
       this.walker.enabled = true;
     } finally {

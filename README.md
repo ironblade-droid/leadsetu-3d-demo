@@ -95,7 +95,7 @@ Wikimedia Commons was checked for Indian apartment plans. The India floor-plan c
 
 The viewer is **three.js (WebGL)**, Vite, TypeScript. Pascal Editor (`@pascal-app/viewer`, MIT, commit `c40a2d3738db57935e89a6cb2b71f19dcce6f38c`) was authorised after a security audit, but it was **not used**. The published package requires React 19, React Three Fiber 9 and three 0.187, and its own scene graph. Vendoring a pinned commit, converting our plan JSON into Pascal’s model, self-hosting furniture (a runtime dependency on editor.pascal.app or its furniture CDN is not allowed) and keeping a WebGL path for phones and TVs would have delayed a working public demo. A purpose-built three.js viewer maps 1:1 onto our blueprint JSON, style presets, TV mode and Lead Setu CTA. Pascal remains a candidate for a later editor evaluation.
 
-Furniture is **procedural** (three.js primitives), not third-party models. Textures are **CC0 from Poly Haven**, self-hosted in `public/textures/`. See `public/textures/CREDITS.txt` and `public/data/sources.json`.
+Furniture is **CC0 glTF from Poly Haven** (sofas, tables, chairs, cabinets, plants, art, stove, mirror), Draco-compressed and lazy-loaded once per session (~5.4 MB shared). Fitted kitchens, a modern bed and bathroom ceramics are original PBR pieces that follow the style presets. Textures and a studio HDRI are **CC0 from Poly Haven**, self-hosted in `public/textures/` and `public/hdris/`. Marble floors use a clearcoat physical material. See `CREDITS.md`.
 
 ## Lead Setu CTA
 

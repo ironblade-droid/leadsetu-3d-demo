@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 export interface Engine {
   renderer: THREE.WebGLRenderer;
@@ -15,6 +16,8 @@ export interface Engine {
   mobile: boolean;
   start: (tick: (dt: number) => void, after?: () => void) => void;
   resize: () => void;
+  /** Shift the look-at upward in portrait walk mode so furniture sits above the HUD. */
+  setHudLift: (frac: number) => void;
   dispose: () => void;
 }
 
@@ -44,7 +47,7 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.06).texture;
-  scene.environmentIntensity = 0.55;
+  scene.environmentIntensity = 0.65;
 
   const fov = mobile ? 58 : 50;
   const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.05, 400);
@@ -112,13 +115,29 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
     afterFn();
   }
 
-  function resize() {
+  let hudLift = 0;
+
+  function applyProjection() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     camera.aspect = w / h;
     camera.fov = isMobileViewport() ? 58 : 50;
     camera.near = 0.05;
+    // Portrait walk: shift the frustum down so the look-at sits in the
+    // visible band above the bottom sheet (positive offsetY raises world points).
+    if (hudLift > 0.05 && h > w * 1.05) {
+      const shift = Math.min(0.2, hudLift * 0.5);
+      camera.setViewOffset(w, h, 0, h * shift, w, h);
+    } else {
+      camera.clearViewOffset();
+    }
     camera.updateProjectionMatrix();
+  }
+
+  function resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    applyProjection();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(w, h);
     labels.setSize(w, h);
@@ -135,6 +154,12 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
       requestAnimationFrame(frame);
     },
     resize,
+    setHudLift(frac: number) {
+      const next = Math.max(0, Math.min(0.4, frac));
+      if (Math.abs(next - hudLift) < 0.01) return;
+      hudLift = next;
+      applyProjection();
+    },
     dispose() {
       running = false;
       window.removeEventListener("resize", resize);
@@ -263,4 +288,23 @@ export function applyTimeOfDay(engine: Engine, time: TimeOfDay): void {
     renderer.toneMappingExposure = 0.8;
   }
   sun.target.position.set(13.7, 0, 10);
+}
+
+
+/** Load a studio HDRI for realistic reflections (marble clearcoat, oak, ceramics).
+ *  The sky background stays a solid colour so time-of-day still reads clearly. */
+export async function loadHdriEnvironment(engine: Engine, url: string): Promise<void> {
+  try {
+    const loader = new RGBELoader();
+    const tex = await loader.loadAsync(url);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    const pmrem = new THREE.PMREMGenerator(engine.renderer);
+    const env = pmrem.fromEquirectangular(tex).texture;
+    tex.dispose();
+    pmrem.dispose();
+    engine.scene.environment = env;
+    engine.scene.environmentIntensity = 0.75;
+  } catch (err) {
+    console.warn("[engine] HDRI failed, keeping RoomEnvironment", err);
+  }
 }

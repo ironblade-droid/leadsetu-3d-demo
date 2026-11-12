@@ -14,3 +14,9 @@ All textures below are from Poly Haven (https://polyhaven.com), licensed CC0
 
 Retrieved 13 November 2026, as 1K JPEG diffuse, normal (OpenGL) and roughness maps.
 Furniture in this demo is procedural (three.js primitives), not third-party models.
+
+Indoor HDRI: studio_small_08 by Greg Zaal, CC0, https://polyhaven.com/a/studio_small_08
+(1K HDR, used as a reflection environment only.)
+
+Furniture models: see ../../CREDITS.md and this folder's packed .glb files.
+

@@ -1,0 +1,710 @@
+{
+  "id": "penthouse",
+  "name": "Penthouse",
+  "type": "Penthouse",
+  "source": {
+    "title": "3BHK house first floor plan, 60 x 120 ft north-facing plot",
+    "url": "https://www.innerscene.com/tools/library/drawings/3bhk-house-first-floor-plan-60-x-120-ft-north-facing-plot-dc0667a4",
+    "file": "plans/3bhk-house-first-floor-plan.dxf",
+    "previewOfficial": "plans/penthouse-official.jpg",
+    "previewExtracted": "plans/penthouse-extracted.png",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Innerscene (original model, released CC0)",
+    "retrieved": "2026-11-13",
+    "nominal": "House footprint 40 x 50 ft (12.192 x 15.240 m), 9-inch (230 mm) external walls, 4.5-inch (115 mm) internal walls (measured from the DXF). Room sizes on the drawing are in feet and inches. Terrace 26'-0\" x 22'-0\", rear balcony 14'-0\" x 12'-0\".",
+    "companionGroundFloor": {
+      "title": "3BHK house ground floor plan, 60 x 120 ft north-facing plot",
+      "url": "https://www.innerscene.com/tools/library/drawings/3bhk-house-ground-floor-plan-60-x-120-ft-north-facing-plot-1f1c239f",
+      "note": "Not used as the penthouse interior. The kitchen in the source house is on this ground-floor plan; see approximations."
+    }
+  },
+  "units": "m",
+  "wallHeight": 3.0,
+  "slabThickness": 0.2,
+  "overallHeight": 3.2,
+  "grossInternalArea_m2": 92.9,
+  "area_sqft": 1000,
+  "terraceArea_m2": 53.14,
+  "bounds": {
+    "min": [
+      0,
+      0
+    ],
+    "max": [
+      12.192,
+      15.24
+    ]
+  },
+  "walls": [
+    {
+      "x": 0.0,
+      "z": 6.9356,
+      "w": 0.23,
+      "d": 1.5413
+    },
+    {
+      "x": 0.0,
+      "z": 8.5919,
+      "w": 0.23,
+      "d": 1.1617
+    },
+    {
+      "x": 0.0,
+      "z": 10.3632,
+      "w": 0.23,
+      "d": 0.5521
+    },
+    {
+      "x": 0.0,
+      "z": 11.0303,
+      "w": 0.23,
+      "d": 1.1617
+    },
+    {
+      "x": 0.0,
+      "z": 14.0208,
+      "w": 0.23,
+      "d": 0.9892
+    },
+    {
+      "x": 0.0,
+      "z": 10.9153,
+      "w": 0.6858,
+      "d": 0.115
+    },
+    {
+      "x": 0.0,
+      "z": 15.01,
+      "w": 0.9144,
+      "d": 0.23
+    },
+    {
+      "x": 0.0,
+      "z": 8.4769,
+      "w": 1.8863,
+      "d": 0.115
+    },
+    {
+      "x": 0.0,
+      "z": 6.7056,
+      "w": 4.4196,
+      "d": 0.23
+    },
+    {
+      "x": 1.3716,
+      "z": 10.9153,
+      "w": 0.9601,
+      "d": 0.115
+    },
+    {
+      "x": 1.7713,
+      "z": 6.9356,
+      "w": 0.115,
+      "d": 0.4558
+    },
+    {
+      "x": 1.7713,
+      "z": 8.0772,
+      "w": 0.115,
+      "d": 0.3997
+    },
+    {
+      "x": 1.7713,
+      "z": 8.5919,
+      "w": 0.115,
+      "d": 2.3234
+    },
+    {
+      "x": 2.7432,
+      "z": 15.01,
+      "w": 0.9144,
+      "d": 0.23
+    },
+    {
+      "x": 3.1699,
+      "z": 10.9153,
+      "w": 0.5452,
+      "d": 0.115
+    },
+    {
+      "x": 3.4276,
+      "z": 11.5824,
+      "w": 0.23,
+      "d": 3.4276
+    },
+    {
+      "x": 3.4276,
+      "z": 11.3524,
+      "w": 1.1444,
+      "d": 0.23
+    },
+    {
+      "x": 3.6001,
+      "z": 11.0303,
+      "w": 0.115,
+      "d": 0.3221
+    },
+    {
+      "x": 7.0104,
+      "z": 11.3524,
+      "w": 0.8569,
+      "d": 0.0471
+    },
+    {
+      "x": 7.0104,
+      "z": 11.3995,
+      "w": 1.1444,
+      "d": 0.1829
+    },
+    {
+      "x": 7.1628,
+      "z": 6.858,
+      "w": 0.7045,
+      "d": 0.0776
+    },
+    {
+      "x": 7.1628,
+      "z": 6.7056,
+      "w": 0.992,
+      "d": 0.1524
+    },
+    {
+      "x": 7.8673,
+      "z": 7.7724,
+      "w": 0.115,
+      "d": 0.0949
+    },
+    {
+      "x": 7.8673,
+      "z": 7.9823,
+      "w": 0.115,
+      "d": 2.3234
+    },
+    {
+      "x": 7.8673,
+      "z": 10.4207,
+      "w": 0.115,
+      "d": 0.1559
+    },
+    {
+      "x": 7.8673,
+      "z": 10.3057,
+      "w": 0.5909,
+      "d": 0.115
+    },
+    {
+      "x": 7.8673,
+      "z": 7.8673,
+      "w": 4.3247,
+      "d": 0.115
+    },
+    {
+      "x": 7.9248,
+      "z": 0.23,
+      "w": 0.23,
+      "d": 5.1989
+    },
+    {
+      "x": 7.9248,
+      "z": 5.5439,
+      "w": 0.23,
+      "d": 1.1617
+    },
+    {
+      "x": 7.9248,
+      "z": 11.5824,
+      "w": 0.23,
+      "d": 3.4276
+    },
+    {
+      "x": 7.9248,
+      "z": 0.0,
+      "w": 1.2192,
+      "d": 0.23
+    },
+    {
+      "x": 7.9248,
+      "z": 5.4289,
+      "w": 1.2192,
+      "d": 0.115
+    },
+    {
+      "x": 7.9248,
+      "z": 15.01,
+      "w": 1.524,
+      "d": 0.23
+    },
+    {
+      "x": 7.9823,
+      "z": 6.858,
+      "w": 0.1725,
+      "d": 0.0776
+    },
+    {
+      "x": 7.9823,
+      "z": 11.3524,
+      "w": 0.1725,
+      "d": 0.0471
+    },
+    {
+      "x": 9.2964,
+      "z": 10.3057,
+      "w": 2.8956,
+      "d": 0.115
+    },
+    {
+      "x": 10.0009,
+      "z": 7.9823,
+      "w": 0.115,
+      "d": 1.0855
+    },
+    {
+      "x": 10.0009,
+      "z": 9.7536,
+      "w": 0.115,
+      "d": 0.5521
+    },
+    {
+      "x": 10.9728,
+      "z": 0.0,
+      "w": 1.2192,
+      "d": 0.23
+    },
+    {
+      "x": 11.2776,
+      "z": 5.4289,
+      "w": 0.9144,
+      "d": 0.115
+    },
+    {
+      "x": 11.2776,
+      "z": 15.01,
+      "w": 0.9144,
+      "d": 0.23
+    },
+    {
+      "x": 11.962,
+      "z": 0.23,
+      "w": 0.23,
+      "d": 1.5988
+    },
+    {
+      "x": 11.962,
+      "z": 3.6576,
+      "w": 0.23,
+      "d": 1.7713
+    },
+    {
+      "x": 11.962,
+      "z": 5.5439,
+      "w": 0.23,
+      "d": 2.3234
+    },
+    {
+      "x": 11.962,
+      "z": 7.9823,
+      "w": 0.23,
+      "d": 1.0093
+    },
+    {
+      "x": 11.962,
+      "z": 9.6012,
+      "w": 0.23,
+      "d": 0.7045
+    },
+    {
+      "x": 11.962,
+      "z": 10.4207,
+      "w": 0.23,
+      "d": 1.7713
+    },
+    {
+      "x": 11.962,
+      "z": 14.0208,
+      "w": 0.23,
+      "d": 0.9892
+    }
+  ],
+  "doors": [
+    {
+      "ax": 7.9823,
+      "az": 11.3995,
+      "bx": 8.8053,
+      "bz": 11.3995,
+      "width": 0.823
+    },
+    {
+      "ax": 9.2964,
+      "az": 10.3057,
+      "bx": 9.2964,
+      "bz": 9.4675,
+      "width": 0.8382
+    },
+    {
+      "ax": 10.1159,
+      "az": 9.7536,
+      "bx": 10.8017,
+      "bz": 9.7536,
+      "width": 0.6858
+    },
+    {
+      "ax": 3.1699,
+      "az": 11.0303,
+      "bx": 3.1699,
+      "bz": 11.8685,
+      "width": 0.8382
+    },
+    {
+      "ax": 1.3716,
+      "az": 10.9153,
+      "bx": 1.3716,
+      "bz": 10.2295,
+      "width": 0.6858
+    },
+    {
+      "ax": 1.7713,
+      "az": 8.0772,
+      "bx": 1.0855,
+      "bz": 8.0772,
+      "width": 0.6858
+    }
+  ],
+  "windows": [
+    {
+      "x": 9.4488,
+      "z": 15.01,
+      "w": 1.8288,
+      "d": 0.23
+    },
+    {
+      "x": 11.962,
+      "z": 12.192,
+      "w": 0.23,
+      "d": 1.8288
+    },
+    {
+      "x": 11.962,
+      "z": 8.9916,
+      "w": 0.23,
+      "d": 0.6096
+    },
+    {
+      "x": 11.962,
+      "z": 1.8288,
+      "w": 0.23,
+      "d": 1.8288
+    },
+    {
+      "x": 9.144,
+      "z": 0.0,
+      "w": 1.8288,
+      "d": 0.23
+    },
+    {
+      "x": 4.572,
+      "z": 11.3524,
+      "w": 2.4384,
+      "d": 0.23
+    },
+    {
+      "x": 4.4196,
+      "z": 6.7056,
+      "w": 2.7432,
+      "d": 0.23
+    },
+    {
+      "x": 0.9144,
+      "z": 15.01,
+      "w": 1.8288,
+      "d": 0.23
+    },
+    {
+      "x": 0.0,
+      "z": 12.192,
+      "w": 0.23,
+      "d": 1.8288
+    },
+    {
+      "x": 0.0,
+      "z": 9.7536,
+      "w": 0.23,
+      "d": 0.6096
+    }
+  ],
+  "rooms": [
+    {
+      "id": "terrace",
+      "name": "Terrace",
+      "type": "terrace",
+      "area_m2": 53.14,
+      "area_m2_from_polygon": 49.83,
+      "polygon": [
+        [
+          0.23,
+          0.23
+        ],
+        [
+          7.925,
+          0.23
+        ],
+        [
+          7.925,
+          6.706
+        ],
+        [
+          0.23,
+          6.706
+        ]
+      ]
+    },
+    {
+      "id": "lobby",
+      "name": "Entrance lobby",
+      "type": "lobby",
+      "area_m2": 19.84,
+      "area_m2_from_polygon": 19.79,
+      "polygon": [
+        [
+          8.155,
+          0.23
+        ],
+        [
+          11.962,
+          0.23
+        ],
+        [
+          11.962,
+          5.429
+        ],
+        [
+          8.155,
+          5.429
+        ]
+      ],
+      "notes": "Drawn as a staircase on the source house plan; treated here as the penthouse's private lift and stair lobby."
+    },
+    {
+      "id": "lounge",
+      "name": "Family lounge",
+      "type": "living",
+      "area_m2": 26.38,
+      "area_m2_from_polygon": 25.45,
+      "polygon": [
+        [
+          1.77,
+          6.936
+        ],
+        [
+          7.867,
+          6.936
+        ],
+        [
+          7.867,
+          11.352
+        ],
+        [
+          3.17,
+          11.352
+        ],
+        [
+          3.17,
+          10.3
+        ],
+        [
+          1.77,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": "linen",
+      "name": "Linen",
+      "type": "linen",
+      "area_m2": 2.4,
+      "area_m2_from_polygon": 2.22,
+      "polygon": [
+        [
+          0.23,
+          6.936
+        ],
+        [
+          1.65,
+          6.936
+        ],
+        [
+          1.65,
+          8.5
+        ],
+        [
+          0.23,
+          8.5
+        ]
+      ]
+    },
+    {
+      "id": "toilet2",
+      "name": "Toilet 2",
+      "type": "bathroom",
+      "area_m2": 3.58,
+      "area_m2_from_polygon": 3.42,
+      "polygon": [
+        [
+          0.23,
+          8.62
+        ],
+        [
+          1.65,
+          8.62
+        ],
+        [
+          1.65,
+          11.03
+        ],
+        [
+          0.23,
+          11.03
+        ]
+      ]
+    },
+    {
+      "id": "bedroom2",
+      "name": "Bedroom 2",
+      "type": "bedroom",
+      "area_m2": 13.47,
+      "area_m2_from_polygon": 10.08,
+      "polygon": [
+        [
+          0.23,
+          11.582
+        ],
+        [
+          3.17,
+          11.582
+        ],
+        [
+          3.17,
+          15.01
+        ],
+        [
+          0.23,
+          15.01
+        ]
+      ]
+    },
+    {
+      "id": "balcony",
+      "name": "Balcony",
+      "type": "balcony",
+      "area_m2": 15.61,
+      "area_m2_from_polygon": 15.51,
+      "polygon": [
+        [
+          3.4,
+          11.582
+        ],
+        [
+          7.925,
+          11.582
+        ],
+        [
+          7.925,
+          15.01
+        ],
+        [
+          3.4,
+          15.01
+        ]
+      ]
+    },
+    {
+      "id": "master",
+      "name": "Master bedroom",
+      "type": "bedroom",
+      "area_m2": 18.33,
+      "area_m2_from_polygon": 13.05,
+      "polygon": [
+        [
+          8.155,
+          11.582
+        ],
+        [
+          11.962,
+          11.582
+        ],
+        [
+          11.962,
+          15.01
+        ],
+        [
+          8.155,
+          15.01
+        ]
+      ]
+    },
+    {
+      "id": "dressing",
+      "name": "Dressing",
+      "type": "dressing",
+      "area_m2": 4.64,
+      "area_m2_from_polygon": 4.29,
+      "polygon": [
+        [
+          8.155,
+          7.982
+        ],
+        [
+          10.001,
+          7.982
+        ],
+        [
+          10.001,
+          10.306
+        ],
+        [
+          8.155,
+          10.306
+        ]
+      ]
+    },
+    {
+      "id": "masterbath",
+      "name": "Master toilet",
+      "type": "bathroom",
+      "area_m2": 4.29,
+      "area_m2_from_polygon": 4.29,
+      "polygon": [
+        [
+          10.116,
+          7.982
+        ],
+        [
+          11.962,
+          7.982
+        ],
+        [
+          11.962,
+          10.306
+        ],
+        [
+          10.116,
+          10.306
+        ]
+      ]
+    }
+  ],
+  "entrance": {
+    "x": 10.0,
+    "z": 1.2,
+    "facing": "N"
+  },
+  "approximations": [
+    "No dedicated freely licensed 'penthouse apartment' plan was found. This interior is the CC0 Innerscene Indian 3BHK G+1 house first-floor plan, which already includes a 26' \u00d7 22' terrace and a 14' \u00d7 12' balcony. It is a house first floor, not a purpose-drawn penthouse apartment.",
+    "The staircase on the source plan is treated as a private lift and stair lobby for the penthouse. The stair flight itself is omitted.",
+    "The source first floor has no kitchen (the kitchen is on the ground-floor plan of the same house, which was not merged into this layout). An open kitchen counter is placed on the south side of the family lounge, facing the terrace. This kitchen is an approximation, not on this drawing.",
+    "Clear ceiling height is not dimensioned on the first-floor plan; 3.00 m is used as a typical value (a luxury penthouse might be taller). Door height 2.10 m, window sill 0.90 m and window opening 1.40 m are likewise typical values, not taken from this sheet.",
+    "On the tower, a wraparound roof terrace is added around this 12.192 \u00d7 15.240 m footprint so the penthouse can sit on the larger typical-floor plate. The extra terrace is a design addition, not on the source plan.",
+    "Room polygons are traced from DXF walls and the labelled sizes in feet and inches; areas used for labels are those sizes converted to m\u00b2 and sq ft."
+  ],
+  "terraceArea_sqft": 572
+}

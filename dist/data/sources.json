@@ -1,0 +1,123 @@
+{
+  "retrieved": "2026-11-13",
+  "timezone": "Asia/Calcutta",
+  "plans": [
+    {
+      "title": "2BHK apartment plan drawing",
+      "url": "https://www.innerscene.com/tools/library/drawings/2bhk-apartment-plan-drawing-fa91d145",
+      "file": "plans/2bhk-apartment-plan-drawing.dxf",
+      "previewOfficial": "plans/2bhk-official.jpg",
+      "previewExtracted": "plans/2bhk-extracted.png",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author": "Innerscene (original model, released CC0)",
+      "retrieved": "2026-11-13",
+      "nominal": "11.00 x 9.00 m footprint, 99.0 m\u00b2 gross internal area, overall height +3.000 m, 200 mm RC slab, external walls 250 mm, internal partitions 100 mm, balcony 4.80 x 1.50 m with a glass balustrade. All stated on the drawing."
+    },
+    {
+      "title": "Three-bedroom apartment - 105 m2",
+      "url": "https://www.innerscene.com/tools/library/drawings/three-bedroom-apartment-105-m2-73915b15",
+      "file": "plans/three-bedroom-apartment-105-m2.dxf",
+      "previewOfficial": "plans/3bhk-official.jpg",
+      "previewExtracted": "plans/3bhk-extracted.png",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author": "Innerscene (original model, released CC0)",
+      "retrieved": "2026-11-13",
+      "nominal": "10.50 x 10.00 m footprint, 105.0 m\u00b2, wall height 2700 mm (all stated on the drawing). External walls 200 mm, internal 120 mm (measured from the DXF)."
+    },
+    {
+      "title": "3BHK house first floor plan, 60 x 120 ft north-facing plot",
+      "url": "https://www.innerscene.com/tools/library/drawings/3bhk-house-first-floor-plan-60-x-120-ft-north-facing-plot-dc0667a4",
+      "file": "plans/3bhk-house-first-floor-plan.dxf",
+      "previewOfficial": "plans/penthouse-official.jpg",
+      "previewExtracted": "plans/penthouse-extracted.png",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author": "Innerscene (original model, released CC0)",
+      "retrieved": "2026-11-13",
+      "nominal": "House footprint 40 x 50 ft (12.192 x 15.240 m), 9-inch (230 mm) external walls, 4.5-inch (115 mm) internal walls (measured from the DXF). Room sizes on the drawing are in feet and inches. Terrace 26'-0\" x 22'-0\", rear balcony 14'-0\" x 12'-0\".",
+      "companionGroundFloor": {
+        "title": "3BHK house ground floor plan, 60 x 120 ft north-facing plot",
+        "url": "https://www.innerscene.com/tools/library/drawings/3bhk-house-ground-floor-plan-60-x-120-ft-north-facing-plot-1f1c239f",
+        "note": "Not used as the penthouse interior. The kitchen in the source house is on this ground-floor plan; see approximations."
+      }
+    }
+  ],
+  "textures": [
+    {
+      "name": "wood_floor_deck",
+      "use": "Wood flooring",
+      "url": "https://polyhaven.com/a/wood_floor_deck",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "marble_01",
+      "use": "Marble flooring",
+      "url": "https://polyhaven.com/a/marble_01",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "floor_tiles_06",
+      "use": "Tile flooring",
+      "url": "https://polyhaven.com/a/floor_tiles_06",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "terracotta_floor_tiles",
+      "use": "Terracotta option / traditional floors",
+      "url": "https://polyhaven.com/a/terracotta_floor_tiles",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "granite_tile",
+      "use": "Kitchen granite finish",
+      "url": "https://polyhaven.com/a/granite_tile",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "concrete_wall_003",
+      "use": "Tower concrete facade",
+      "url": "https://polyhaven.com/a/concrete_wall_003",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "concrete_floor_02",
+      "use": "Plaza / lobby concrete",
+      "url": "https://polyhaven.com/a/concrete_floor_02",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "plastered_wall_02",
+      "use": "Interior plaster (tinted)",
+      "url": "https://polyhaven.com/a/plastered_wall_02",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "grass_ground",
+      "use": "Plaza lawn",
+      "url": "https://polyhaven.com/a/grass_ground",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    },
+    {
+      "name": "patterned_paving",
+      "use": "Plaza paving",
+      "url": "https://polyhaven.com/a/patterned_paving",
+      "license": "CC0",
+      "licenseUrl": "https://polyhaven.com/license"
+    }
+  ],
+  "engine": {
+    "three.js": "npm, MIT",
+    "pascalEditor": "Not used in this demo. @pascal-app/viewer 1.1.3 requires React 19, React Three Fiber and its own scene graph; vendoring a pinned commit, converting our plan JSON into Pascal's model, self-hosting furniture (runtime CDN is not allowed) and keeping a WebGL path would have delayed a working public demo. This viewer is purpose-built in three.js (WebGL) against our blueprint JSON. Pascal remains a candidate for a later editor evaluation."
+  }
+}

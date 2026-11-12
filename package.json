@@ -1,0 +1,20 @@
+{
+  "name": "leadsetu-3d-demo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lead Setu sample: interactive 3D apartment walkthrough from 2D blueprints",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host --port 4173"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.170.0",
+    "typescript": "5.6.3",
+    "vite": "6.0.3"
+  }
+}

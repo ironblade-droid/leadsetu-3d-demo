@@ -1,0 +1,16 @@
+All textures below are from Poly Haven (https://polyhaven.com), licensed CC0
+(https://polyhaven.com/license). Credit is not required; we list them anyway.
+
+- wood_floor_deck     https://polyhaven.com/a/wood_floor_deck
+- marble_01           https://polyhaven.com/a/marble_01
+- floor_tiles_06      https://polyhaven.com/a/floor_tiles_06
+- terracotta_floor_tiles  https://polyhaven.com/a/terracotta_floor_tiles
+- granite_tile        https://polyhaven.com/a/granite_tile
+- concrete_wall_003   https://polyhaven.com/a/concrete_wall_003
+- concrete_floor_02   https://polyhaven.com/a/concrete_floor_02
+- plastered_wall_02   https://polyhaven.com/a/plastered_wall_02
+- grass_ground        https://polyhaven.com/a/grass_ground
+- patterned_paving    https://polyhaven.com/a/patterned_paving
+
+Retrieved 13 November 2026, as 1K JPEG diffuse, normal (OpenGL) and roughness maps.
+Furniture in this demo is procedural (three.js primitives), not third-party models.

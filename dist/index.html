@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a1c19" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M6 22 L18 8 L30 22' stroke='%23c4a265' stroke-width='2.2' fill='none'/%3E%3Ccircle cx='18' cy='25.5' r='2.2' fill='%23c4a265'/%3E%3C/svg%3E" />
+    <title>Lead Setu — 3D Home Walkthrough (sample)</title>
+    <meta name="description" content="Sample interactive 3D walkthrough for Lead Setu: a tower from 2D blueprints, with style preferences and a Book site visit lead form." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="./assets/index-Ca4S0JZU.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-8Fr2dwr0.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <div id="labels"></div>
+      <div id="ui"></div>
+      <div id="loading" role="status" aria-live="polite">
+        <div class="load-card">
+          <div class="mark" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <path d="M6 22 L18 8 L30 22" stroke="currentColor" stroke-width="2.2" fill="none"/>
+              <path d="M10 22 L18 13.5 L26 22" stroke="currentColor" stroke-width="2.2" fill="none"/>
+              <circle cx="18" cy="25.5" r="2.2" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="load-brand">Lead Setu</div>
+          <div class="load-sub">Preparing the walkthrough</div>
+          <div class="bar"><div class="bar-fill" id="load-bar"></div></div>
+          <div class="load-pct" id="load-pct">0%</div>
+          <div class="tips" id="tips" aria-live="polite">
+            <div class="tip on" data-tip="0">
+              <div class="tip-k">1 of 3</div>
+              <div class="tip-t">Walk through a home</div>
+              <p>Use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or the arrows — or the on-screen joystick on a phone. Click and drag to look around.</p>
+            </div>
+            <div class="tip" data-tip="1">
+              <div class="tip-k">2 of 3</div>
+              <div class="tip-t">Click or tap the floor</div>
+              <p>Walk to that spot. Gold pins mark the kitchen, a bathroom, and a balcony or terrace when the plan has one. Tap a pin for sizes and finishes.</p>
+            </div>
+            <div class="tip" data-tip="2">
+              <div class="tip-k">3 of 3</div>
+              <div class="tip-t">Change the finishes</div>
+              <p>Open <b>Your preferences</b> for style, flooring, wall colour and kitchen. Switch Morning, Golden hour or Night to see the flat in different light.</p>
+            </div>
+            <div class="tip-dots" role="tablist" aria-label="Tips">
+              <button type="button" class="on" data-dot="0" aria-label="Tip 1"></button>
+              <button type="button" data-dot="1" aria-label="Tip 2"></button>
+              <button type="button" data-dot="2" aria-label="Tip 3"></button>
+            </div>
+          </div>
+          <button type="button" class="start-explore" id="start-explore" hidden>Start exploring</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

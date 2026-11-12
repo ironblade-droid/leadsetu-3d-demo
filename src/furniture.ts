@@ -124,6 +124,7 @@ function living(
   rug(a.cx, a.cz, Math.min(a.w * 0.5, 2.6), Math.min(a.d * 0.45, 2.0), g, m, style);
   plant(a.maxX - 0.4, a.maxZ - 0.4, 1.2, g, m);
   if (large) plant(a.minX + 0.4, a.maxZ - 0.4, 1.0, g, m);
+  floorLamp(a.maxX - 0.45, a.minZ + 0.55, g, m, style);
 }
 
 function sofa(x: number, z: number, len: number, rot: number, g: THREE.Group, m: Materials) {
@@ -210,6 +211,8 @@ function dining(
     chair(0, W / 2 + 0.38, Math.PI, root, m);
     chair(-L / 2 + 0.35, -W / 2 - 0.38, 0, root, m);
     chair(L / 2 - 0.35, W / 2 + 0.38, Math.PI, root, m);
+    cyl(0.08, 0.015, m.ceramic, -0.3, 0.79, -0.18, root);
+    cyl(0.08, 0.015, m.ceramic, 0.3, 0.79, 0.18, root);
   }
 }
 
@@ -244,6 +247,10 @@ function bedroom(
     sideTable(cx - bedW / 2 - 0.28, headZ - 0.35, g, m);
     sideTable(cx + bedW / 2 + 0.28, headZ - 0.35, g, m);
     wardrobe(a.minX + 0.35, 0, a.cz, 0.6, 2.2, Math.min(1.8, a.d * 0.5), g, m, Math.PI / 2);
+    if (master) {
+      box(Math.min(1.1, bedW * 0.7), 0.38, 0.4, m.woodFur, cx, 0.22, headZ - bedL - 0.35, g);
+      box(Math.min(1.1, bedW * 0.7), 0.05, 0.4, m.fabric, cx, 0.43, headZ - bedL - 0.35, g);
+    }
   } else {
     const cz = a.cz;
     const headX = a.minX + 0.15;
@@ -356,6 +363,15 @@ function counterRun(
   }
   // plinth
   box(len, 0.1, depth - 0.04, m.frame, 0, 0.05, 0, root);
+  // backsplash
+  box(len, 0.42, 0.02, m.ceramic, 0, 1.14, -depth / 2 + 0.02, root);
+  if (hob) {
+    // oven door under the hob, and a slim hood
+    box(0.6, 0.46, 0.04, m.frame, -len * 0.18, 0.38, depth / 2 - 0.01, root);
+    box(0.54, 0.08, 0.02, m.metal, -len * 0.18, 0.38, depth / 2 + 0.01, root);
+    box(0.7, 0.06, 0.38, m.metal, -len * 0.18, 1.72, -depth / 2 + 0.22, root);
+    box(0.08, 0.22, 0.08, m.metal, -len * 0.18, 1.84, -depth / 2 + 0.18, root);
+  }
 }
 
 function fridge(x: number, z: number, g: THREE.Group, m: Materials) {
@@ -366,15 +382,18 @@ function fridge(x: number, z: number, g: THREE.Group, m: Materials) {
 
 function bathroom(a: ReturnType<typeof aabb>, g: THREE.Group, m: Materials) {
   const alongX = a.w >= a.d;
+  const large = a.w * a.d > 8;
   // Toilet against a short wall, sink, shower cubicle in a corner.
   if (alongX) {
     toilet(a.minX + 0.4, a.cz, Math.PI / 2, g, m);
     bathSink(a.cx, a.maxZ - 0.28, 0, g, m);
     shower(a.maxX - 0.55, a.minZ + 0.55, g, m);
+    if (large) bathtub(a.minX + 1.35, a.minZ + 0.45, 0, g, m);
   } else {
     toilet(a.cx, a.minZ + 0.4, 0, g, m);
     bathSink(a.maxX - 0.28, a.cz, Math.PI / 2, g, m);
     shower(a.minX + 0.55, a.maxZ - 0.55, g, m);
+    if (large) bathtub(a.minX + 0.45, a.cz + 0.9, Math.PI / 2, g, m);
   }
 }
 
@@ -460,6 +479,25 @@ function outdoor(
     box(a.w - 0.8, 0.08, 0.08, m.woodFur, a.cx, y, a.minZ + 0.4, g);
     box(a.w - 0.8, 0.08, 0.08, m.woodFur, a.cx, y, a.maxZ - 0.4, g);
   }
+}
+
+function bathtub(x: number, z: number, rot: number, g: THREE.Group, m: Materials) {
+  const root = new THREE.Group();
+  root.position.set(x, 0, z);
+  root.rotation.y = rot;
+  g.add(root);
+  box(1.7, 0.45, 0.72, m.ceramic, 0, 0.28, 0, root);
+  box(1.5, 0.08, 0.54, m.water, 0, 0.48, 0, root);
+  cyl(0.015, 0.18, m.metal, 0.7, 0.64, -0.22, root);
+  box(0.12, 0.03, 0.04, m.metal, 0.7, 0.74, -0.14, root);
+}
+
+function floorLamp(x: number, z: number, g: THREE.Group, m: Materials, style: StyleId) {
+  cyl(0.12, 0.03, m.metal, x, 0.02, z, g);
+  cyl(0.015, 1.35, style === "luxury" ? m.gold : m.metal, x, 0.7, z, g);
+  mesh(new THREE.ConeGeometry(0.18, 0.22, 16, 1, true), m.fabric, x, 1.48, z, g);
+  const glow = cyl(0.06, 0.04, m.emissive.clone(), x, 1.38, z, g);
+  (glow.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.4;
 }
 
 function plant(x: number, z: number, h: number, g: THREE.Group, m: Materials) {

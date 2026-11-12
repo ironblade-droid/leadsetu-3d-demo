@@ -1,0 +1,3710 @@
+{
+  "360x800": [
+    {
+      "error": "Locator.click: Element is outside of the viewport\nCall log:\n  - waiting for locator(\"#labels .unit-card, .unit-chip, [data-unit='5A']\").nth(1)\n    - locator resolved to <button type=\"button\" class=\"unit-card\" draggable=\"false\">\u2026</button>\n  - attempting click action\n    - scrolling into view if needed\n    - done scrolling\n"
+    }
+  ],
+  "412x915": [
+    {
+      "error": "Locator.click: Element is outside of the viewport\nCall log:\n  - waiting for locator(\"#labels .unit-card, .unit-chip, [data-unit='5A']\").nth(1)\n    - locator resolved to <button type=\"button\" class=\"unit-card\" draggable=\"false\">\u2026</button>\n  - attempting click action\n    - scrolling into view if needed\n    - done scrolling\n"
+    }
+  ],
+  "800x360": [
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "unit-card",
+            "x": 146,
+            "y": 233,
+            "w": 228,
+            "h": 55
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "unit-card",
+            "x": 146,
+            "y": 233,
+            "w": 228,
+            "h": 55
+          },
+          {
+            "name": "load-card",
+            "x": 190,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "unit-card",
+            "x": 146,
+            "y": 233,
+            "w": 228,
+            "h": 55
+          },
+          {
+            "name": "tips",
+            "x": 190,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 65
+          },
+          {
+            "name": "floors",
+            "x": 16,
+            "y": 54,
+            "w": 80,
+            "h": 252
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 65
+          },
+          {
+            "name": "load-card",
+            "x": 190,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "crumbs",
+            "x": 166,
+            "y": 18,
+            "w": 458,
+            "h": 30
+          },
+          {
+            "name": "load-card",
+            "x": 190,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 285,
+            "w": 280,
+            "h": 57
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "load-card",
+            "x": 190,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "tips",
+            "x": 190,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 285,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 285,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "floors",
+            "x": 16,
+            "y": 54,
+            "w": 80,
+            "h": 252
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 285,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "load-card",
+            "x": 190,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 285,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "tips",
+            "x": 190,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "load-card",
+            "x": 190,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "tips",
+            "x": 190,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "load-card",
+          "x": 190,
+          "y": 0,
+          "w": 420,
+          "h": 651
+        },
+        {
+          "name": "tips",
+          "x": 190,
+          "y": 189,
+          "w": 420,
+          "h": 397
+        },
+        {
+          "name": "start-explore",
+          "x": 321,
+          "y": 608,
+          "w": 158,
+          "h": 43
+        }
+      ],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 146,
+          "y": 233,
+          "w": 228,
+          "h": 55
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 323,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 285,
+          "w": 280,
+          "h": 57
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 273,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "floors",
+          "x": 16,
+          "y": 54,
+          "w": 80,
+          "h": 252
+        },
+        {
+          "name": "load-card",
+          "x": 190,
+          "y": 0,
+          "w": 420,
+          "h": 651
+        },
+        {
+          "name": "tips",
+          "x": 190,
+          "y": 189,
+          "w": 420,
+          "h": 397
+        },
+        {
+          "name": "start-explore",
+          "x": 321,
+          "y": 608,
+          "w": 158,
+          "h": 43
+        }
+      ],
+      "screen": "onboarding",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/onboarding.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "unit-card",
+            "x": 146,
+            "y": -58,
+            "w": 228,
+            "h": 55
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": -18,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": -291,
+            "w": 800,
+            "h": 65
+          },
+          {
+            "name": "floors",
+            "x": 16,
+            "y": -237,
+            "w": 80,
+            "h": 252
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 32,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": -6,
+            "w": 280,
+            "h": 57
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": -6,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": -18,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": -6,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "floors",
+            "x": 16,
+            "y": -237,
+            "w": 80,
+            "h": 252
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "unit-card",
+          "x": 146,
+          "y": -58,
+          "w": 228,
+          "h": 55
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -291,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": -273,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": -279,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": -6,
+          "w": 280,
+          "h": 57
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": -18,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "floors",
+          "x": 16,
+          "y": -237,
+          "w": 80,
+          "h": 252
+        }
+      ],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 146,
+          "y": -58,
+          "w": 228,
+          "h": 55
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -291,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": -273,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": -279,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 32,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": -6,
+          "w": 280,
+          "h": 57
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": -18,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "floors",
+          "x": 16,
+          "y": -237,
+          "w": 80,
+          "h": 252
+        }
+      ],
+      "screen": "tower",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/tower.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "unit-card",
+            "x": 450,
+            "y": 218,
+            "w": 120,
+            "h": 71
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 303,
+            "w": 235,
+            "h": 39
+          }
+        ]
+      ],
+      "clipped": [],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 212,
+          "y": 176,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 450,
+          "y": 218,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 354,
+          "y": 62,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 334,
+          "y": 195,
+          "w": 120,
+          "h": 34
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 323,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 303,
+          "w": 235,
+          "h": 39
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 273,
+          "w": 239,
+          "h": 35
+        }
+      ],
+      "screen": "floor",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/floor.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "unit-card",
+            "x": 450,
+            "y": 218,
+            "w": 120,
+            "h": 71
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 303,
+            "w": 235,
+            "h": 39
+          }
+        ]
+      ],
+      "clipped": [],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 212,
+          "y": 176,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 450,
+          "y": 218,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 354,
+          "y": 62,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 334,
+          "y": 195,
+          "w": 120,
+          "h": 34
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 323,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 303,
+          "w": 235,
+          "h": 39
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 273,
+          "w": 239,
+          "h": 35
+        }
+      ],
+      "screen": "flat-picker",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/flat-picker.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 292,
+            "y": 291,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          }
+        ]
+      ],
+      "clipped": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 260,
+          "y": 167,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 336,
+          "y": 106,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 292,
+          "y": 291,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 323,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 266,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 273,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 464,
+          "y": 72,
+          "w": 320,
+          "h": 240
+        }
+      ],
+      "screen": "dollhouse",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/dollhouse.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "hotspot-lab",
+          "x": 280,
+          "y": -139,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 1494,
+          "y": 543,
+          "w": 96,
+          "h": 23
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 368,
+          "y": 136,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 280,
+          "y": -139,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 1494,
+          "y": 543,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 323,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 266,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 273,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "spec-card",
+          "x": 18,
+          "y": 86,
+          "w": 320,
+          "h": 164
+        },
+        {
+          "name": "panel",
+          "x": 464,
+          "y": 72,
+          "w": 320,
+          "h": 240
+        }
+      ],
+      "screen": "rooms",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/rooms.png"
+    },
+    {
+      "screen": "guided-tour",
+      "missing": true,
+      "note": "no guided-tour UI in this build"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 700,
+            "y": 143,
+            "w": 70,
+            "h": 23
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 279,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 246,
+            "w": 280,
+            "h": 96
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 279,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 261,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 279,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 246,
+            "w": 280,
+            "h": 96
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 261,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 246,
+            "w": 280,
+            "h": 96
+          },
+          {
+            "name": "joy-wrap",
+            "x": 20,
+            "y": 160,
+            "w": 120,
+            "h": 120
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 261,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "hotspot-lab",
+          "x": -259,
+          "y": 199,
+          "w": 96,
+          "h": 23
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 368,
+          "y": 141,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 700,
+          "y": 143,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": -259,
+          "y": 199,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 279,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 246,
+          "w": 280,
+          "h": 96
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 261,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 464,
+          "y": 72,
+          "w": 320,
+          "h": 240
+        },
+        {
+          "name": "joy-wrap",
+          "x": 20,
+          "y": 160,
+          "w": 120,
+          "h": 120
+        },
+        {
+          "name": "crosshair",
+          "x": 395,
+          "y": 175,
+          "w": 10,
+          "h": 10
+        }
+      ],
+      "screen": "walk",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/walk.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 260,
+            "y": 167,
+            "w": 65,
+            "h": 23
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 260,
+            "y": 167,
+            "w": 65,
+            "h": 23
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 336,
+            "y": 106,
+            "w": 70,
+            "h": 23
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 336,
+            "y": 106,
+            "w": 70,
+            "h": 23
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 292,
+            "y": 291,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 292,
+            "y": 291,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 292,
+            "y": 291,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 65
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 65
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "crumbs",
+            "x": 166,
+            "y": 18,
+            "w": 458,
+            "h": 30
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "crumbs",
+            "x": 166,
+            "y": 18,
+            "w": 458,
+            "h": 30
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "cta",
+            "x": 641,
+            "y": 12,
+            "w": 141,
+            "h": 41
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 323,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 266,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 273,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 800,
+            "h": 360
+          }
+        ],
+        [
+          {
+            "name": "panel",
+            "x": 464,
+            "y": 72,
+            "w": 320,
+            "h": 240
+          },
+          {
+            "name": "modal",
+            "x": 190,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "modal",
+          "x": 190,
+          "y": 20,
+          "w": 420,
+          "h": 491
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 260,
+          "y": 167,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 336,
+          "y": 106,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 292,
+          "y": 291,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 323,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 266,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 273,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 464,
+          "y": 72,
+          "w": 320,
+          "h": 240
+        },
+        {
+          "name": "modal-bg",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 360
+        },
+        {
+          "name": "modal",
+          "x": 190,
+          "y": 20,
+          "w": 420,
+          "h": 491
+        }
+      ],
+      "screen": "lead-form",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/lead-form.png"
+    },
+    {
+      "vw": 800,
+      "vh": 360,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 292,
+            "y": 74,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 56,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 292,
+            "y": 74,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "toast.show",
+            "x": 200,
+            "y": 29,
+            "w": 400,
+            "h": 66
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 127,
+            "y": 106,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 49,
+            "w": 280,
+            "h": 76
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 49,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 56,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 49,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "toast.show",
+            "x": 200,
+            "y": 29,
+            "w": 400,
+            "h": 66
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 56,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "panel",
+            "x": 464,
+            "y": -145,
+            "w": 320,
+            "h": 240
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 281,
+            "y": 56,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "toast.show",
+            "x": 200,
+            "y": 29,
+            "w": 400,
+            "h": 66
+          }
+        ],
+        [
+          {
+            "name": "panel",
+            "x": 464,
+            "y": -145,
+            "w": 320,
+            "h": 240
+          },
+          {
+            "name": "toast.show",
+            "x": 200,
+            "y": 29,
+            "w": 400,
+            "h": 66
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "hotspot-lab",
+          "x": 260,
+          "y": -50,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 336,
+          "y": -111,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -217,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": -199,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": -205,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "panel",
+          "x": 464,
+          "y": -145,
+          "w": 320,
+          "h": 240
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 260,
+          "y": -50,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 336,
+          "y": -111,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 292,
+          "y": 74,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -217,
+          "w": 800,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": -199,
+          "w": 458,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 641,
+          "y": -205,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 127,
+          "y": 106,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 49,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 281,
+          "y": 56,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 464,
+          "y": -145,
+          "w": 320,
+          "h": 240
+        },
+        {
+          "name": "toast.show",
+          "x": 200,
+          "y": 29,
+          "w": 400,
+          "h": 66
+        }
+      ],
+      "screen": "toast",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/800x360/toast.png"
+    }
+  ],
+  "915x412": [
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "unit-card",
+            "x": 183,
+            "y": 271,
+            "w": 228,
+            "h": 55
+          },
+          {
+            "name": "load-card",
+            "x": 248,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "unit-card",
+            "x": 183,
+            "y": 271,
+            "w": 228,
+            "h": 55
+          },
+          {
+            "name": "tips",
+            "x": 248,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 65
+          },
+          {
+            "name": "load-card",
+            "x": 248,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "crumbs",
+            "x": 166,
+            "y": 18,
+            "w": 573,
+            "h": 30
+          },
+          {
+            "name": "load-card",
+            "x": 248,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 337,
+            "w": 280,
+            "h": 57
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "load-card",
+            "x": 248,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "tips",
+            "x": 248,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 337,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "floors",
+            "x": 16,
+            "y": 62,
+            "w": 80,
+            "h": 288
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 337,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "load-card",
+            "x": 248,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 337,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "tips",
+            "x": 248,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 325,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "load-card",
+            "x": 248,
+            "y": 0,
+            "w": 420,
+            "h": 651
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 325,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "tips",
+            "x": 248,
+            "y": 189,
+            "w": 420,
+            "h": 397
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "load-card",
+          "x": 248,
+          "y": 0,
+          "w": 420,
+          "h": 651
+        },
+        {
+          "name": "tips",
+          "x": 248,
+          "y": 189,
+          "w": 420,
+          "h": 397
+        },
+        {
+          "name": "start-explore",
+          "x": 379,
+          "y": 608,
+          "w": 158,
+          "h": 43
+        }
+      ],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 183,
+          "y": 271,
+          "w": 228,
+          "h": 55
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 375,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 337,
+          "w": 280,
+          "h": 57
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 325,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "floors",
+          "x": 16,
+          "y": 62,
+          "w": 80,
+          "h": 288
+        },
+        {
+          "name": "load-card",
+          "x": 248,
+          "y": 0,
+          "w": 420,
+          "h": 651
+        },
+        {
+          "name": "tips",
+          "x": 248,
+          "y": 189,
+          "w": 420,
+          "h": 397
+        },
+        {
+          "name": "start-explore",
+          "x": 379,
+          "y": 608,
+          "w": 158,
+          "h": 43
+        }
+      ],
+      "screen": "onboarding",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/onboarding.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 136,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 98,
+            "w": 280,
+            "h": 57
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 98,
+            "w": 280,
+            "h": 57
+          },
+          {
+            "name": "floors",
+            "x": 16,
+            "y": -177,
+            "w": 80,
+            "h": 288
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -239,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": -221,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": -227,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "floors",
+          "x": 16,
+          "y": -177,
+          "w": 80,
+          "h": 288
+        }
+      ],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 183,
+          "y": 32,
+          "w": 228,
+          "h": 55
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -239,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": -221,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": -227,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 136,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 98,
+          "w": 280,
+          "h": 57
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 86,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "floors",
+          "x": 16,
+          "y": -177,
+          "w": 80,
+          "h": 288
+        }
+      ],
+      "screen": "tower",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/tower.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 355,
+            "w": 235,
+            "h": 39
+          }
+        ]
+      ],
+      "clipped": [],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 251,
+          "y": 206,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 523,
+          "y": 255,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 413,
+          "y": 77,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 390,
+          "y": 226,
+          "w": 120,
+          "h": 34
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 375,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 355,
+          "w": 235,
+          "h": 39
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 325,
+          "w": 239,
+          "h": 35
+        }
+      ],
+      "screen": "floor",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/floor.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 355,
+            "w": 235,
+            "h": 39
+          }
+        ]
+      ],
+      "clipped": [],
+      "boxes": [
+        {
+          "name": "unit-card",
+          "x": 251,
+          "y": 206,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 523,
+          "y": 255,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 413,
+          "y": 77,
+          "w": 120,
+          "h": 71
+        },
+        {
+          "name": "unit-card",
+          "x": 390,
+          "y": 226,
+          "w": 120,
+          "h": 34
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 375,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 355,
+          "w": 235,
+          "h": 39
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 325,
+          "w": 239,
+          "h": 35
+        }
+      ],
+      "screen": "flat-picker",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/flat-picker.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 341,
+            "y": 335,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 325,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 318,
+            "w": 280,
+            "h": 76
+          }
+        ]
+      ],
+      "clipped": [],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 302,
+          "y": 193,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 389,
+          "y": 123,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 341,
+          "y": 335,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 375,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 318,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 325,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 579,
+          "y": 72,
+          "w": 320,
+          "h": 292
+        }
+      ],
+      "screen": "dollhouse",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/dollhouse.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 318,
+            "w": 280,
+            "h": 76
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "hotspot-lab",
+          "x": 326,
+          "y": -158,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 1716,
+          "y": 623,
+          "w": 96,
+          "h": 23
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 425,
+          "y": 157,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 326,
+          "y": -158,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 1716,
+          "y": 623,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 375,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 318,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 325,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "spec-card",
+          "x": 18,
+          "y": 138,
+          "w": 320,
+          "h": 164
+        },
+        {
+          "name": "panel",
+          "x": 579,
+          "y": 72,
+          "w": 320,
+          "h": 292
+        }
+      ],
+      "screen": "rooms",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/rooms.png"
+    },
+    {
+      "screen": "guided-tour",
+      "missing": true,
+      "note": "no guided-tour UI in this build"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 795,
+            "y": 166,
+            "w": 70,
+            "h": 23
+          },
+          {
+            "name": "panel",
+            "x": 579,
+            "y": 72,
+            "w": 320,
+            "h": 292
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 331,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 298,
+            "w": 280,
+            "h": 96
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 331,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 313,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 331,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "panel",
+            "x": 579,
+            "y": 72,
+            "w": 320,
+            "h": 292
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 298,
+            "w": 280,
+            "h": 96
+          },
+          {
+            "name": "joy-wrap",
+            "x": 20,
+            "y": 212,
+            "w": 120,
+            "h": 120
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "hotspot-lab",
+          "x": -252,
+          "y": 226,
+          "w": 96,
+          "h": 23
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 425,
+          "y": 164,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 795,
+          "y": 166,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": -252,
+          "y": 226,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 331,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 298,
+          "w": 280,
+          "h": 96
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 313,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 579,
+          "y": 72,
+          "w": 320,
+          "h": 292
+        },
+        {
+          "name": "joy-wrap",
+          "x": 20,
+          "y": 212,
+          "w": 120,
+          "h": 120
+        },
+        {
+          "name": "crosshair",
+          "x": 453,
+          "y": 201,
+          "w": 10,
+          "h": 10
+        }
+      ],
+      "screen": "walk",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/walk.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 302,
+            "y": 193,
+            "w": 65,
+            "h": 23
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 302,
+            "y": 193,
+            "w": 65,
+            "h": 23
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 389,
+            "y": 123,
+            "w": 70,
+            "h": 23
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 389,
+            "y": 123,
+            "w": 70,
+            "h": 23
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 341,
+            "y": 335,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 325,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 341,
+            "y": 335,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 341,
+            "y": 335,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 65
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "topbar",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 65
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "crumbs",
+            "x": 166,
+            "y": 18,
+            "w": 573,
+            "h": 30
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "crumbs",
+            "x": 166,
+            "y": 18,
+            "w": 573,
+            "h": 30
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "cta",
+            "x": 756,
+            "y": 12,
+            "w": 141,
+            "h": 41
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 318,
+            "w": 280,
+            "h": 76
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 375,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 318,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 318,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 325,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 325,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ],
+        [
+          {
+            "name": "panel",
+            "x": 579,
+            "y": 72,
+            "w": 320,
+            "h": 292
+          },
+          {
+            "name": "modal-bg",
+            "x": 0,
+            "y": 0,
+            "w": 915,
+            "h": 412
+          }
+        ],
+        [
+          {
+            "name": "panel",
+            "x": 579,
+            "y": 72,
+            "w": 320,
+            "h": 292
+          },
+          {
+            "name": "modal",
+            "x": 248,
+            "y": 20,
+            "w": 420,
+            "h": 491
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "modal",
+          "x": 248,
+          "y": 20,
+          "w": 420,
+          "h": 491
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 302,
+          "y": 193,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 389,
+          "y": 123,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 341,
+          "y": 335,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 18,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 12,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 375,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 318,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 325,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 579,
+          "y": 72,
+          "w": 320,
+          "h": 292
+        },
+        {
+          "name": "modal-bg",
+          "x": 0,
+          "y": 0,
+          "w": 915,
+          "h": 412
+        },
+        {
+          "name": "modal",
+          "x": 248,
+          "y": 20,
+          "w": 420,
+          "h": 491
+        }
+      ],
+      "screen": "lead-form",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/lead-form.png"
+    },
+    {
+      "vw": 915,
+      "vh": 412,
+      "overlaps": [
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 341,
+            "y": 330,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 320,
+            "w": 239,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "name": "hotspot-lab",
+            "x": 341,
+            "y": 330,
+            "w": 96,
+            "h": 23
+          },
+          {
+            "name": "toast.show",
+            "x": 229,
+            "y": 293,
+            "w": 458,
+            "h": 66
+          }
+        ],
+        [
+          {
+            "name": "disclaimer",
+            "x": 184,
+            "y": 370,
+            "w": 547,
+            "h": 25
+          },
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 313,
+            "w": 280,
+            "h": 76
+          }
+        ],
+        [
+          {
+            "name": "hint",
+            "x": 18,
+            "y": 313,
+            "w": 280,
+            "h": 76
+          },
+          {
+            "name": "toast.show",
+            "x": 229,
+            "y": 293,
+            "w": 458,
+            "h": 66
+          }
+        ],
+        [
+          {
+            "name": "time-pill",
+            "x": 338,
+            "y": 320,
+            "w": 239,
+            "h": 35
+          },
+          {
+            "name": "toast.show",
+            "x": 229,
+            "y": 293,
+            "w": 458,
+            "h": 66
+          }
+        ],
+        [
+          {
+            "name": "panel",
+            "x": 579,
+            "y": 67,
+            "w": 320,
+            "h": 292
+          },
+          {
+            "name": "toast.show",
+            "x": 229,
+            "y": 293,
+            "w": 458,
+            "h": 66
+          }
+        ]
+      ],
+      "clipped": [
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -5,
+          "w": 915,
+          "h": 65
+        }
+      ],
+      "boxes": [
+        {
+          "name": "hotspot-lab",
+          "x": 302,
+          "y": 188,
+          "w": 65,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 389,
+          "y": 118,
+          "w": 70,
+          "h": 23
+        },
+        {
+          "name": "hotspot-lab",
+          "x": 341,
+          "y": 330,
+          "w": 96,
+          "h": 23
+        },
+        {
+          "name": "topbar",
+          "x": 0,
+          "y": -5,
+          "w": 915,
+          "h": 65
+        },
+        {
+          "name": "crumbs",
+          "x": 166,
+          "y": 13,
+          "w": 573,
+          "h": 30
+        },
+        {
+          "name": "cta",
+          "x": 756,
+          "y": 7,
+          "w": 141,
+          "h": 41
+        },
+        {
+          "name": "disclaimer",
+          "x": 184,
+          "y": 370,
+          "w": 547,
+          "h": 25
+        },
+        {
+          "name": "hint",
+          "x": 18,
+          "y": 313,
+          "w": 280,
+          "h": 76
+        },
+        {
+          "name": "time-pill",
+          "x": 338,
+          "y": 320,
+          "w": 239,
+          "h": 35
+        },
+        {
+          "name": "panel",
+          "x": 579,
+          "y": 67,
+          "w": 320,
+          "h": 292
+        },
+        {
+          "name": "toast.show",
+          "x": 229,
+          "y": 293,
+          "w": 458,
+          "h": 66
+        }
+      ],
+      "screen": "toast",
+      "file": "/workspace/leadsetu-3d-demo/screens/mobile/before/915x412/toast.png"
+    }
+  ]
+}

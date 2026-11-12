@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { Materials } from "./materials";
-import { applyKitchen, flooringSet } from "./materials";
+import { applyKitchen, applyStyleLook, applyWorldXZUVs, flooringSet } from "./materials";
 import { furnishRoom, aabb } from "./furniture";
+import { buildRoomStops, defaultSpawn, type RoomStop } from "./rooms";
 import type { Collision, Prefs, TimeOfDay, Transform, UnitPlan, Wall } from "./types";
 import { planToWorld, transformPointDir, transformWall, wallCollision } from "./layout";
 
@@ -32,6 +33,8 @@ export interface InteriorBuild {
   floorMeshes: THREE.Mesh[];
   wallMat: THREE.MeshStandardMaterial;
   hotspots: Hotspot[];
+  rooms: RoomStop[];
+  worldRooms: { polygon: [number, number][]; type: string; id: string }[];
   applyPrefs: (p: Prefs) => void;
   setTime: (time: TimeOfDay) => void;
   dispose: () => void;
@@ -86,6 +89,7 @@ export function buildInterior(
   wallMat.color.set(prefs.wallColor);
   extraMats.push(wallMat);
   applyKitchen(mats, prefs.kitchen);
+  applyStyleLook(mats, prefs);
 
   const livingFloor = pbrFloor(flooringSet(mats, prefs.flooring));
   const bathFloor = pbrFloor(mats.tile, "#e8eef0");
@@ -104,6 +108,7 @@ export function buildInterior(
     const shape = shapeFromPoly(poly);
     const geo = new THREE.ShapeGeometry(shape);
     geo.rotateX(-Math.PI / 2);
+    applyWorldXZUVs(geo, 0.55);
     geos.push(geo);
     let mat = livingFloor;
     if (room.type === "bathroom" || room.type === "utility") mat = bathFloor;
@@ -129,6 +134,7 @@ export function buildInterior(
   const slabPoly = worldPoly(corners, t);
   const slabGeo = new THREE.ShapeGeometry(shapeFromPoly(slabPoly));
   slabGeo.rotateX(-Math.PI / 2);
+  applyWorldXZUVs(slabGeo, 0.4);
   geos.push(slabGeo);
   const slab = new THREE.Mesh(slabGeo, mats.concfloor ? pbrFloor(mats.concfloor, "#d0cdc6") : livingFloor);
   slab.position.y = -0.04;
@@ -308,23 +314,19 @@ export function buildInterior(
     }
   }
 
-  // Spawn
-  const ent = t
-    ? transformPointDir(plan.entrance.x, plan.entrance.z, plan.entrance.facing, t)
-    : { x: plan.entrance.x, z: plan.entrance.z, facing: plan.entrance.facing };
-  const yaw = FACE_YAW[ent.facing];
-  // Step into the room so the camera is not born inside the door leaf.
-  const inward = 1.05;
-  const spawn = {
-    x: ent.x - Math.sin(yaw) * inward,
-    y: opts.y + 1.6,
-    z: ent.z - Math.cos(yaw) * inward,
-    yaw,
-  };
+  const worldRooms = plan.rooms.map((r) => ({
+    ...r,
+    polygon: worldPoly(r.polygon, t),
+  }));
+  const rooms = buildRoomStops(plan, t, collisions);
+  // Spawn inside the foyer (or living) at eye height, facing in — never in a wall or outside.
+  const spawn0 = defaultSpawn(plan, t, collisions);
+  const spawn = { ...spawn0, y: opts.y + 1.6 };
 
   function applyPrefs(p: Prefs) {
     wallMat.color.set(p.wallColor);
     applyKitchen(mats, p.kitchen);
+    applyStyleLook(mats, p);
     const fl = flooringSet(mats, p.flooring);
     livingFloor.map = fl.map;
     livingFloor.normalMap = fl.normalMap;
@@ -348,7 +350,7 @@ export function buildInterior(
     for (const m of extraMats) m.dispose();
   }
 
-  return { group, collisions, spawn, floorMeshes, wallMat, hotspots, applyPrefs, setTime, dispose };
+  return { group, collisions, spawn, floorMeshes, wallMat, hotspots, rooms, worldRooms, applyPrefs, setTime, dispose };
 }
 
 function alongLen(a: number, b: number, fallback: number) {

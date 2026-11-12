@@ -46,11 +46,11 @@ For kiosk / smart TV:
 
 1. **Tower** — drag to orbit. Hover or click a floor (or use the floor list) to highlight and enter it.
 2. **Floor** — the floor is isolated, cut away, with labelled flats (unit number, 2 BHK / 3 BHK / Penthouse, area in sq ft). Click a flat.
-3. **Flat** — dollhouse (orbit, roof off) or first-person walkthrough. Gold pins mark the kitchen, a bathroom, and a balcony or terrace when the plan has one; click a pin to fly the camera there and open a spec card (sizes from the drawing, finishes from the current preferences). Click or tap the floor to walk to that spot.
-4. **Preferences** (in a flat) — style preset (Modern, Luxury, Minimal, Traditional Indian), flooring (marble, wood, tile), wall colour, kitchen finish, furniture on/off. Changes apply live.
-5. **Time of day** — Morning, Golden hour, or Night, from any view. At night, interior ceiling lights come on and tower windows pick up a warm glow.
-6. **Onboarding** — a three-tip carousel on the loading screen (walk, click-to-move, finishes) with a Start exploring button; it auto-dismisses after a few seconds so it never blocks the demo.
-7. **Book site visit** — name, phone, unit of interest (pre-filled). Submissions are stored in `localStorage` under `leadsetu-3d-demo-leads` and logged to the console. There is a TODO in the form and in `src/ui.ts` (`storeLead`) for `POST`ing to the Lead Setu API.
+3. **Flat** — dollhouse (orbit, roof off) or first-person walkthrough. Room chips (and, on a wide screen, gold pins) mark every room; tap a chip to fly the camera there and open a spec card (sizes from the drawing, finishes from the current preferences). **Tour** plays through the rooms in order. Click or tap the floor to walk to that spot.
+4. **Preferences** — on a phone, a bottom sheet (Your preferences) holds style preset (Modern, Luxury, Minimal, Traditional Indian), flooring, wall colour, kitchen finish, and furniture on/off. On a wide screen the same panel sits on the right. Changes apply live. Room chips stay on the sheet peek so they are never a second floating layer.
+5. **Time of day** — Morning, Golden hour, or Night, from the sun button in the top bar (a compact menu, not a pill over the crumbs). At night, interior ceiling lights come on and tower windows pick up a warm glow.
+6. **Onboarding** — a three-tip carousel on the loading screen (rooms, walk, finishes) with a Start exploring button; it auto-dismisses after a few seconds so it never blocks the demo. On a short landscape screen the tips sit in a single row (titles only) so nothing is clipped.
+7. **Book site visit** — the calendar icon in the top bar on a phone, or the “Book site visit” label on a wide screen. Name, phone, unit of interest (pre-filled). Submissions are stored in `localStorage` under `leadsetu-3d-demo-leads` and logged to the console. There is a TODO in the form and in `src/ui.ts` (`storeLead`) for `POST`ing to the Lead Setu API.
 
 ### Controls
 
@@ -59,9 +59,10 @@ For kiosk / smart TV:
 | Orbit | Drag, scroll to zoom | Drag | Not needed; menus are D-pad driven |
 | Choose floor / flat | Click | Tap | ↑↓ floors, ←→ flats, Enter to open |
 | Walk | Click to look (pointer lock), WASD or arrows, Shift to go faster. Click the floor to walk there. | Left joystick to move, drag on the right to look, tap the floor to walk there | ↑ walk, ↓ back, ←→ turn, Enter dollhouse |
-| Hotspots | Click a gold pin or its label | Tap a pin | — |
-| Time of day | Morning / Golden hour / Night pill | Same | Focus the pill, Enter |
-| Back | Breadcrumb, or Esc | Breadcrumb | Esc |
+| Rooms / tour | Click a gold pin, its label, or a room chip; Tour plays through them | Room chips and Tour in the bottom sheet (scene labels are hidden on a phone so they cannot overlap the chrome) | ←→ rooms |
+| Time of day | Sun button in the top bar opens Morning / Golden hour / Night | Same | Focus the sun button, Enter |
+| Back | Breadcrumb, or Esc (closes the form, menu, tour or sheet first, then walks back Tower ← Floor ← Flat) | Back arrow in the top bar, same order | Esc |
+| Book a visit | “Book site visit” in the top bar | Calendar icon in the top bar | Focus the CTA, Enter |
 
 ## Tower programme
 
@@ -120,6 +121,17 @@ Furniture is **procedural** (three.js primitives), not third-party models. Textu
 - Typical-floor south-wing facades are a simplified balcony-and-slab treatment, not a fully enclosed curtain wall. Night window glow is stronger on the penthouse’s larger glass than on the typical-floor grid (the openings are small and recessed).
 - A three.js PMREM warning (`sigmaRadians` clipped) can appear in the console; it is harmless and comes from the room environment.
 - First-person lighting is real-time point lights, not baked; SwiftShader / software WebGL will look flatter than a discrete GPU.
+
+## Mobile chrome (November 2026 redesign)
+
+The first public build stacked a time-of-day pill, a tall preferences panel, hints and CSS2D unit cards on top of each other on a phone. This version is a mobile-first HUD:
+
+- One compact top bar: back, a single current-place breadcrumb (full path on a wide screen), a sun menu for time of day, and a calendar CTA icon (full “Book site visit” label on a wide screen).
+- A bottom dock of floor chips (tower) or flat chips (floor) — on a 360-wide phone, 5A, 5B and 5C are all tappable. CSS2D unit cards are hidden in compact mode so they cannot sit off-screen or collide with the chrome.
+- In a flat, a bottom sheet: Dollhouse / Walk, Your preferences, and a scrolling row of room chips plus Tour. Spec cards and the guided-tour panel (Back / Pause / Next, “1 of N”) open inside that sheet, not as a second floating card. On a short landscape screen the open sheet becomes a right-hand side panel.
+- Reserved slots (`--topbar-h`, `--dock-h`) keep the joystick, toast, zoom and crosshair in the remaining scene; nothing is positioned over another control. The HUD is hidden until the loading screen is dismissed.
+
+Checked at **360×800**, **412×915**, **800×360** and **915×412**. Playwright overlap tests (8 px threshold, ignoring parent/child) reported **zero overlaps and zero clipping** on onboarding, tower, floor / flat picker, dollhouse, rooms, guided tour, walk, lead form and toast. Before/after PNG sets are under `screens/mobile/before/` and `screens/mobile/after/`. The old build had no guided tour, so that screen has after shots only.
 
 ## Screenshots
 

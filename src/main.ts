@@ -1,26 +1,22 @@
 import "./styles.css";
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { applyTimeOfDay, createEngine, flyCamera, type Engine } from "./engine";
+import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, type Engine } from "./engine";
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
-import { Walker, attachJoystick, attachLookTouch } from "./walker";
-import { HUD, storeLead, areaLabel } from "./ui";
-import type { Prefs, TimeOfDay, UnitPlan, View, Collision } from "./types";
+import { Walker, attachJoystick } from "./walker";
+import { HUD, storeLead, areaLabel, type TourState } from "./ui";
+import { installGestures, isUiEventTarget } from "./gestures";
+import type { RoomStop } from "./rooms";
+import type { Prefs, TimeOfDay, UnitPlan, View } from "./types";
 import {
   CORE,
   PENTHOUSE_FLOOR,
-  UNIT_A,
-  UNIT_B,
-  UNIT_C,
-  UNIT_PH,
   floorY,
   plateCenter,
   slotsForFloor,
   unitCode,
-  describeFloor,
-  type Slot,
 } from "./layout";
 
 const DEFAULT_PREFS: Prefs = {
@@ -30,6 +26,8 @@ const DEFAULT_PREFS: Prefs = {
   kitchen: STYLE_DEFAULTS.modern.kitchen,
   furniture: true,
 };
+
+const TOUR_DWELL = 4200;
 
 async function loadPlans(): Promise<Record<string, UnitPlan>> {
   const base = import.meta.env.BASE_URL;
@@ -48,6 +46,7 @@ class App {
   tower!: TowerBuild;
   walker!: Walker;
   hud!: HUD;
+  gestures!: { zoom: (dir: 1 | -1) => void; dispose: () => void };
   tv: boolean;
   prefs: Prefs = { ...DEFAULT_PREFS };
   view: View = { kind: "tower", hoverFloor: null };
@@ -62,6 +61,10 @@ class App {
   roomLights: THREE.Light[] = [];
   time: TimeOfDay = "morning";
   private flying = false;
+  roomStops: RoomStop[] = [];
+  currentRoom: string | null = null;
+  tour: TourState | null = null;
+  private tourTimer: number | null = null;
 
   constructor() {
     const q = new URLSearchParams(location.search);
@@ -87,7 +90,12 @@ class App {
 
     this.walker = new Walker(canvas);
     this.walker.tv = this.tv;
-    attachLookTouch(canvas, this.walker);
+
+    this.gestures = installGestures(canvas, this.engine.orbit, this.engine.camera, {
+      isWalk: () => this.view.kind === "flat" && this.view.cam === "walk" && !this.flying,
+      walker: this.walker,
+      isUiTarget: isUiEventTarget,
+    });
 
     this.hud = new HUD(ui, this.prefs, this.plans, this.tv, {
       onGotoTower: () => this.showTower(),
@@ -102,6 +110,9 @@ class App {
         this.hud.toast("Request saved on this device. A sales executive would follow up in Lead Setu.");
       },
       onTime: (tm) => this.setTime(tm),
+      onRoom: (id) => { this.stopTour(false); void this.goRoom(id); },
+      onTour: (act) => this.handleTour(act),
+      onZoom: (dir) => this.gestures.zoom(dir),
     });
 
     this.bindPointer(canvas);
@@ -109,12 +120,9 @@ class App {
     this.showTower(false);
     this.hud.setView(this.view);
 
-    const joyBase = () => document.getElementById("joy-base");
-    const joyKnob = () => document.getElementById("joy-knob");
-    // Attach after first render; re-query when HUD rerenders via MutationObserver-lite
     const tryJoy = () => {
-      const b = joyBase();
-      const k = joyKnob();
+      const b = document.getElementById("joy-base");
+      const k = document.getElementById("joy-knob");
       if (b && k && !b.dataset.ready) {
         b.dataset.ready = "1";
         attachJoystick(b, k, this.walker);
@@ -132,7 +140,8 @@ class App {
     setLoad(1);
     finishLoading();
 
-    this.engine.start((dt) => this.tick(dt));
+    this.engine.start((dt) => this.tick(dt), () => this.afterRender());
+    this.exposeApi();
   }
 
   setTime(tm: TimeOfDay) {
@@ -171,13 +180,93 @@ class App {
   }
 
   tick(dt: number) {
+    if (this.flying) return;
     if (this.view.kind === "flat" && this.view.cam === "walk") {
       this.engine.orbit.enabled = false;
       this.walker.update(dt);
       this.walker.apply(this.engine.camera);
-    } else {
+    } else if (!this.flying) {
       this.engine.orbit.enabled = true;
     }
+  }
+
+  afterRender() {
+    this.syncHotspotLabels();
+  }
+
+  syncHotspotLabels() {
+    const interiors = this.interiors;
+    if (!interiors.length) return;
+    const compact = document.body.classList.contains("compact");
+    const cam = this.engine.camera;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const chrome = this.chromeRects();
+    for (const built of interiors) {
+      for (const hs of built.hotspots) {
+        const el = hs.labelEl;
+        if (!el) continue;
+        if (compact) {
+          el.classList.add("is-hidden");
+          continue;
+        }
+        const wp = hs.position;
+        const cs = wp.clone().applyMatrix4(cam.matrixWorldInverse);
+        if (cs.z > -0.15) {
+          el.classList.add("is-hidden");
+          continue;
+        }
+        const ndc = wp.clone().project(cam);
+        if (ndc.z < -1 || ndc.z > 1) {
+          el.classList.add("is-hidden");
+          continue;
+        }
+        let x = (ndc.x * 0.5 + 0.5) * w;
+        let y = (-ndc.y * 0.5 + 0.5) * h;
+        const pad = 10;
+        const off = x < -30 || y < -20 || x > w + 30 || y > h + 20;
+        if (off) {
+          el.classList.add("is-hidden");
+          continue;
+        }
+        // Occlusion: a wall between the camera and the pin.
+        const dir = wp.clone().sub(cam.position);
+        const dist = dir.length();
+        dir.multiplyScalar(1 / (dist || 1));
+        this.ray.set(cam.position, dir);
+        const walls: THREE.Object3D[] = [];
+        built.group.traverse((o) => {
+          if (o instanceof THREE.Mesh && o.name !== "hotspot" && !o.name.startsWith("studio")) walls.push(o);
+        });
+        const hits = this.ray.intersectObjects(walls, true);
+        const blocked = hits.some((hit) => hit.distance < dist - 0.45 && !isHotspotObj(hit.object));
+        if (blocked) {
+          el.classList.add("is-hidden");
+          continue;
+        }
+        const ew = el.offsetWidth || 80;
+        const eh = el.offsetHeight || 22;
+        x = Math.max(pad + ew / 2, Math.min(w - pad - ew / 2, x));
+        y = Math.max(pad + eh / 2, Math.min(h - pad - eh / 2, y));
+        const box = { x: x - ew / 2, y: y - eh / 2, w: ew, h: eh };
+        if (chrome.some((c) => intersects(box, c))) {
+          el.classList.add("is-hidden");
+          continue;
+        }
+        el.classList.remove("is-hidden");
+      }
+    }
+  }
+
+  chromeRects(): { x: number; y: number; w: number; h: number }[] {
+    const sel = ".topbar, .sheet, .room-dock, .dock, .tour-card, .menu-pop, .modal-bg, .zoom-stack, .joy-wrap";
+    return [...this.hud.root.querySelectorAll(sel)].flatMap((el) => {
+      const st = getComputedStyle(el);
+      if (st.display === "none" || st.visibility === "hidden") return [];
+      const r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4) return [];
+      return [{ x: r.x, y: r.y, w: r.width, h: r.height }];
+    });
   }
 
   clearInteriors() {
@@ -188,9 +277,7 @@ class App {
       l.removeFromParent();
     }
     this.unitLabels = [];
-    for (const l of this.roomLights) {
-      l.removeFromParent();
-    }
+    for (const l of this.roomLights) l.removeFromParent();
     this.roomLights = [];
     this.interiorRoot.clear();
   }
@@ -198,20 +285,25 @@ class App {
   setPrefs(p: Prefs) {
     this.prefs = p;
     for (const i of this.interiors) i.applyPrefs(p);
-    // Rebuild furniture when style or furniture flag changes — applyPrefs already toggles visibility;
-    // style fabrics need a rebuild.
     if (this.view.kind === "flat") {
       const { floor, unitId, cam } = this.view;
-      this.showFlat(floor, unitId, cam, true);
+      const keepRoom = this.currentRoom;
+      void this.showFlat(floor, unitId, cam, true).then(() => {
+        if (keepRoom) this.hud.setCurrentRoom(keepRoom);
+      });
     } else if (this.view.kind === "floor") {
       this.showFloor(this.view.floor, true);
     }
   }
 
   async showTower(fly = true) {
+    this.stopTour(true);
     this.walker.enabled = false;
+    cancelFly();
     if (document.pointerLockElement) document.exitPointerLock();
     this.clearInteriors();
+    this.roomStops = [];
+    this.currentRoom = null;
     this.world.visible = true;
     this.tower.setIsolated(null);
     this.tower.highlight(null);
@@ -231,15 +323,17 @@ class App {
   }
 
   async showFloor(floor: number, keepCam = false) {
+    this.stopTour(true);
     this.walker.enabled = false;
+    cancelFly();
     if (document.pointerLockElement) document.exitPointerLock();
     this.clearInteriors();
+    this.roomStops = [];
+    this.currentRoom = null;
     this.world.visible = true;
     this.tower.setIsolated(floor);
     this.tower.highlight(floor);
-    const keepSpec = false;
     this.hud.spec = null;
-    void keepSpec;
     this.view = { kind: "floor", floor, hoverUnit: null };
     this.hud.setView(this.view);
     this.applySceneTime();
@@ -269,14 +363,12 @@ class App {
         this.showFlat(floor, unitCode(floor, slot.suffix), "dollhouse");
       });
       const lab = new CSS2DObject(el);
-      // Place label at unit centre, above walls
       const t = slot.transform;
       const [lx, lz] = [t.ox + t.width / 2, t.oz + t.depth / 2];
       lab.position.set(lx, y + 2.2, lz);
       this.interiorRoot.add(lab);
       this.unitLabels.push(lab);
     }
-    // Core label
     const coreEl = document.createElement("div");
     coreEl.className = "unit-card";
     coreEl.style.pointerEvents = "none";
@@ -303,14 +395,15 @@ class App {
     unitId: string,
     cam: "dollhouse" | "walk",
     keepCam = false,
-    spawnAt?: { x: number; z: number },
+    spawnAt?: { x: number; z: number; yaw?: number },
+    opts: { skipSpawn?: boolean } = {},
   ) {
     if (document.pointerLockElement && cam !== "walk") document.exitPointerLock();
     const prevPos = this.walker.position.clone();
     const prevYaw = this.walker.yaw;
     const openId = this.hud.spec?.id ?? null;
+    const keepRoom = this.currentRoom;
     this.clearInteriors();
-    // Keep the tower out of the flat views so plaza signs and trees don't crowd the unit.
     this.world.visible = false;
     this.tower.setIsolated(null);
     this.tower.highlight(null);
@@ -330,6 +423,7 @@ class App {
     });
     this.interiorRoot.add(built.group);
     this.interiors.push(built);
+    this.roomStops = built.rooms;
 
     if (cam === "dollhouse") {
       const studio = new THREE.Mesh(
@@ -352,7 +446,7 @@ class App {
     this.roomLights.push(fill);
     const sun2 = new THREE.DirectionalLight("#fff4df", cam === "walk" ? 0.55 : 0.9);
     sun2.position.set(8, 12, 6);
-    sun2.castShadow = cam === "dollhouse";
+    sun2.castShadow = cam === "dollhouse" && !this.engine.mobile;
     this.interiorRoot.add(sun2);
     this.roomLights.push(sun2);
     this.applySceneTime();
@@ -370,24 +464,40 @@ class App {
       else this.hud.spec = null;
     }
 
+    this.hud.setRooms(this.roomStops, keepRoom);
+
     const xf = slot.transform;
     const cx = xf.ox + xf.width / 2;
     const cz = xf.oz + xf.depth / 2;
 
     if (cam === "walk") {
-      this.walker.setCollisions(built.collisions, boundsOf(built.collisions, plan, slot));
-      let sx = spawnAt?.x ?? built.spawn.x;
-      let sz = spawnAt?.z ?? built.spawn.z;
-      let yaw = built.spawn.yaw;
-      if (keepCam && !spawnAt) {
-        sx = prevPos.x;
-        sz = prevPos.z;
-        yaw = prevYaw;
+      this.walker.setCollisions(built.collisions, built.worldRooms);
+      if (!opts.skipSpawn) {
+        let sx = spawnAt?.x ?? built.spawn.x;
+        let sz = spawnAt?.z ?? built.spawn.z;
+        let yaw = spawnAt?.yaw ?? built.spawn.yaw;
+        if (keepCam && !spawnAt && prevPos.y > 0.5 && this.walker.isWalkable(prevPos.x, prevPos.z)) {
+          sx = prevPos.x;
+          sz = prevPos.z;
+          yaw = prevYaw;
+        }
+        this.walker.spawn(sx, 1.6, sz, yaw);
+        this.walker.apply(this.engine.camera);
+        this.walker.enabled = true;
+      } else {
+        this.walker.enabled = false;
       }
-      this.walker.spawn(sx, 1.6, sz, yaw);
-      this.walker.apply(this.engine.camera);
-      this.walker.enabled = true;
       this.engine.orbit.enabled = false;
+      if (!this.currentRoom && !opts.skipSpawn) {
+        const home =
+          this.roomStops.find((r) => r.type === "living") ??
+          this.roomStops.find((r) => r.type === "foyer") ??
+          this.roomStops[0];
+        if (home) {
+          this.currentRoom = home.id;
+          this.hud.setCurrentRoom(home.id, false);
+        }
+      }
     } else {
       this.walker.enabled = false;
       this.engine.orbit.enabled = true;
@@ -403,10 +513,129 @@ class App {
     }
   }
 
+  cameraYaw(): number {
+    const d = new THREE.Vector3();
+    this.engine.camera.getWorldDirection(d);
+    return Math.atan2(-d.x, -d.z);
+  }
+
+  cameraPitch(): number {
+    const e = new THREE.Euler().setFromQuaternion(this.engine.camera.quaternion, "YXZ");
+    return e.x;
+  }
+
+  async goRoom(id: string) {
+    const stop = this.roomStops.find((r) => r.id === id);
+    if (!stop || this.view.kind !== "flat") return;
+    this.hud.spec = null;
+    this.currentRoom = id;
+    this.walker.skipLockOnce = true;
+    if (document.pointerLockElement) document.exitPointerLock();
+
+    if (this.view.cam !== "walk") {
+      const { floor, unitId } = this.view;
+      // Rebuild with full-height walls and a ceiling, keep the current camera, then fly in.
+      await this.showFlat(floor, unitId, "walk", true, undefined, { skipSpawn: true });
+    }
+
+    await this.flyToStop(stop);
+    this.hud.setCurrentRoom(id);
+  }
+
+  async flyToStop(stop: RoomStop) {
+    if (this.view.kind !== "flat") return;
+    cancelFly();
+    this.flying = true;
+    this.walker.enabled = false;
+    this.engine.orbit.enabled = false;
+    const fromPos = this.engine.camera.position.clone();
+    const fromYaw = this.cameraYaw();
+    const fromPitch = this.cameraPitch();
+    try {
+      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, 0, 1.15);
+      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw);
+      this.walker.apply(this.engine.camera);
+      this.walker.enabled = true;
+    } finally {
+      this.flying = false;
+      this.engine.orbit.enabled = false;
+    }
+  }
+
+  handleTour(act: "start" | "stop" | "next" | "prev" | "toggle") {
+    if (act === "start") void this.startTour();
+    else if (act === "stop") this.stopTour(false);
+    else if (act === "next") void this.tourStep(1);
+    else if (act === "prev") void this.tourStep(-1);
+    else if (act === "toggle") this.toggleTourPlay();
+  }
+
+  async startTour() {
+    if (!this.roomStops.length || this.view.kind !== "flat") return;
+    this.tour = { active: true, playing: true, index: 0 };
+    this.hud.setTour(this.tour);
+    await this.goRoom(this.roomStops[0].id);
+    this.scheduleTour();
+  }
+
+  stopTour(silent = false) {
+    this.clearTourTimer();
+    const was = this.tour;
+    this.tour = null;
+    if (was && !silent) this.hud.setTour(null);
+  }
+
+  toggleTourPlay() {
+    if (!this.tour) return;
+    this.tour = { ...this.tour, playing: !this.tour.playing };
+    this.hud.setTour(this.tour);
+    if (this.tour.playing) this.scheduleTour();
+    else this.clearTourTimer();
+  }
+
+  async tourStep(dir: number) {
+    if (!this.roomStops.length) return;
+    if (!this.tour) {
+      this.tour = { active: true, playing: false, index: 0 };
+    }
+    const next = this.tour.index + dir;
+    if (next < 0) return;
+    if (next >= this.roomStops.length) {
+      this.stopTour(false);
+      return;
+    }
+    this.tour = { ...this.tour, index: next };
+    this.hud.setTour(this.tour);
+    await this.goRoom(this.roomStops[next].id);
+    if (this.tour?.playing) this.scheduleTour();
+  }
+
+  scheduleTour() {
+    this.clearTourTimer();
+    if (!this.tour?.playing) return;
+    this.tourTimer = window.setTimeout(() => {
+      void this.tourStep(1);
+    }, TOUR_DWELL);
+  }
+
+  clearTourTimer() {
+    if (this.tourTimer !== null) {
+      clearTimeout(this.tourTimer);
+      this.tourTimer = null;
+    }
+  }
+
   async openHotspot(h: Hotspot) {
     this.walker.skipLockOnce = true;
     if (document.pointerLockElement) document.exitPointerLock();
     this.hud.showSpec(h);
+    // Prefer a matching room stop so we land at eye level inside, not at a cutaway camera.
+    const match = this.roomStops.find((r) => r.name === h.title || r.id === h.id.replace(/^(kitchen|bath|view)-/, "") || (h.kind === "kitchen" && r.type === "kitchen") || (h.kind === "bath" && r.type === "bathroom") || (h.kind === "view" && (r.type === "balcony" || r.type === "terrace")));
+    if (match) {
+      this.stopTour(false);
+      await this.goRoom(match.id);
+      return;
+    }
     if (this.flying) return;
     this.flying = true;
     const pos = h.cameraPos.clone();
@@ -434,7 +663,7 @@ class App {
       this.downXY = { x: e.clientX, y: e.clientY };
     };
     const onMove = (e: PointerEvent) => {
-      if (e.buttons) {
+      if (e.buttons || e.pressure) {
         if (Math.hypot(e.clientX - this.downXY.x, e.clientY - this.downXY.y) > 5) this.dragging = true;
       }
       this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -443,7 +672,7 @@ class App {
     };
     const onUp = (e: PointerEvent) => {
       if (this.dragging) return;
-      if ((e.target as HTMLElement).closest?.("#ui, #labels")) return;
+      if (isUiEventTarget(e.target)) return;
       this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
       this.clickScene();
@@ -529,23 +758,31 @@ class App {
           document.exitPointerLock();
           return;
         }
-        if (this.view.kind === "flat" && this.view.cam === "walk") {
-          this.showFlat(this.view.floor, this.view.unitId, "dollhouse");
-          return;
-        }
-        if (this.view.kind === "flat") {
-          this.showFloor(this.view.floor);
-          return;
-        }
-        if (this.view.kind === "floor") this.showTower();
+        this.hud.goBack();
         return;
       }
       if (!this.tv) return;
-      // TV remote navigation when not walking, or when menu is open
       const view = this.view;
-      if (view.kind === "flat" && view.cam === "walk") {
-        if (e.code === "Enter" || e.code === "NumpadEnter") {
+      if (view.kind === "flat") {
+        if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+          if (!this.roomStops.length) return;
+          let i = this.roomStops.findIndex((r) => r.id === this.currentRoom);
+          if (i < 0) i = 0;
+          i += e.code === "ArrowRight" ? 1 : -1;
+          i = Math.max(0, Math.min(this.roomStops.length - 1, i));
+          this.stopTour(false);
+          void this.goRoom(this.roomStops[i].id);
+          e.preventDefault();
+          return;
+        }
+        if (view.cam === "walk" && (e.code === "Enter" || e.code === "NumpadEnter")) {
           this.showFlat(view.floor, view.unitId, "dollhouse");
+          e.preventDefault();
+          return;
+        }
+        if (view.cam === "dollhouse" && (e.code === "Enter" || e.code === "NumpadEnter")) {
+          this.showFlat(view.floor, view.unitId, "walk");
+          e.preventDefault();
         }
         return;
       }
@@ -575,8 +812,7 @@ class App {
           i = (i + (e.code === "ArrowRight" ? 1 : ids.length - 1)) % ids.length;
           this.view = { ...view, hoverUnit: ids[i] };
           this.hud.setView(this.view);
-          // visually pulse the matching card
-          document.querySelectorAll(".unit-card").forEach((c) => {
+          document.querySelectorAll(".unit-card, .unit-chip").forEach((c) => {
             c.classList.toggle("hov", c.textContent?.includes(ids[i]) ?? false);
           });
           e.preventDefault();
@@ -585,36 +821,68 @@ class App {
           this.showFlat(view.floor, view.hoverUnit ?? ids[0], "dollhouse");
           e.preventDefault();
         }
-      } else if (view.kind === "flat") {
-        if (e.code === "Enter" || e.code === "NumpadEnter") {
-          this.showFlat(view.floor, view.unitId, "walk");
-          e.preventDefault();
-        }
       }
     });
   }
+
+  exposeApi() {
+    const api = {
+      ready: true,
+      view: () => this.view,
+      gotoTower: () => this.showTower(),
+      gotoFloor: (f: number) => this.showFloor(f),
+      gotoFlat: (f: number, id: string, cam: "dollhouse" | "walk" = "dollhouse") => this.showFlat(f, id, cam),
+      setCam: (cam: "dollhouse" | "walk") => {
+        if (this.view.kind === "flat") return this.showFlat(this.view.floor, this.view.unitId, cam);
+      },
+      setTime: (t: TimeOfDay) => this.setTime(t),
+      setPrefs: (p: Partial<Prefs>) => this.setPrefs({ ...this.prefs, ...p }),
+      setSheet: (open: boolean) => this.hud.setSheet(open),
+      rooms: () => this.roomStops,
+      goRoom: (id: string) => this.goRoom(id),
+      startTour: () => this.startTour(),
+      stopTour: () => this.stopTour(false),
+      tourStep: (d: number) => this.tourStep(d),
+      setTourPlaying: (p: boolean) => {
+        if (!this.tour) return;
+        this.tour = { ...this.tour, playing: p };
+        this.hud.setTour(this.tour);
+        if (p) this.scheduleTour();
+        else this.clearTourTimer();
+      },
+      openForm: () => this.hud.openForm(),
+      closeForm: () => this.hud.closeForm(),
+      submitLead: (name: string, phone: string) => {
+        const unit = this.hud.unitOfInterest();
+        storeLead({ name, phone, unit });
+        this.hud.closeForm();
+        this.hud.toast("Request saved on this device. A sales executive would follow up in Lead Setu.");
+      },
+      toast: (m: string) => this.hud.toast(m),
+      currentRoom: () => this.currentRoom,
+      tour: () => this.tour,
+      prefs: () => this.prefs,
+    };
+    (window as unknown as { __leadsetu: typeof api }).__leadsetu = api;
+  }
 }
 
-function boundsOf(cols: Collision[], plan: UnitPlan, slot: Slot): Collision {
-  const b = plan.bounds;
-  // Transform corners
-  const corners = [
-    [b.min[0], b.min[1]],
-    [b.max[0], b.min[1]],
-    [b.max[0], b.max[1]],
-    [b.min[0], b.max[1]],
-  ];
-  // Use collision AABB union plus a margin — simpler and includes balcony
-  if (!cols.length) {
-    return { minX: slot.transform.ox - 2, maxX: slot.transform.ox + slot.transform.width + 2, minZ: slot.transform.oz - 2, maxZ: slot.transform.oz + slot.transform.depth + 3 };
+function isHotspotObj(o: THREE.Object3D): boolean {
+  let x: THREE.Object3D | null = o;
+  while (x) {
+    if (x.name === "hotspot" || x.userData.hotspot) return true;
+    x = x.parent;
   }
-  return {
-    minX: Math.min(...cols.map((c) => c.minX)) - 2.5,
-    maxX: Math.max(...cols.map((c) => c.maxX)) + 2.5,
-    minZ: Math.min(...cols.map((c) => c.minZ)) - 2.5,
-    maxZ: Math.max(...cols.map((c) => c.maxZ)) + 2.5,
-  };
-  void corners;
+  return false;
+}
+
+function intersects(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+): boolean {
+  const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+  const iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  return ix > 6 && iy > 6;
 }
 
 function setLoad(p: number) {
@@ -638,11 +906,6 @@ function startTips() {
   show(0);
   dots.forEach((d, k) => d.addEventListener("click", () => show(k)));
   const id = window.setInterval(() => show(i + 1), 3200);
-  (document.getElementById("tips") as HTMLElement | null)?.addEventListener(
-    "remove",
-    () => clearInterval(id),
-  );
-  // Clear when the loading screen is dismissed
   const loading = document.getElementById("loading");
   if (loading) {
     const obs = new MutationObserver(() => {
@@ -662,12 +925,14 @@ function finishLoading() {
   const hold = new URLSearchParams(location.search).get("hold") === "1";
   let dismissed = false;
   const go = () => {
-    if (dismissed || hold) return;
+    if (dismissed) return;
     dismissed = true;
     loading?.classList.add("done");
+    document.body.classList.remove("booting");
   };
   btn?.addEventListener("click", go);
-  // Auto-dismiss so onboarding never blocks the demo. ?hold=1 keeps it for screenshots.
+  // ?hold=1 skips only the auto-dismiss timer, so screenshots can capture onboarding
+  // and still click Start exploring.
   if (!hold) window.setTimeout(go, 7000);
 }
 

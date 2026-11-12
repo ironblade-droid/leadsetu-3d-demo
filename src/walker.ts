@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import type { Collision } from "./types";
+import { hitsCollision, inRooms } from "./rooms";
 
 const EYE = 1.6;
-const RADIUS = 0.28;
+const RADIUS = 0.3;
 const SPEED = 3.4;
 const SPRINT = 5.4;
 const TURN = 1.6;
@@ -17,8 +18,8 @@ export class Walker {
   readonly keys = new Set<string>();
   joy = { x: 0, y: 0 };
   private collisions: Collision[] = [];
-  private minY = 1.6;
-  private bounds: Collision | null = null;
+  private rooms: { polygon: [number, number][] }[] = [];
+  private minY = EYE;
   private walkTarget: THREE.Vector3 | null = null;
   private canvas: HTMLCanvasElement;
   private onLockChange?: (locked: boolean) => void;
@@ -33,37 +34,49 @@ export class Walker {
     canvas.addEventListener("mousemove", this.onMouse);
   }
 
-  setCollisions(c: Collision[], bounds?: Collision) {
+  setCollisions(c: Collision[], rooms?: { polygon: [number, number][] }[]) {
     this.collisions = c;
-    this.bounds = bounds ?? null;
+    this.rooms = rooms ?? [];
   }
 
   spawn(x: number, y: number, z: number, yaw: number) {
-    this.position.set(x, y, z);
-    this.minY = y;
+    const clear = this.nearestClear(x, z);
+    this.position.set(clear.x, y || EYE, clear.z);
+    this.minY = y || EYE;
     this.yaw = yaw;
     this.pitch = 0;
     this.walkTarget = null;
   }
 
-  /** True if a point on the floor is free of wall collisions and inside bounds. */
-  isWalkable(x: number, z: number): boolean {
-    if (this.hits(x, z)) return false;
-    if (this.bounds) {
-      if (x < this.bounds.minX + 0.2 || x > this.bounds.maxX - 0.2) return false;
-      if (z < this.bounds.minZ + 0.2 || z > this.bounds.maxZ - 0.2) return false;
+  nearestClear(x: number, z: number): { x: number; z: number } {
+    if (this.isWalkable(x, z)) return { x, z };
+    const rings = [0.3, 0.55, 0.85, 1.2, 1.7, 2.3, 3.0];
+    for (const r of rings) {
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        const nx = x + Math.cos(a) * r;
+        const nz = z + Math.sin(a) * r;
+        if (this.isWalkable(nx, nz)) return { x: nx, z: nz };
+      }
     }
+    return { x, z };
+  }
+
+  /** True if a point on the floor is free of wall collisions and inside a room. */
+  isWalkable(x: number, z: number): boolean {
+    if (hitsCollision(this.collisions, x, z, RADIUS)) return false;
+    if (this.rooms.length && !inRooms(this.rooms, x, z, 0.35)) return false;
     return true;
   }
 
   walkTo(x: number, z: number) {
-    if (!this.isWalkable(x, z)) return false;
-    this.walkTarget = new THREE.Vector3(x, this.minY, z);
+    const c = this.nearestClear(x, z);
+    if (!this.isWalkable(c.x, c.z)) return false;
+    this.walkTarget = new THREE.Vector3(c.x, this.minY, c.z);
     return true;
   }
 
   cancelWalkTo() { this.walkTarget = null; }
-
 
   requestLock = () => {
     if (this.skipLockOnce) { this.skipLockOnce = false; return; }
@@ -93,7 +106,7 @@ export class Walker {
     if (!this.enabled || !this.locked) return;
     this.yaw -= e.movementX * 0.0022;
     this.pitch -= e.movementY * 0.0022;
-    this.pitch = Math.max(-1.2, Math.min(1.2, this.pitch));
+    this.pitch = Math.max(-1.15, Math.min(1.15, this.pitch));
   };
 
   /** Touch look — call with dx, dy in pixels. */
@@ -101,7 +114,7 @@ export class Walker {
     if (!this.enabled) return;
     this.yaw -= dx * 0.005;
     this.pitch -= dy * 0.005;
-    this.pitch = Math.max(-1.2, Math.min(1.2, this.pitch));
+    this.pitch = Math.max(-1.15, Math.min(1.15, this.pitch));
   }
 
   update(dt: number) {
@@ -134,8 +147,7 @@ export class Walker {
     if (this.keys.has("KeyA")) strafe -= 1;
     if (this.keys.has("KeyD")) strafe += 1;
     if (this.tv) {
-      if (this.keys.has("ArrowLeft")) this.yaw += TURN * dt;
-      if (this.keys.has("ArrowRight")) this.yaw -= TURN * dt;
+      // TV: ←→ change rooms (handled in main). Turning is not on the D-pad here.
     } else {
       if (this.keys.has("ArrowLeft")) strafe -= 1;
       if (this.keys.has("ArrowRight")) strafe += 1;
@@ -145,6 +157,7 @@ export class Walker {
     const len = Math.hypot(fwd, strafe);
     if (len > 1) { fwd /= len; strafe /= len; }
     const speed = (this.keys.has("ShiftLeft") || this.keys.has("ShiftRight") ? SPRINT : SPEED);
+    // Movement is taken from the camera's yaw (look direction) on the XZ plane.
     const sin = Math.sin(this.yaw);
     const cos = Math.cos(this.yaw);
     // yaw 0 looks -Z (south)
@@ -158,23 +171,10 @@ export class Walker {
   private tryMove(dx: number, dz: number) {
     const nx = this.position.x + dx;
     const nz = this.position.z + dz;
-    if (this.hits(nx, nz)) return;
-    if (this.bounds) {
-      if (nx < this.bounds.minX + RADIUS || nx > this.bounds.maxX - RADIUS) return;
-      if (nz < this.bounds.minZ + RADIUS || nz > this.bounds.maxZ - RADIUS) return;
-    }
+    if (hitsCollision(this.collisions, nx, nz, RADIUS)) return;
+    if (this.rooms.length && !inRooms(this.rooms, nx, nz, 0.35)) return;
     this.position.x = nx;
     this.position.z = nz;
-  }
-
-  private hits(x: number, z: number): boolean {
-    for (const c of this.collisions) {
-      if (
-        x + RADIUS > c.minX && x - RADIUS < c.maxX &&
-        z + RADIUS > c.minZ && z - RADIUS < c.maxZ
-      ) return true;
-    }
-    return false;
   }
 
   apply(camera: THREE.PerspectiveCamera) {
@@ -216,6 +216,7 @@ export function attachJoystick(
     tracking = null;
   };
   base.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
     tracking = e.pointerId;
     base.setPointerCapture(e.pointerId);
     const r = base.getBoundingClientRect();
@@ -223,26 +224,33 @@ export function attachJoystick(
   });
   base.addEventListener("pointermove", (e) => {
     if (tracking !== e.pointerId) return;
+    e.stopPropagation();
     const r = base.getBoundingClientRect();
     set(r.left + r.width / 2, r.top + r.height / 2, e.clientX, e.clientY);
   });
-  base.addEventListener("pointerup", clear);
+  base.addEventListener("pointerup", (e) => { e.stopPropagation(); clear(); });
   base.addEventListener("pointercancel", clear);
 }
 
+/** Legacy look helper — the gesture module now owns touch look; this stays for non-gesture paths. */
 export function attachLookTouch(canvas: HTMLCanvasElement, walker: Walker) {
   let id: number | null = null;
   let lx = 0, ly = 0;
+  let pending = true;
+  let ox = 0, oy = 0;
   canvas.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || !walker.enabled || walker.tv) return;
-    // left half is for joystick on mobile; look on the right
-    if (e.clientX < window.innerWidth * 0.38) return;
+    if (e.pointerType !== "mouse" /* touch is handled by gestures */) return;
     id = e.pointerId;
-    lx = e.clientX; ly = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
+    lx = ox = e.clientX; ly = oy = e.clientY;
+    pending = true;
   });
   canvas.addEventListener("pointermove", (e) => {
     if (id !== e.pointerId) return;
+    if (pending) {
+      if (Math.hypot(e.clientX - ox, e.clientY - oy) < 5) return;
+      pending = false;
+    }
     walker.look(e.clientX - lx, e.clientY - ly);
     lx = e.clientX; ly = e.clientY;
   });
@@ -250,3 +258,5 @@ export function attachLookTouch(canvas: HTMLCanvasElement, walker: Walker) {
   canvas.addEventListener("pointerup", up);
   canvas.addEventListener("pointercancel", up);
 }
+
+export { EYE, TURN };

@@ -12,22 +12,28 @@ export interface Engine {
   sun: THREE.DirectionalLight;
   hemi: THREE.HemisphereLight;
   fill: THREE.DirectionalLight;
-  start: (tick: (dt: number) => void) => void;
+  mobile: boolean;
+  start: (tick: (dt: number) => void, after?: () => void) => void;
   resize: () => void;
   dispose: () => void;
 }
 
+export function isMobileViewport(): boolean {
+  return window.innerWidth < 900 || window.innerHeight < 520 || ("ontouchstart" in window && window.innerWidth < 1200);
+}
+
 export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement): Engine {
+  const mobile = isMobileViewport();
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true,
+    antialias: !mobile,
     powerPreference: "high-performance",
     alpha: false,
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = mobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -40,7 +46,8 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.06).texture;
   scene.environmentIntensity = 0.55;
 
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 400);
+  const fov = mobile ? 58 : 50;
+  const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.05, 400);
   camera.position.set(36, 28, 38);
 
   const orbit = new OrbitControls(camera, renderer.domElement);
@@ -51,6 +58,9 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   orbit.maxDistance = 90;
   orbit.target.set(13.7, 8, 10);
   orbit.update();
+  // Custom gesture handler owns touch; keep mouse + wheel.
+  orbit.touches.ONE = THREE.TOUCH.ROTATE;
+  orbit.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
   const labels = new CSS2DRenderer({ element: labelLayer });
   labels.setSize(window.innerWidth, window.innerHeight);
@@ -62,7 +72,8 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   const sun = new THREE.DirectionalLight("#fff3d8", 2.35);
   sun.position.set(48, 62, 28);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  const map = mobile ? 1024 : 2048;
+  sun.shadow.mapSize.set(map, map);
   sun.shadow.camera.near = 10;
   sun.shadow.camera.far = 140;
   sun.shadow.camera.left = -50;
@@ -85,6 +96,7 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   let last = performance.now();
   let running = false;
   let tickFn: (dt: number) => void = () => {};
+  let afterFn: () => void = () => {};
 
   function frame(now: number) {
     if (!running) return;
@@ -92,25 +104,32 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     tickFn(dt);
-    orbit.update();
+    // When orbit is disabled (walk / fly), do NOT call update(): it would
+    // lookAt(target) and overwrite first-person yaw/pitch.
+    if (orbit.enabled) orbit.update();
     renderer.render(scene, camera);
     labels.render(scene, camera);
+    afterFn();
   }
 
   function resize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     camera.aspect = w / h;
+    camera.fov = isMobileViewport() ? 58 : 50;
+    camera.near = 0.05;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(w, h);
     labels.setSize(w, h);
   }
   window.addEventListener("resize", resize);
 
   return {
-    renderer, scene, camera, orbit, labels, sun, hemi, fill,
-    start(tick) {
+    renderer, scene, camera, orbit, labels, sun, hemi, fill, mobile,
+    start(tick, after) {
       tickFn = tick;
+      afterFn = after ?? (() => {});
       running = true;
       last = performance.now();
       requestAnimationFrame(frame);
@@ -123,6 +142,12 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   };
 }
 
+let flyGen = 0;
+
+export function cancelFly(): void {
+  flyGen += 1;
+}
+
 export function flyCamera(
   camera: THREE.PerspectiveCamera,
   orbit: OrbitControls,
@@ -130,20 +155,26 @@ export function flyCamera(
   target: THREE.Vector3,
   duration = 1.15,
 ): Promise<void> {
+  const gen = ++flyGen;
   const fromP = camera.position.clone();
   const fromT = orbit.target.clone();
   const t0 = performance.now();
+  const was = orbit.enabled;
   orbit.enabled = false;
   return new Promise((resolve) => {
     function step(now: number) {
+      if (gen !== flyGen) {
+        resolve();
+        return;
+      }
       const u = Math.min(1, (now - t0) / (duration * 1000));
       const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
       camera.position.lerpVectors(fromP, pos, e);
       orbit.target.lerpVectors(fromT, target, e);
-      orbit.update();
+      camera.lookAt(orbit.target);
       if (u < 1) requestAnimationFrame(step);
       else {
-        orbit.enabled = true;
+        orbit.enabled = was;
         resolve();
       }
     }
@@ -151,6 +182,44 @@ export function flyCamera(
   });
 }
 
+/** Animate a first-person camera to an eye-level room viewpoint. Does not touch orbit. */
+export function flyEye(
+  camera: THREE.PerspectiveCamera,
+  fromPos: THREE.Vector3,
+  fromYaw: number,
+  fromPitch: number,
+  toPos: THREE.Vector3,
+  toYaw: number,
+  toPitch = 0,
+  duration = 1.05,
+  onFrame?: (pos: THREE.Vector3, yaw: number, pitch: number) => void,
+): Promise<void> {
+  const gen = ++flyGen;
+  let yaw0 = fromYaw;
+  let yaw1 = toYaw;
+  while (yaw1 - yaw0 > Math.PI) yaw1 -= Math.PI * 2;
+  while (yaw1 - yaw0 < -Math.PI) yaw1 += Math.PI * 2;
+  const t0 = performance.now();
+  return new Promise((resolve) => {
+    function step(now: number) {
+      if (gen !== flyGen) {
+        resolve();
+        return;
+      }
+      const u = Math.min(1, (now - t0) / (duration * 1000));
+      const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+      const pos = new THREE.Vector3().lerpVectors(fromPos, toPos, e);
+      const yaw = yaw0 + (yaw1 - yaw0) * e;
+      const pitch = fromPitch + (toPitch - fromPitch) * e;
+      camera.position.copy(pos);
+      camera.rotation.set(pitch, yaw, 0, "YXZ");
+      onFrame?.(pos, yaw, pitch);
+      if (u < 1) requestAnimationFrame(step);
+      else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
 
 export type TimeOfDay = "morning" | "golden" | "night";
 

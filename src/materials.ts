@@ -215,3 +215,35 @@ export function applyKitchen(m: Materials, id: KitchenId) {
   m.cabinet.needsUpdate = true;
   m.counter.needsUpdate = true;
 }
+
+/** Apply style-preset fabric and wood tints so furniture reacts live. */
+export function applyStyleLook(m: Materials, prefs: Prefs): void {
+  const d = STYLE_DEFAULTS[prefs.style];
+  m.fabric.color.set(d.fabric);
+  m.fabric.needsUpdate = true;
+  m.woodFur.color.set(d.wood);
+  m.woodFur.needsUpdate = true;
+  if (prefs.style === "luxury") m.mattress.color.set("#efe2cc");
+  else if (prefs.style === "traditional") m.mattress.color.set("#f3e6d0");
+  else if (prefs.style === "minimal") m.mattress.color.set("#f4f2ec");
+  else m.mattress.color.set("#ece6da");
+  m.mattress.needsUpdate = true;
+}
+
+/**
+ * Cheap world-aligned UVs for a horizontal surface (floors, slabs).
+ * After a ShapeGeometry has been rotated to XZ, UVs are taken from world XZ
+ * so the texture doesn't stretch with the room's bounding box.
+ */
+export function applyWorldXZUVs(geo: THREE.BufferGeometry, scale = 0.55): void {
+  const pos = geo.attributes.position;
+  if (!pos) return;
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    uv[i * 2] = x * scale;
+    uv[i * 2 + 1] = z * scale;
+  }
+  geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+}

@@ -315,30 +315,55 @@ function roomOverview(
     lookZ = a.cz;
   }
 
-  // Bathroom: stand at the doorway or the corner farthest from the shower,
-  // looking at the basin and WC. Never stare into the shower enclosure —
-  // it is a solid partition and reads as a wall close-up.
+  // Bathroom: stand just inside the doorway and look down the room so the
+  // basin, WC and shower all read. Never stare into the shower enclosure —
+  // a partition (or even glass) at close range fills the frame.
   if (kind === "bathroom") {
     const shower = (lookBias?.showerX !== undefined && lookBias?.showerZ !== undefined)
       ? { x: lookBias.showerX, z: lookBias.showerZ }
       : null;
-    if (lookBias) {
-      lookX = lookBias.x * 0.4 + a.cx * 0.6;
-      lookZ = lookBias.z * 0.4 + a.cz * 0.6;
+    lookX = a.cx;
+    lookZ = a.cz;
+    // Look at a far wall, then slide off the shower so the enclosure sits
+    // at the edge of a wide doorway frame — not back toward the door.
+    type Look = { x: number; z: number; score: number };
+    let bestLook: Look = { x: a.cx, z: a.cz, score: -1 };
+    for (const door of doors) {
+      const inv = doorInward(door, poly);
+      if (!inv) continue;
+      const farPts: [number, number][] = [
+        [a.cx, a.minZ + 0.4], [a.cx, a.maxZ - 0.4],
+        [a.minX + 0.4, a.cz], [a.maxX - 0.4, a.cz],
+      ];
+      for (let [lx, lz] of farPts) {
+        if (shower) {
+          const d = Math.hypot(lx - shower.x, lz - shower.z);
+          if (d < 0.9) {
+            const ax = lx - shower.x, az = lz - shower.z;
+            const al = Math.hypot(ax, az) || 1;
+            lx += (ax / al) * (1.05 - d);
+            lz += (az / al) * (1.05 - d);
+            const held = pullInside(poly, lx, lz, 0.28);
+            lx = held.x; lz = held.z;
+          }
+        }
+        const dist = Math.hypot(lx - inv.mx, lz - inv.mz);
+        const toward = (lx - inv.mx) * inv.ix + (lz - inv.mz) * inv.iz;
+        // Prefer looking along the longer leftover axis (down the room)
+        // over staring across a short wall the door faces into.
+        const alongLong = a.d >= a.w ? Math.abs(lz - inv.mz) : Math.abs(lx - inv.mx);
+        const score = dist + alongLong * 1.2 + toward * 0.2;
+        if (score > bestLook.score) bestLook = { x: lx, z: lz, score };
+      }
     }
-    const bathCorners: [number, number][] = [
-      [a.minX + 0.22, a.minZ + 0.22],
-      [a.maxX - 0.22, a.minZ + 0.22],
-      [a.minX + 0.22, a.maxZ - 0.22],
-      [a.maxX - 0.22, a.maxZ - 0.22],
-    ];
-    if (shower) {
-      bathCorners.sort((p, q) =>
-        Math.hypot(q[0] - shower.x, q[1] - shower.z) - Math.hypot(p[0] - shower.x, p[1] - shower.z),
-      );
-      consider(bathCorners[0][0], bathCorners[0][1], 100, 0.16);
-      consider(bathCorners[1][0], bathCorners[1][1], 74, 0.16);
+    if (bestLook.score > 0) {
+      lookX = bestLook.x;
+      lookZ = bestLook.z;
+    } else if (lookBias) {
+      lookX = lookBias.x * 0.25 + a.cx * 0.75;
+      lookZ = lookBias.z * 0.25 + a.cz * 0.75;
     }
+
     for (const door of doors) {
       const inv = doorInward(door, poly);
       if (!inv) continue;
@@ -347,12 +372,24 @@ function roomOverview(
       if (shower) {
         const along = (inv.mx - shower.x) * sx + (inv.mz - shower.z) * sz;
         const sign = along >= 0 ? 1 : -1;
-        ox = sx * sign * 0.38;
-        oz = sz * sign * 0.38;
+        ox = sx * sign * 0.2;
+        oz = sz * sign * 0.2;
       }
-      consider(inv.mx + inv.ix * 0.28 + ox, inv.mz + inv.iz * 0.28 + oz, 90, 0.14);
-      consider(inv.mx + inv.ix * 0.52 + ox, inv.mz + inv.iz * 0.52 + oz, 94, 0.16);
-      consider(inv.mx + inv.ix * 0.30, inv.mz + inv.iz * 0.30, 58, 0.14);
+      consider(inv.mx + inv.ix * 0.55 + ox, inv.mz + inv.iz * 0.55 + oz, 150, 0.22);
+      consider(inv.mx + inv.ix * 0.75 + ox, inv.mz + inv.iz * 0.75 + oz, 156, 0.22);
+      consider(inv.mx + inv.ix * 0.45, inv.mz + inv.iz * 0.45, 120, 0.2);
+    }
+    const bathCorners: [number, number][] = [
+      [a.minX + 0.28, a.minZ + 0.28],
+      [a.maxX - 0.28, a.minZ + 0.28],
+      [a.minX + 0.28, a.maxZ - 0.28],
+      [a.maxX - 0.28, a.maxZ - 0.28],
+    ];
+    if (shower) {
+      bathCorners.sort((p, q) =>
+        Math.hypot(q[0] - shower.x, q[1] - shower.z) - Math.hypot(p[0] - shower.x, p[1] - shower.z),
+      );
+      consider(bathCorners[0][0], bathCorners[0][1], 36, 0.2);
     }
     const ahead = (x: number, z: number, ux: number, uz: number) => {
       for (let s = 0.06; s < 5; s += 0.06) {
@@ -376,27 +413,44 @@ function roomOverview(
       else if (hit < 1.35) c.score -= 45;
       c.score += Math.min(hit, 2.4) * 22;
       if (wallAhead < 0.7) c.score -= 80;
-      c.score += Math.min(wallAhead, 2.2) * 12;
-      c.score += Math.min(dist, 2.0) * 12;
+      c.score += Math.min(wallAhead, 2.4) * 18;
+      c.score += Math.min(dist, 2.2) * 16;
+      if (dist < 0.85) c.score -= 60;
       if (shower) {
         const toSx = shower.x - c.x, toSz = shower.z - c.z;
         const sLen = Math.hypot(toSx, toSz) || 1;
         const facing = (toSx / sLen) * ux + (toSz / sLen) * uz;
-        // Shower dead ahead at short range = wall close-up.
-        if (facing > 0.8 && sLen < 1.65) c.score -= 80;
-        c.score += Math.min(sLen, 2.0) * 10;
+        if (facing > 0.55 && sLen < 2.0) c.score -= 120;
+        if (sLen < 1.15) c.score -= 80;
+        c.score += Math.min(sLen, 2.2) * 14;
       }
     }
   }
 
-  // Bedroom: stand in a foot-side corner, looking at the headboard on its wall.
-  // Stay off the mattress — a stand 0.6 m past the foot often collides with
-  // the wardrobe or bench and gets pulled onto the bed.
+  // Bedroom: stand on the foot axis, looking at the headboard. Side-wall
+  // stands (2BHK bedroom 2) land a side-on view of the mattress.
   if (kind === "bedroom") {
     if (bed) {
       const px = -bed.fz, pz = bed.fx;
       const footX = bed.x + bed.fx * (bed.depth / 2);
       const footZ = bed.z + bed.fz * (bed.depth / 2);
+      // Foot-axis stands, clamped into the room so a short leftover
+      // (bedroom 2 has ~1.1 m past the foot) still gets a head-on view.
+      for (const s of [0.42, 0.58, 0.75, 0.95, 1.2]) {
+        const pulled = pullInside(poly, footX + bed.fx * s, footZ + bed.fz * s, 0.26);
+        consider(pulled.x, pulled.z, 120 - s * 12, 0.22);
+      }
+      for (const side of [1, -1]) {
+        for (const s of [0.55, 0.8]) {
+          const pulled = pullInside(
+            poly,
+            footX + bed.fx * s + px * side * 0.5,
+            footZ + bed.fz * s + pz * side * 0.5,
+            0.24,
+          );
+          consider(pulled.x, pulled.z, 64, 0.22);
+        }
+      }
       const corners: [number, number][] = [
         [a.minX + inset, a.minZ + inset],
         [a.maxX - inset, a.minZ + inset],
@@ -405,17 +459,8 @@ function roomOverview(
       ];
       for (const [cx, cz] of corners) {
         const along = (cx - bed.x) * bed.fx + (cz - bed.z) * bed.fz;
-        if (along > 0.15) consider(cx, cz, 56 + along * 6);
+        if (along > 0.35) consider(cx, cz, 36 + along * 4);
       }
-      for (const side of [1, -1]) {
-        consider(footX + bed.fx * 0.85 + px * side * 1.25, footZ + bed.fz * 0.85 + pz * side * 1.25, 44);
-        consider(footX + bed.fx * 0.4 + px * side * 1.45, footZ + bed.fz * 0.4 + pz * side * 1.45, 38);
-        consider(footX + bed.fx * 1.15 + px * side * 0.95, footZ + bed.fz * 1.15 + pz * side * 0.95, 62);
-      }
-      // Straight past the foot — usually the most spacious stand in a tight room.
-      consider(footX + bed.fx * 1.15, footZ + bed.fz * 1.15, 74);
-      consider(footX + bed.fx * 1.45, footZ + bed.fz * 1.45, 70);
-      consider(footX + bed.fx * 1.8, footZ + bed.fz * 1.8, 58);
       const halfW = (bed.width ?? 1.6) / 2;
       const onMattress = (x: number, z: number) => {
         const along = (x - bed.x) * bed.fx + (z - bed.z) * bed.fz;
@@ -427,14 +472,14 @@ function roomOverview(
         const dist = Math.hypot(dx, dz);
         const along = dx * bed.fx + dz * bed.fz;
         if (onMattress(c.x, c.z)) c.score -= 160;
-        if (dist < 1.35) c.score -= 90; // on or astride the bed
-        if (along < 0.25) c.score -= 55; // head-side
+        if (dist < 1.35) c.score -= 90;
+        if (along < 0.35) c.score -= 70;
         c.score += Math.min(dist, 2.8) * 10;
         const toHeadX = lookX - c.x, toHeadZ = lookZ - c.z;
         const len = Math.hypot(toHeadX, toHeadZ) || 1;
         const align = (toHeadX / len) * (-bed.fx) + (toHeadZ / len) * (-bed.fz);
-        c.score += align * 16;
-        // Prefer the corner with leftover walk space (2BHK SE is ~2 cm).
+        c.score += align * 44;
+        if (align < 0.5) c.score -= 95; // side-on
         let clear = 1.4;
         for (const col of cols) {
           const ix = Math.max(col.minX - c.x, 0, c.x - col.maxX);
@@ -479,10 +524,23 @@ function roomOverview(
   }
 
   const horiz = Math.hypot(lookX - cam.x, lookZ - cam.z) || 1;
-  let pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : kind === "bathroom" ? (-18 * Math.PI) / 180 : kind === "bedroom" ? (-10 * Math.PI) / 180 : PITCH_DOWN;
+  let pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : kind === "bathroom" ? (-16 * Math.PI) / 180 : kind === "bedroom" ? (-10 * Math.PI) / 180 : PITCH_DOWN;
   // Bathrooms: look at fixture height, not the upper wall a short pitch hits.
-  let lookY = kind === "bathroom" ? 1.15 : EYE + Math.tan(pitch) * horiz;
-  if (kind === "bathroom") pitch = Math.atan((lookY - EYE) / horiz);
+  // Keep enough horizontal distance so the pitch does not become a floor close-up.
+  if (kind === "bathroom" && horiz < 1.2) {
+    const ux = (lookX - cam.x) / horiz, uz = (lookZ - cam.z) / horiz;
+    const ext = pullInside(poly, cam.x + ux * 1.25, cam.z + uz * 1.25, 0.22);
+    lookX = ext.x;
+    lookZ = ext.z;
+  }
+  const horiz2 = Math.hypot(lookX - cam.x, lookZ - cam.z) || 1;
+  let lookY = kind === "bathroom" ? 1.2 : EYE + Math.tan(pitch) * horiz2;
+  if (kind === "bathroom") {
+    const raw = Math.atan((lookY - EYE) / horiz2);
+    const minP = (-20 * Math.PI) / 180;
+    const maxP = (-8 * Math.PI) / 180;
+    pitch = Math.max(minP, Math.min(maxP, raw));
+  }
 
   let fov = defaultFov(kind, area);
   if (kind === "kitchen" && area < 18) fov = 80;

@@ -127,7 +127,7 @@ class App {
         storeLead(data);
         this.hud.toast("Request saved on this device. A sales executive would follow up in Lead Setu.");
       },
-      onTime: (tm) => this.setTime(tm),
+      onTime: (tm) => { void this.setTime(tm); },
       onRoom: (id) => { this.stopTour(false); void this.goRoom(id); },
       onTour: (act) => this.handleTour(act),
       onZoom: (dir) => this.gestures.zoom(dir),
@@ -172,17 +172,17 @@ class App {
     }
   }
 
-  setTime(tm: TimeOfDay) {
+  setTime(tm: TimeOfDay): Promise<void> {
     this.time = tm;
     this.hud.setTime(tm);
-    this.applySceneTime();
+    return this.applySceneTime();
   }
 
-  applySceneTime() {
+  async applySceneTime() {
     applyTimeOfDay(this.engine, this.time);
     this.tower.setTime(this.time);
     for (const i of this.interiors) i.setTime(this.time);
-    for (const b of this.bakedUnits) b.setTime(this.time === "night");
+    await Promise.all(this.bakedUnits.map((b) => Promise.resolve(b.setTime(this.time === "night"))));
     const night = this.time === "night";
     const golden = this.time === "golden";
     const walk = this.view.kind === "flat" && this.view.cam === "walk";
@@ -374,7 +374,7 @@ class App {
     this.engine.setWalkFov(null);
     this.engine.aimWalkLighting(null, null, 0);
     this.hud.setView(this.view);
-    this.applySceneTime();
+    await this.applySceneTime();
     this.engine.setOutlined([]);
     const [cx, cz] = plateCenter();
     const pos = new THREE.Vector3(44, 11, -30);
@@ -405,7 +405,7 @@ class App {
     this.engine.setHudLift(0);
     this.engine.setWalkFov(null);
     this.engine.aimWalkLighting(null, null, 0);
-    this.applySceneTime();
+    await this.applySceneTime();
 
     const y = floorY(floor);
     const slots = slotsForFloor(floor);
@@ -577,7 +577,7 @@ class App {
       this.interiorRoot.add(sun2);
       this.roomLights.push(sun2);
     }
-    this.applySceneTime();
+    await this.applySceneTime();
     if (cam === "walk") {
       const lit = built.lighting;
       this.engine.aimWalkLighting(lit.center, lit.incoming, lit.radius);

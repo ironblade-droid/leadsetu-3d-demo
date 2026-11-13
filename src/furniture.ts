@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { Materials } from "./materials";
+import { hardwareOf } from "./materials";
 import type { Prefs, StyleId } from "./types";
 import { type Catalog, type PlaceOpts } from "./catalog";
 import { front } from "./occupancy";
@@ -73,20 +74,47 @@ function rbox(
   return mesh(new RoundedBoxGeometry(w, h, d, 3, r), mat, x, y, z, parent, 0, ry, 0);
 }
 
+let _aoTex: THREE.CanvasTexture | null = null;
+function contactAoTex(): THREE.CanvasTexture {
+  if (_aoTex) return _aoTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(64, 64, 6, 64, 64, 62);
+  g.addColorStop(0, "rgba(0,0,0,0.62)");
+  g.addColorStop(0.28, "rgba(0,0,0,0.34)");
+  g.addColorStop(0.62, "rgba(0,0,0,0.12)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  _aoTex = new THREE.CanvasTexture(c);
+  _aoTex.colorSpace = THREE.NoColorSpace;
+  return _aoTex;
+}
+
+/** Baked per-piece contact AO — a darkened elliptical gradient under furniture.
+ *  Used on every tier; it's the mobile / software-GPU AO path, and it still
+ *  helps on desktop under sofas and beds next to GTAO. */
 function contactShadow(
   x: number, z: number, w: number, d: number, parent: THREE.Object3D, rot = 0,
 ): void {
   const g = new THREE.PlaneGeometry(1, 1);
   const m = new THREE.MeshBasicMaterial({
-    color: "#000000", transparent: true, opacity: 0.18, depthWrite: false,
+    map: contactAoTex(),
+    color: "#000000",
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false,
+    depthTest: true,
   });
   const meshObj = new THREE.Mesh(g, m);
   meshObj.rotation.x = -Math.PI / 2;
   meshObj.rotation.z = rot;
-  meshObj.position.set(x, 0.01, z);
-  meshObj.scale.set(w * 1.06, d * 1.06, 1);
+  meshObj.position.set(x, 0.012, z);
+  meshObj.scale.set(w * 1.18, d * 1.18, 1);
   meshObj.renderOrder = 1;
   meshObj.castShadow = meshObj.receiveShadow = false;
+  meshObj.name = "contact-ao";
   parent.add(meshObj);
 }
 
@@ -98,23 +126,27 @@ function groupAt(x: number, z: number, rot: number, parent: THREE.Object3D): THR
   return root;
 }
 
-function velvet(color: string): THREE.MeshPhysicalMaterial {
+function velvet(color: string, mats: Materials): THREE.MeshPhysicalMaterial {
   return new THREE.MeshPhysicalMaterial({
     color,
-    roughness: 0.55,
+    roughness: 0.58,
     metalness: 0,
     sheen: 1,
-    sheenRoughness: 0.3,
+    sheenRoughness: 0.32,
     sheenColor: new THREE.Color(color).lerp(new THREE.Color("#ffffff"), 0.18),
-    clearcoat: 0.06,
-    clearcoatRoughness: 0.65,
+    clearcoat: 0.05,
+    clearcoatRoughness: 0.7,
+    normalMap: mats.fabric.normalMap,
+    roughnessMap: mats.fabric.roughnessMap,
+    normalScale: new THREE.Vector2(0.55, 0.55),
+    envMapIntensity: 0.28,
   });
 }
 
 function fabricFor(mats: Materials, style: StyleId, luxury = false): THREE.Material {
   if (style === "luxury" || luxury) {
     const c = (mats.fabric.color as THREE.Color).getStyle();
-    return velvet(c || "#5c1a1a");
+    return velvet(c || "#5c1a1a", mats);
   }
   return mats.fabric;
 }
@@ -133,7 +165,7 @@ function marbleMat(mats: Materials): THREE.MeshPhysicalMaterial {
 }
 
 function brass(mats: Materials, style: StyleId): THREE.Material {
-  return style === "luxury" || style === "traditional" ? mats.gold : mats.metal;
+  return hardwareOf(mats, style);
 }
 
 let tileTex: THREE.CanvasTexture | null = null;
@@ -237,7 +269,7 @@ function modernSofa(p: Placement, g: THREE.Group, mats: Materials, style: StyleI
   rbox(armW, armH, depth - 0.08, 0.04, isTrad ? mats.woodFur : fab, len / 2 - armW / 2, legH + 0.28, 0.02, root);
   // Luxury piping
   if (style === "luxury") {
-    box(len - 0.04, 0.012, 0.012, mats.gold, 0, 0.72, -depth / 2 + 0.2, root);
+    box(len - 0.04, 0.012, 0.012, mats.brass, 0, 0.72, -depth / 2 + 0.2, root);
   }
   contactShadow(p.x, p.z, len + 0.15, depth + 0.1, g, p.rot);
   void seatW;
@@ -286,10 +318,10 @@ function coffeeTable(p: Placement, g: THREE.Group, mats: Materials, style: Style
   rbox(w, 0.04, d, 0.012, top, 0, h - 0.02, 0, root);
   if (style === "luxury") {
     // Slim brass frame, open shelf
-    box(w - 0.04, 0.012, d - 0.04, mats.gold, 0, 0.14, 0, root);
+    box(w - 0.04, 0.012, d - 0.04, mats.brass, 0, 0.14, 0, root);
     for (const lx of [-(w / 2 - 0.05), w / 2 - 0.05]) {
       for (const lz of [-(d / 2 - 0.05), d / 2 - 0.05]) {
-        box(0.018, h - 0.04, 0.018, mats.gold, lx, (h - 0.04) / 2, lz, root);
+        box(0.018, h - 0.04, 0.018, mats.brass, lx, (h - 0.04) / 2, lz, root);
       }
     }
   } else {
@@ -302,7 +334,7 @@ function coffeeTable(p: Placement, g: THREE.Group, mats: Materials, style: Style
   // A book and a small bowl so the table reads as lived-in, not a floating slab.
   box(0.22, 0.015, 0.16, mats.fabric, -0.16, h + 0.01, 0.04, root);
   box(0.22, 0.012, 0.16, mats.woodFur, -0.15, h + 0.025, 0.05, root);
-  cyl(0.07, 0.04, style === "luxury" ? mats.gold : mats.ceramic, 0.22, h + 0.03, -0.06, root);
+  cyl(0.07, 0.04, style === "luxury" ? mats.brass : mats.ceramic, 0.22, h + 0.03, -0.06, root);
   contactShadow(p.x, p.z, w, d, g, p.rot);
 }
 
@@ -346,7 +378,7 @@ function diningTable(p: Placement, g: THREE.Group, mats: Materials, style: Style
   if (style === "luxury") {
     // Pedestal + brass ring
     cyl(0.14, h - 0.08, mats.woodFur, 0, (h - 0.08) / 2, 0, root);
-    cyl(0.28, 0.03, mats.gold, 0, 0.04, 0, root);
+    cyl(0.28, 0.03, mats.brass, 0, 0.04, 0, root);
   } else {
     for (const lx of [-(w / 2 - 0.1), w / 2 - 0.1]) {
       for (const lz of [-(d / 2 - 0.08), d / 2 - 0.08]) {
@@ -469,17 +501,18 @@ function buildHobAndChimney(
   // Duct up to the ceiling (~2.7)
   box(0.26, 1.05, 0.22, steel, x, 2.15, -depth / 2 + 0.16, root);
   // Front badge so it reads as an appliance
-  box(0.18, 0.03, 0.01, mats.gold, x, 1.58, 0.23, root);
+  box(0.18, 0.03, 0.01, mats.brass, x, 1.58, 0.23, root);
 }
 
 function buildSink(root: THREE.Group, mats: Materials, x: number, depth: number, counterY: number): void {
   const steel = new THREE.MeshStandardMaterial({ color: "#c8ccd0", roughness: 0.25, metalness: 0.8 });
   box(0.48, 0.12, 0.36, steel, x, counterY - 0.04, 0.04, root);
   box(0.4, 0.02, 0.28, mats.water, x, counterY + 0.02, 0.04, root);
-  // Faucet
-  cyl(0.016, 0.2, mats.metal, x, counterY + 0.16, -depth / 2 + 0.16, root);
-  box(0.03, 0.03, 0.16, mats.metal, x, counterY + 0.26, -depth / 2 + 0.22, root);
-  cyl(0.01, 0.08, mats.metal, x, counterY + 0.22, 0.0, root);
+  // Faucet — matte black by default (brushed brass when the parent passes brass via mats.blackMetal swap is style-specific at the call site)
+  const tap = mats.blackMetal;
+  cyl(0.016, 0.2, tap, x, counterY + 0.16, -depth / 2 + 0.16, root);
+  box(0.03, 0.03, 0.16, tap, x, counterY + 0.26, -depth / 2 + 0.22, root);
+  cyl(0.01, 0.08, tap, x, counterY + 0.22, 0.0, root);
 }
 
 function fridge(p: Placement, g: THREE.Group, mats: Materials): void {
@@ -492,7 +525,7 @@ function fridge(p: Placement, g: THREE.Group, mats: Materials): void {
   // Freezer seam
   box(w - 0.04, 0.008, 0.01, mats.frame, 0, h * 0.72, d / 2 - 0.005, root);
   // Recessed vertical handle
-  box(0.018, 0.55, 0.02, mats.metal, w / 2 - 0.08, h * 0.42, d / 2 + 0.01, root);
+  box(0.018, 0.55, 0.02, mats.blackMetal, w / 2 - 0.08, h * 0.42, d / 2 + 0.01, root);
   // Water dispenser hint
   box(0.12, 0.16, 0.02, mats.frame, 0, h * 0.5, d / 2 + 0.008, root);
   contactShadow(p.x, p.z, w, d, g, p.rot);
@@ -516,7 +549,7 @@ function platformBed(p: Placement, g: THREE.Group, mats: Materials, style: Style
   const mattress = mats.mattress.clone();
   rbox(w, 0.24, len - 0.08, 0.04, mattress, 0, 0.38, 0.02, root);
   // Duvet
-  const duvet = (style === "luxury" ? velvet("#5c1a1a") : mats.fabric.clone()) as THREE.Material;
+  const duvet = (style === "luxury" ? velvet("#5c1a1a", mats) : mats.fabric.clone()) as THREE.Material;
   if (duvet instanceof THREE.MeshStandardMaterial && style !== "luxury") {
     duvet.color.set(style === "traditional" ? "#7a2e1f" : style === "minimal" ? "#e8e4db" : "#3d4f63");
     duvet.roughness = 0.9;
@@ -533,7 +566,7 @@ function platformBed(p: Placement, g: THREE.Group, mats: Materials, style: Style
   if (master) rbox(w * 0.3, 0.1, 0.2, 0.03, duvet, 0, 0.68, -len / 2 + 0.42, root);
   // Upholstered headboard — channel tufting for luxury (boxes, not carved wood)
   const hbH = master ? 1.15 : 0.95;
-  const hb = style === "luxury" ? velvet("#3a1010") : mats.fabric.clone();
+  const hb = style === "luxury" ? velvet("#3a1010", mats) : mats.fabric.clone();
   if (hb instanceof THREE.MeshStandardMaterial) {
     hb.color.set(style === "minimal" ? "#d0cbc2" : style === "traditional" ? "#5c2218" : "#2c3540");
   }
@@ -542,7 +575,7 @@ function platformBed(p: Placement, g: THREE.Group, mats: Materials, style: Style
     const n = 4;
     for (let i = 0; i < n; i++) {
       const lx = -w / 2 + (w / n) * (i + 0.5);
-      box(0.01, hbH - 0.16, 0.02, mats.gold, lx, hbH / 2 + 0.1, -len / 2 + 0.02, root);
+      box(0.01, hbH - 0.16, 0.02, mats.brass, lx, hbH / 2 + 0.1, -len / 2 + 0.02, root);
     }
   }
   if (style === "traditional") {
@@ -555,7 +588,7 @@ function nightstand(p: Placement, g: THREE.Group, mats: Materials, style: StyleI
   const root = groupAt(p.x, p.z, p.rot, g);
   rbox(p.w, 0.42, p.d, 0.015, mats.woodFur, 0, 0.27, 0, root);
   box(p.w - 0.08, 0.008, 0.01, mats.frame, 0, 0.3, p.d / 2 - 0.002, root);
-  if (style === "luxury") box(0.06, 0.01, 0.01, mats.gold, 0, 0.3, p.d / 2 + 0.01, root);
+  if (style === "luxury") box(0.06, 0.01, 0.01, mats.brass, 0, 0.3, p.d / 2 + 0.01, root);
   // Lamp
   const shade = mats.fabric.clone();
   shade.color.set("#f0e6d4");
@@ -609,7 +642,7 @@ function toilet(p: Placement, g: THREE.Group, mats: Materials): void {
   rbox(0.36, 0.4, 0.5, 0.06, c, 0, 0.32, 0.05, root);
   rbox(0.34, 0.08, 0.08, 0.02, c, 0, 0.54, -0.18, root);
   box(0.36, 0.42, 0.16, c, 0, 0.72, -0.26, root);
-  cyl(0.028, 0.04, mats.metal, 0.12, 0.9, -0.26, root);
+  cyl(0.028, 0.04, mats.blackMetal, 0.12, 0.9, -0.26, root);
   contactShadow(p.x, p.z, 0.4, 0.6, g, p.rot);
 }
 
@@ -621,13 +654,13 @@ function basin(p: Placement, g: THREE.Group, mats: Materials, style: StyleId): v
   rbox(w, 0.06, d, 0.01, style === "luxury" ? marbleMat(mats) : mats.woodFur, 0, 0.82, 0, root);
   box(w - 0.04, 0.7, d - 0.04, mats.cabinet, 0, 0.4, 0, root);
   mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.1, 24), c, 0, 0.92, 0.02, root);
-  cyl(0.014, 0.16, mats.metal, 0, 1.04, -d / 2 + 0.12, root);
-  box(0.03, 0.025, 0.14, mats.metal, 0, 1.12, -d / 2 + 0.18, root);
+  cyl(0.014, 0.16, hardwareOf(mats, style), 0, 1.04, -d / 2 + 0.12, root);
+  box(0.03, 0.025, 0.14, hardwareOf(mats, style), 0, 1.12, -d / 2 + 0.18, root);
   // Simple frameless mirror — not an ornate PH mirror
   const glass = new THREE.MeshPhysicalMaterial({
     color: "#cfe0ea", roughness: 0.04, metalness: 0.35, envMapIntensity: 1.3,
   });
-  box(w * 0.85, 0.7, 0.02, style === "luxury" ? mats.gold : mats.frame, 0, 1.55, -d / 2 + 0.02, root);
+  box(w * 0.85, 0.7, 0.02, style === "luxury" ? mats.brass : mats.frame, 0, 1.55, -d / 2 + 0.02, root);
   box(w * 0.85 - 0.04, 0.64, 0.015, glass, 0, 1.55, -d / 2 + 0.035, root);
   contactShadow(p.x, p.z, w, d, g, p.rot);
 }
@@ -642,17 +675,17 @@ function shower(p: Placement, g: THREE.Group, mats: Materials): void {
   box(s, 1.95, 0.02, glass, 0, 1.02, -s / 2 + 0.01, root);
   box(0.02, 1.95, s, glass, -s / 2 + 0.01, 1.02, 0, root);
   // Top rails + a vertical post at the open outer corner so they don't float.
-  box(s, 0.02, 0.02, mats.metal, 0, 2.00, -s / 2 + 0.01, root);
-  box(0.02, 0.02, s, mats.metal, -s / 2 + 0.01, 2.00, 0, root);
-  box(0.02, 2.00, 0.02, mats.metal, s / 2 - 0.01, 1.02, -s / 2 + 0.01, root);
-  box(0.02, 2.00, 0.02, mats.metal, -s / 2 + 0.01, 1.02, s / 2 - 0.01, root);
-  box(0.02, 2.00, 0.02, mats.metal, -s / 2 + 0.01, 1.02, -s / 2 + 0.01, root);
+  box(s, 0.02, 0.02, mats.blackMetal, 0, 2.00, -s / 2 + 0.01, root);
+  box(0.02, 0.02, s, mats.blackMetal, -s / 2 + 0.01, 2.00, 0, root);
+  box(0.02, 2.00, 0.02, mats.blackMetal, s / 2 - 0.01, 1.02, -s / 2 + 0.01, root);
+  box(0.02, 2.00, 0.02, mats.blackMetal, -s / 2 + 0.01, 1.02, s / 2 - 0.01, root);
+  box(0.02, 2.00, 0.02, mats.blackMetal, -s / 2 + 0.01, 1.02, -s / 2 + 0.01, root);
   // Rain head on a wall arm from the back corner, clearly connected.
   const ax = -s / 2 + 0.12, az = -s / 2 + 0.12;
-  cyl(0.012, 0.22, mats.metal, ax, 2.08, az, root);
-  box(0.012, 0.012, s * 0.28, mats.metal, ax, 2.18, az + s * 0.14, root);
-  box(0.22, 0.02, 0.22, mats.metal, ax, 2.17, az + s * 0.28, root);
-  cyl(0.045, 0.01, mats.metal, 0, 0.06, 0, root);
+  cyl(0.012, 0.22, mats.blackMetal, ax, 2.08, az, root);
+  box(0.012, 0.012, s * 0.28, mats.blackMetal, ax, 2.18, az + s * 0.14, root);
+  box(0.22, 0.02, 0.22, mats.blackMetal, ax, 2.17, az + s * 0.28, root);
+  cyl(0.045, 0.01, mats.blackMetal, 0, 0.06, 0, root);
 }
 
 /* ---------------- other ---------------- */
@@ -684,7 +717,7 @@ function outdoorTable(p: Placement, g: THREE.Group, mats: Materials): void {
   rbox(p.w, 0.04, p.d, 0.015, mats.woodFur, 0, p.h, 0, root);
   for (const lx of [-(p.w / 2 - 0.06), p.w / 2 - 0.06]) {
     for (const lz of [-(p.d / 2 - 0.06), p.d / 2 - 0.06]) {
-      cyl(0.02, p.h, mats.metal, lx, p.h / 2, lz, root);
+      cyl(0.02, p.h, mats.blackMetal, lx, p.h / 2, lz, root);
     }
   }
 }
@@ -734,7 +767,7 @@ function floorLamp(p: Placement, g: THREE.Group, mats: Materials, style: StyleId
 function mandirMesh(p: Placement, g: THREE.Group, mats: Materials): void {
   const root = groupAt(p.x, p.z, p.rot, g);
   box(p.w, 0.7, p.d, mats.woodFur, 0, 1.15, 0, root);
-  box(p.w + 0.04, 0.06, p.d + 0.02, mats.gold, 0, 1.52, 0, root);
+  box(p.w + 0.04, 0.06, p.d + 0.02, mats.brass, 0, 1.52, 0, root);
   box(p.w + 0.02, 0.04, p.d, mats.woodFur, 0, 0.78, 0, root);
   // Simple carved-looking columns (traditional only)
   box(0.04, 0.7, 0.04, mats.woodFur, -p.w / 2 + 0.04, 1.15, p.d / 2, root);
@@ -745,13 +778,70 @@ function mandirMesh(p: Placement, g: THREE.Group, mats: Materials): void {
   cyl(0.04, 0.06, glow, 0, 1.05, p.d / 2 - 0.02, root);
 }
 
+function artCanvas(seed: number, style: StyleId): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 512;
+  const ctx = c.getContext("2d")!;
+  const rng = (n: number) => {
+    const x = Math.sin(seed * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const pal =
+    style === "luxury"
+      ? ["#5c1a1a", "#8a3a2a", "#c4a265", "#efe2cc", "#2a1810"]
+      : style === "minimal"
+        ? ["#d8d2c8", "#b8b2a8", "#8a8680", "#efece6", "#5a5854"]
+        : style === "traditional"
+          ? ["#7a2e1f", "#c4a265", "#e8d5b0", "#3a2010", "#a05a30"]
+          : ["#3d5a6c", "#d8c2a8", "#6a8a7a", "#f0ebe3", "#2c3a44"];
+  ctx.fillStyle = pal[0];
+  ctx.fillRect(0, 0, 512, 512);
+  // Large colour fields
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = pal[Math.floor(rng(i + 1) * pal.length)];
+    ctx.globalAlpha = 0.45 + rng(i + 9) * 0.4;
+    const x = rng(i + 2) * 512 - 40;
+    const y = rng(i + 3) * 512 - 40;
+    const w = 80 + rng(i + 4) * 320;
+    const h = 60 + rng(i + 5) * 280;
+    if (rng(i + 6) > 0.45) ctx.fillRect(x, y, w, h);
+    else {
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, rng(i + 7) * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // Horizon / gesture strokes
+  ctx.globalAlpha = 0.7;
+  ctx.strokeStyle = pal[Math.floor(rng(20) * pal.length)];
+  ctx.lineWidth = 6 + rng(21) * 14;
+  ctx.beginPath();
+  ctx.moveTo(0, 180 + rng(22) * 200);
+  ctx.quadraticCurveTo(256, 80 + rng(23) * 300, 512, 200 + rng(24) * 180);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  // Thin matte border
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 10;
+  ctx.strokeRect(16, 16, 480, 480);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
 function artFrame(p: Placement, g: THREE.Group, mats: Materials, style: StyleId): void {
   const root = groupAt(p.x, p.z, p.rot, g);
-  const frame = style === "luxury" ? mats.gold : mats.frame;
-  box(p.w, p.h, 0.03, frame, 0, 1.45, 0, root);
-  const canvas = mats.fabric.clone();
-  canvas.color.set(style === "luxury" ? "#7a3030" : style === "minimal" ? "#d8d2c8" : "#3d5a6c");
-  box(p.w - 0.08, p.h - 0.08, 0.02, canvas, 0, 1.45, 0.01, root);
+  const frame = style === "luxury" || style === "traditional" ? mats.brass : mats.frame;
+  box(p.w, p.h, 0.04, frame, 0, 1.45, 0, root);
+  const paint = new THREE.MeshStandardMaterial({
+    map: artCanvas(p.x * 17 + p.z * 31 + p.w * 9, style),
+    roughness: 0.82,
+    metalness: 0,
+    envMapIntensity: 0.15,
+  });
+  box(p.w - 0.08, p.h - 0.08, 0.02, paint, 0, 1.45, 0.015, root);
 }
 
 function rugMesh(p: Placement, g: THREE.Group, mats: Materials, style: StyleId): void {
@@ -878,22 +968,52 @@ export function addCurtains(
 ): void {
   const alongX = w >= d;
   const fabric = mats.fabric.clone();
-  fabric.color.set(style === "luxury" ? "#5c1a1a" : style === "traditional" ? "#7a3a1a" : style === "minimal" ? "#efeae2" : "#4a5560");
+  fabric.color.set(style === "luxury" ? "#5c1a1a" : style === "traditional" ? "#7a3a1a" : style === "minimal" ? "#efeae2" : "#3d4a58");
   fabric.side = THREE.DoubleSide;
-  fabric.roughness = 0.92;
-  fabric.transparent = true;
-  fabric.opacity = 0.92;
+  fabric.roughness = 0.9;
+  fabric.transparent = false;
+  fabric.normalScale = new THREE.Vector2(0.85, 0.85);
   const height = Math.min(2.15, wallH - 0.35);
   const y = 0.25 + height / 2;
+  const rod = hardwareOf(mats, style);
+  const folds = 6;
+  const panel = (px: number, pz: number, pw: number, pd: number) => {
+    for (let i = 0; i < folds; i++) {
+      const t = (i + 0.5) / folds;
+      const wave = Math.sin(i * 1.35) * 0.018;
+      if (alongX) {
+        const ww = (pw / folds) * 1.2;
+        box(ww, height, 0.03, fabric, px - pw / 2 + t * pw, y, pz + wave, g);
+      } else {
+        const dd = (pd / folds) * 1.2;
+        box(0.03, height, dd, fabric, px + wave, y, pz - pd / 2 + t * pd, g);
+      }
+    }
+  };
   if (alongX) {
-    const half = Math.max(0.18, w * 0.16);
-    box(half, height, 0.04, fabric, x - w / 2 + half / 2, y, z + (d > 0 ? 0.08 : -0.08), g);
-    box(half, height, 0.04, fabric, x + w / 2 - half / 2, y, z + (d > 0 ? 0.08 : -0.08), g);
-    box(w + 0.1, 0.03, 0.03, mats.metal, x, 0.25 + height + 0.03, z + (d > 0 ? 0.08 : -0.08), g);
+    const half = Math.max(0.2, w * 0.18);
+    const zin = z + (d > 0 ? 0.09 : -0.09);
+    panel(x - w / 2 + half / 2, zin, half, 0.04);
+    panel(x + w / 2 - half / 2, zin, half, 0.04);
+    box(w + 0.14, 0.025, 0.025, rod, x, 0.25 + height + 0.03, zin, g);
+    // Finials
+    const fin = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), rod);
+    fin.position.set(x - w / 2 - 0.05, 0.25 + height + 0.03, zin);
+    g.add(fin);
+    const fin2 = fin.clone();
+    fin2.position.x = x + w / 2 + 0.05;
+    g.add(fin2);
   } else {
-    const half = Math.max(0.18, d * 0.16);
-    box(0.04, height, half, fabric, x + (w > 0 ? 0.08 : -0.08), y, z - d / 2 + half / 2, g);
-    box(0.04, height, half, fabric, x + (w > 0 ? 0.08 : -0.08), y, z + d / 2 - half / 2, g);
-    box(0.03, 0.03, d + 0.1, mats.metal, x + (w > 0 ? 0.08 : -0.08), 0.25 + height + 0.03, z, g);
+    const half = Math.max(0.2, d * 0.18);
+    const xin = x + (w > 0 ? 0.09 : -0.09);
+    panel(xin, z - d / 2 + half / 2, 0.04, half);
+    panel(xin, z + d / 2 - half / 2, 0.04, half);
+    box(0.025, 0.025, d + 0.14, rod, xin, 0.25 + height + 0.03, z, g);
+    const fin = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), rod);
+    fin.position.set(xin, 0.25 + height + 0.03, z - d / 2 - 0.05);
+    g.add(fin);
+    const fin2 = fin.clone();
+    fin2.position.z = z + d / 2 + 0.05;
+    g.add(fin2);
   }
 }

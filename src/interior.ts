@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { Materials } from "./materials";
-import { applyKitchen, applyStyleLook, applyWorldXZUVs, flooringSet, makeFloorMaterial, tuneFloorMaterial } from "./materials";
+import { applyKitchen, applyStyleLook, applyWorldXZUVs, assignFloorMaps, flooringSet, hardwareOf, makeFloorMaterial, uvScaleFor } from "./materials";
+import { addFalseCeiling, addRoomSkirting } from "./deco";
 import { furnishFromPlacements, aabb, addCurtains, type Anchor } from "./furniture";
 import { planUnit } from "./planner";
 import { assertLayout } from "./occupancy";
@@ -13,7 +14,6 @@ import { planToWorld, transformPointDir, transformWall, wallCollision } from "./
 const DOOR_H = 2.10;
 const WIN_SILL = 0.90;
 const WIN_H = 1.40;
-const SKIRT = 0.08;
 
 export interface Hotspot {
   id: string;
@@ -41,6 +41,8 @@ export interface InteriorBuild {
   applyPrefs: (p: Prefs) => void;
   setTime: (time: TimeOfDay) => void;
   dispose: () => void;
+  /** Unit centre and average window-inward direction, for the walk-mode sun. */
+  lighting: { center: THREE.Vector3; incoming: THREE.Vector3; radius: number };
 }
 
 const FACE_YAW = { S: 0, N: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 };
@@ -49,10 +51,20 @@ function pbrFloor(tex: { map: THREE.Texture; normalMap: THREE.Texture; roughness
   return makeFloorMaterial(tex, kind, tint);
 }
 
+function signedArea(poly: [number, number][]): number {
+  let a = 0;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    a += poly[j][0] * poly[i][1] - poly[i][0] * poly[j][1];
+  }
+  return a;
+}
+
 function shapeFromPoly(poly: [number, number][]): THREE.Shape {
+  // CCW so that after rotateX(-π/2) vertex normals point +Y (up).
+  const pts = signedArea(poly) < 0 ? [...poly].reverse() : poly;
   const s = new THREE.Shape();
-  s.moveTo(poly[0][0], poly[0][1]);
-  for (let i = 1; i < poly.length; i++) s.lineTo(poly[i][0], poly[i][1]);
+  s.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
   s.closePath();
   return s;
 }
@@ -66,7 +78,7 @@ export function buildInterior(
   plan: UnitPlan,
   prefs: Prefs,
   mats: Materials,
-  opts: { transform?: Transform; showCeiling: boolean; y: number; cutaway: boolean; hotspots?: boolean; catalog?: Catalog | null } = {
+  opts: { transform?: Transform; showCeiling: boolean; y: number; cutaway: boolean; hotspots?: boolean; catalog?: Catalog | null; mobile?: boolean } = {
     showCeiling: false,
     y: 0,
     cutaway: false,
@@ -94,6 +106,7 @@ export function buildInterior(
   extraMats.push(livingFloor, bathFloor, kitFloor, terrFloor, woodFloor);
 
   const h = opts.cutaway ? Math.min(1.15, plan.wallHeight) : plan.wallHeight;
+  const worldWalls = plan.walls.map((w0) => (t ? transformWall(w0, t) : w0));
 
   // Floors per room
   for (const room of plan.rooms) {
@@ -102,20 +115,25 @@ export function buildInterior(
     if (poly.length < 3) continue;
     const shape = shapeFromPoly(poly);
     const geo = new THREE.ShapeGeometry(shape);
-    geo.rotateX(-Math.PI / 2);
-    applyWorldXZUVs(geo, 0.55);
+    geo.rotateX(Math.PI / 2);
     geos.push(geo);
     let mat = livingFloor;
-    if (room.type === "bathroom" || room.type === "utility") mat = bathFloor;
-    else if (room.type === "kitchen") mat = kitFloor;
-    else if (room.type === "terrace" || room.type === "balcony") mat = terrFloor;
-    else if (room.type === "bedroom" && prefs.flooring === "marble") mat = livingFloor;
-    else if (room.type === "lobby" || room.type === "hall") mat = kitFloor;
+    let kind: "wood" | "marble" | "tile" | "tile-wet" | "terra" = prefs.flooring;
+    if (room.type === "bathroom" || room.type === "utility") { mat = bathFloor; kind = "tile-wet"; }
+    else if (room.type === "kitchen") { mat = kitFloor; kind = "tile"; }
+    else if (room.type === "terrace" || room.type === "balcony") { mat = terrFloor; kind = "terra"; }
+    else if (room.type === "bedroom" && prefs.flooring === "marble") { mat = livingFloor; kind = "marble"; }
+    else if (room.type === "lobby" || room.type === "hall") { mat = kitFloor; kind = "tile"; }
+    applyWorldXZUVs(geo, uvScaleFor(kind));
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.y = 0.01;
+    mesh.position.y = 0.008;
     mesh.receiveShadow = true;
+    mesh.castShadow = false;
+    mesh.frustumCulled = false;
+    mesh.name = `floor-${room.id}`;
     group.add(mesh);
     floorMeshes.push(mesh);
+    if (!opts.cutaway) addRoomSkirting(poly, group, mats.woodFur, geos, worldWalls);
   }
 
   // A single slab under the unit for edges / holes
@@ -128,8 +146,8 @@ export function buildInterior(
   ];
   const slabPoly = worldPoly(corners, t);
   const slabGeo = new THREE.ShapeGeometry(shapeFromPoly(slabPoly));
-  slabGeo.rotateX(-Math.PI / 2);
-  applyWorldXZUVs(slabGeo, 0.4);
+  slabGeo.rotateX(Math.PI / 2);
+  applyWorldXZUVs(slabGeo, uvScaleFor("tile"));
   geos.push(slabGeo);
   const slab = new THREE.Mesh(slabGeo, mats.concfloor ? pbrFloor(mats.concfloor, "wood", "#d0cdc6") : livingFloor);
   slab.position.y = -0.04;
@@ -149,13 +167,6 @@ export function buildInterior(
     mesh.receiveShadow = true;
     group.add(mesh);
     collisions.push(wallCollision(w));
-    // skirting
-    if (!opts.cutaway) {
-      const sk = new THREE.Mesh(new THREE.BoxGeometry(w.w + 0.01, SKIRT, w.d + 0.01), mats.woodFur);
-      sk.position.set(w.x + w.w / 2, SKIRT / 2, w.z + w.d / 2);
-      sk.castShadow = false;
-      group.add(sk);
-    }
   }
 
   // Windows
@@ -221,7 +232,7 @@ export function buildInterior(
     door.position.set(0, dh / 2, len * 0.45);
     door.castShadow = true;
     leaf.add(door);
-    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.1, 8), mats.metal);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.1, 8), hardwareOf(mats, prefs.style));
     handle.rotation.z = Math.PI / 2;
     handle.position.set(0.03, 1.0, len * 0.8);
     leaf.add(handle);
@@ -308,6 +319,23 @@ export function buildInterior(
     roomLights.push(light);
   }
 
+  // Cove / false ceiling with downlights in living rooms and bedrooms.
+  const coveLights: THREE.Light[] = [];
+  if (opts.showCeiling && !opts.cutaway) {
+    for (const room of plan.rooms) {
+      if (room.type !== "living" && room.type !== "bedroom") continue;
+      if (room.area_m2 < 10) continue;
+      addFalseCeiling(worldPoly(room.polygon, t), plan.wallHeight, group, mats, {
+        mobile: !!opts.mobile,
+        geos,
+        extraMats,
+        lights: coveLights,
+      });
+    }
+  }
+
+  const lighting = computeLighting(plan, t);
+
   const hotspots: Hotspot[] = opts.hotspots ? makeHotspots(plan, t, opts.cutaway, group) : [];
 
   function setTime(time: TimeOfDay) {
@@ -337,12 +365,11 @@ export function buildInterior(
     wallMat.color.set(p.wallColor);
     applyKitchen(mats, p.kitchen);
     applyStyleLook(mats, p);
-    const fl = flooringSet(mats, p.flooring);
-    livingFloor.map = fl.map;
-    livingFloor.normalMap = fl.normalMap;
-    livingFloor.roughnessMap = fl.roughnessMap;
-    tuneFloorMaterial(livingFloor, p.flooring);
-    livingFloor.needsUpdate = true;
+    assignFloorMaps(livingFloor, flooringSet(mats, p.flooring), p.flooring);
+    const liveScale = uvScaleFor(p.flooring);
+    for (const mesh of floorMeshes) {
+      if (mesh.material === livingFloor) applyWorldXZUVs(mesh.geometry, liveScale);
+    }
     furn.visible = p.furniture;
     retintFurniture(furn, p, mats);
   }
@@ -362,7 +389,7 @@ export function buildInterior(
     for (const m of extraMats) m.dispose();
   }
 
-  return { group, collisions, spawn, floorMeshes, wallMat, hotspots, rooms, worldRooms, applyPrefs, setTime, dispose };
+  return { group, collisions, spawn, floorMeshes, wallMat, hotspots, rooms, worldRooms, applyPrefs, setTime, dispose, lighting };
 }
 
 function alongLen(a: number, b: number, fallback: number) {
@@ -557,4 +584,43 @@ function makeHotspots(
     spots.push(hs);
   }
   return spots;
+}
+
+function computeLighting(plan: UnitPlan, t?: Transform): { center: THREE.Vector3; incoming: THREE.Vector3; radius: number } {
+  const interiors = plan.rooms.filter((r) => r.type !== "terrace" && r.type !== "balcony");
+  const cents = interiors.map((r) => aabb(worldPoly(r.polygon, t)));
+  const all = plan.rooms.flatMap((r) => worldPoly(r.polygon, t));
+  const bounds = aabb(all.length ? all : [[0, 0], [1, 1]]);
+  const acc = new THREE.Vector3();
+  let n = 0;
+  for (const w0 of plan.windows) {
+    const w = t ? transformWall(w0, t) : w0;
+    const cx = w.x + w.w / 2;
+    const cz = w.z + w.d / 2;
+    let best = cents[0];
+    let bestD = Infinity;
+    for (const c of cents) {
+      const d = (c.cx - cx) ** 2 + (c.cz - cz) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    if (!best) continue;
+    const ix = best.cx - cx;
+    const iz = best.cz - cz;
+    const len = Math.hypot(ix, iz) || 1;
+    acc.x += ix / len;
+    acc.z += iz / len;
+    n += 1;
+  }
+  if (n) acc.multiplyScalar(1 / n);
+  else acc.set(0.55, 0, 0.45);
+  acc.y = 0;
+  acc.normalize();
+  return {
+    center: new THREE.Vector3(bounds.cx, 1.45, bounds.cz),
+    incoming: acc,
+    radius: Math.max(bounds.w, bounds.d) * 0.62 + 3,
+  };
 }

@@ -18,6 +18,8 @@ export interface Materials {
   plaster: TexSet;
   grass: TexSet;
   pave: TexSet;
+  fabricTex: TexSet;
+  brushed: TexSet;
   wall: THREE.MeshStandardMaterial;
   ceiling: THREE.MeshStandardMaterial;
   glass: THREE.MeshPhysicalMaterial;
@@ -26,6 +28,8 @@ export interface Materials {
   door: THREE.MeshStandardMaterial;
   metal: THREE.MeshStandardMaterial;
   gold: THREE.MeshStandardMaterial;
+  brass: THREE.MeshStandardMaterial;
+  blackMetal: THREE.MeshStandardMaterial;
   fabric: THREE.MeshStandardMaterial;
   mattress: THREE.MeshStandardMaterial;
   plant: THREE.MeshStandardMaterial;
@@ -33,12 +37,21 @@ export interface Materials {
   counter: THREE.MeshStandardMaterial;
   cabinet: THREE.MeshStandardMaterial;
   woodFur: THREE.MeshStandardMaterial;
-  ceramic: THREE.MeshStandardMaterial;
+  ceramic: THREE.MeshPhysicalMaterial;
   water: THREE.MeshPhysicalMaterial;
   emissive: THREE.MeshStandardMaterial;
 }
 
 const BASE = () => `${import.meta.env.BASE_URL}textures/`;
+
+/** World-space metres covered by one repeat of each floor texture. */
+export const FLOOR_TILE_M: Record<string, number> = {
+  wood: 2.15,
+  marble: 3.4,
+  tile: 1.7,
+  "tile-wet": 1.7,
+  terra: 2.0,
+};
 
 function loadTex(
   loader: THREE.TextureLoader,
@@ -88,10 +101,10 @@ export async function loadMaterials(
   loader.manager = manager;
   manager.onProgress = (_u, loaded, total) => onProgress(total ? loaded / total : 0);
 
-  const [wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave] =
+  const [wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed] =
     await Promise.all([
       set(loader, "wood", aniso, 1),
-      set(loader, "marble", aniso, 1),
+      set(loader, "marblevein", aniso, 1),
       set(loader, "tile", aniso, 1),
       set(loader, "terra", aniso, 1),
       set(loader, "granite", aniso, 1),
@@ -100,40 +113,81 @@ export async function loadMaterials(
       set(loader, "plaster", aniso, 2),
       set(loader, "grass", aniso, 1),
       set(loader, "pave", aniso, 1),
+      (async () => {
+        const [normalMap, roughnessMap] = await Promise.all([
+          loadTex(loader, "fabric_nor.jpg", false, 5, aniso),
+          loadTex(loader, "fabric_rough.jpg", false, 5, aniso),
+        ]);
+        const map = whiteTex();
+        return { map, normalMap, roughnessMap };
+      })(),
+      (async () => {
+        const [normalMap, roughnessMap] = await Promise.all([
+          loadTex(loader, "brushed_nor.jpg", false, 4, aniso),
+          loadTex(loader, "brushed_rough.jpg", false, 4, aniso),
+        ]);
+        const map = whiteTex();
+        return { map, normalMap, roughnessMap };
+      })(),
     ]);
 
   const std = (color: string, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.05, ...extra });
 
   return {
-    wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave,
+    wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed,
     wall: std("#f4f1ea", { roughness: 0.85, metalness: 0, map: plaster.map, normalMap: plaster.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), roughnessMap: plaster.roughnessMap }),
-    ceiling: std("#f7f4ee", { roughness: 0.9 }),
+    ceiling: std("#f7f4ee", { roughness: 0.92, metalness: 0, envMapIntensity: 0.2 }),
     glass: new THREE.MeshPhysicalMaterial({
-      color: "#9ec5d8",
+      color: "#eef4f8",
       transparent: true,
-      opacity: 0.28,
-      roughness: 0.05,
-      metalness: 0.05,
-      transmission: 0.6,
-      thickness: 0.04,
+      opacity: 0.14,
+      roughness: 0.04,
+      metalness: 0.02,
+      transmission: 0.86,
+      thickness: 0.03,
       ior: 1.45,
+      envMapIntensity: 0.35,
     }),
     glassRail: new THREE.MeshPhysicalMaterial({
-      color: "#d7e6ef",
+      color: "#e8f0f5",
       transparent: true,
-      opacity: 0.22,
-      roughness: 0.04,
-      metalness: 0.1,
-      transmission: 0.7,
+      opacity: 0.16,
+      roughness: 0.05,
+      metalness: 0.08,
+      transmission: 0.8,
       thickness: 0.02,
+      envMapIntensity: 0.3,
     }),
-    frame: std("#2b2e2c", { roughness: 0.4, metalness: 0.35 }),
-    door: std("#6b4a2e", { roughness: 0.55, metalness: 0.05, map: wood.map, roughnessMap: wood.roughnessMap }),
+    frame: std("#2b2e2c", { roughness: 0.45, metalness: 0.35 }),
+    door: std("#6b4a2e", { roughness: 0.55, metalness: 0.05, map: wood.map, roughnessMap: wood.roughnessMap, normalMap: wood.normalMap, normalScale: new THREE.Vector2(0.4, 0.4) }),
     metal: std("#8a8e92", { roughness: 0.35, metalness: 0.8 }),
     gold: std("#c4a265", { roughness: 0.3, metalness: 0.7 }),
-    fabric: std("#4a5560", { roughness: 0.85, metalness: 0 }),
-    mattress: std("#ece6da", { roughness: 0.9 }),
+    brass: std("#c9a15b", {
+      roughness: 0.34,
+      metalness: 0.92,
+      normalMap: brushed.normalMap,
+      roughnessMap: brushed.roughnessMap,
+      normalScale: new THREE.Vector2(0.7, 0.25),
+      envMapIntensity: 0.85,
+    }),
+    blackMetal: std("#1c1e20", {
+      roughness: 0.58,
+      metalness: 0.72,
+      normalMap: brushed.normalMap,
+      roughnessMap: brushed.roughnessMap,
+      normalScale: new THREE.Vector2(0.5, 0.2),
+      envMapIntensity: 0.4,
+    }),
+    fabric: std("#4a5560", {
+      roughness: 0.86,
+      metalness: 0,
+      normalMap: fabricTex.normalMap,
+      roughnessMap: fabricTex.roughnessMap,
+      normalScale: new THREE.Vector2(0.7, 0.7),
+      envMapIntensity: 0.22,
+    }),
+    mattress: std("#ece6da", { roughness: 0.9, normalMap: fabricTex.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), roughnessMap: fabricTex.roughnessMap }),
     plant: std("#2d5a3d", { roughness: 0.8 }),
     soil: std("#3a2a1c", { roughness: 1 }),
     counter: new THREE.MeshPhysicalMaterial({
@@ -141,7 +195,15 @@ export async function loadMaterials(
       clearcoat: 0.7, clearcoatRoughness: 0.12, envMapIntensity: 1.05,
     }),
     cabinet: std("#f3f1ec", { roughness: 0.55 }),
-    woodFur: std("#8b5a2b", { roughness: 0.58, metalness: 0.02, map: wood.map, roughnessMap: wood.roughnessMap, normalMap: wood.normalMap, normalScale: new THREE.Vector2(0.45, 0.45), envMapIntensity: 0.4 }),
+    woodFur: std("#8b5a2b", {
+      roughness: 0.58,
+      metalness: 0.02,
+      map: wood.map,
+      roughnessMap: wood.roughnessMap,
+      normalMap: wood.normalMap,
+      normalScale: new THREE.Vector2(0.55, 0.55),
+      envMapIntensity: 0.35,
+    }),
     ceramic: new THREE.MeshPhysicalMaterial({
       color: "#f4f6f7", roughness: 0.2, metalness: 0.03,
       clearcoat: 0.8, clearcoatRoughness: 0.14, envMapIntensity: 1.0,
@@ -156,6 +218,14 @@ export async function loadMaterials(
     }),
     emissive: std("#fff4d8", { emissive: "#fff4d8", emissiveIntensity: 0.85, roughness: 1 }),
   };
+}
+
+function whiteTex(): THREE.Texture {
+  const data = new Uint8Array([255, 255, 255, 255]);
+  const t = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.needsUpdate = true;
+  return t;
 }
 
 export const STYLE_DEFAULTS: Record<
@@ -241,54 +311,98 @@ export function applyStyleLook(m: Materials, prefs: Prefs): void {
 }
 
 /**
- * Cheap world-aligned UVs for a horizontal surface (floors, slabs).
- * After a ShapeGeometry has been rotated to XZ, UVs are taken from world XZ
- * so the texture doesn't stretch with the room's bounding box.
+ * World-metre UVs for a horizontal surface. After ShapeGeometry is rotated
+ * onto XZ, U = world X and V = world Z (metres). Texture.repeat then sets
+ * the real-world tile size (see FLOOR_TILE_M / cloneFloorMaps).
  */
-export function applyWorldXZUVs(geo: THREE.BufferGeometry, scale = 0.55): void {
+export function applyWorldXZUVs(geo: THREE.BufferGeometry, scale = 1): void {
   const pos = geo.attributes.position;
   if (!pos) return;
+  // Shift into the positive quadrant so RepeatWrapping is reliable on
+  // SwiftShader / mobile (world Z is often negative after rotY 180).
   const uv = new Float32Array(pos.count * 2);
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const z = pos.getZ(i);
-    uv[i * 2] = x * scale;
-    uv[i * 2 + 1] = z * scale;
+    uv[i * 2] = pos.getX(i) * scale + 40;
+    uv[i * 2 + 1] = -pos.getZ(i) * scale + 40;
   }
   geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  geo.computeVertexNormals();
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
+  const n = geo.attributes.normal;
+  if (n && n.getY(0) < 0) {
+    for (let i = 0; i < n.count; i++) {
+      n.setXYZ(i, -n.getX(i), -n.getY(i), -n.getZ(i));
+    }
+    n.needsUpdate = true;
+    const idx = geo.index;
+    if (idx) {
+      for (let i = 0; i < idx.count; i += 3) {
+        const b = idx.getX(i + 1);
+        idx.setX(i + 1, idx.getX(i + 2));
+        idx.setX(i + 2, b);
+      }
+      idx.needsUpdate = true;
+    }
+  }
 }
 
+/**
+ * Floors share the loaded TexSet (same Texture objects as on disk) so
+ * SwiftShader actually samples the albedo — Texture.clone() produced a
+ * Standard material whose normal mapped and whose diffuse stayed white.
+ * World-metre tile size is baked into the geometry UVs (see uvScaleFor)
+ * so we never mutate wood.repeat, which furniture (woodFur) also uses.
+ */
+export function uvScaleFor(kind: string): number {
+  return 1 / (FLOOR_TILE_M[kind] ?? 2.0);
+}
 
 export function makeFloorMaterial(
   tex: TexSet,
   kind: FlooringId | "tile-wet" | "terra",
   tint = "#ffffff",
-): THREE.MeshPhysicalMaterial {
-  const map = tex.map.clone();
-  const normalMap = tex.normalMap.clone();
-  const roughnessMap = tex.roughnessMap.clone();
-  map.needsUpdate = normalMap.needsUpdate = roughnessMap.needsUpdate = true;
+): THREE.MeshStandardMaterial {
   const marble = kind === "marble";
   const wet = kind === "tile" || kind === "tile-wet";
-  return new THREE.MeshPhysicalMaterial({
+  tex.map.wrapS = tex.map.wrapT = THREE.RepeatWrapping;
+  tex.normalMap.wrapS = tex.normalMap.wrapT = THREE.RepeatWrapping;
+  tex.roughnessMap.wrapS = tex.roughnessMap.wrapT = THREE.RepeatWrapping;
+  return new THREE.MeshStandardMaterial({
     color: tint,
-    map, normalMap, roughnessMap,
-    roughness: marble ? 0.12 : wet ? 0.32 : 0.62,
-    metalness: 0.02,
-    clearcoat: marble ? 1.0 : wet ? 0.28 : 0.0,
-    clearcoatRoughness: marble ? 0.06 : 0.35,
-    envMapIntensity: marble ? 1.25 : wet ? 0.7 : 0.35,
-    reflectivity: marble ? 0.55 : 0.2,
-    ior: 1.5,
+    map: tex.map,
+    normalMap: tex.normalMap,
+    roughnessMap: tex.roughnessMap,
+    roughness: marble ? 0.28 : wet ? 0.42 : 0.62,
+    metalness: 0.0,
+    envMapIntensity: marble ? 0.28 : wet ? 0.2 : 0.12,
+    normalScale: new THREE.Vector2(marble ? 0.45 : 0.7, marble ? 0.45 : 0.7),
+    side: THREE.DoubleSide,
   });
 }
 
-export function tuneFloorMaterial(mat: THREE.MeshPhysicalMaterial, kind: FlooringId): void {
+export function tuneFloorMaterial(mat: THREE.MeshStandardMaterial, kind: FlooringId | "tile-wet" | "terra"): void {
   const marble = kind === "marble";
-  const tile = kind === "tile";
-  mat.roughness = marble ? 0.12 : tile ? 0.32 : 0.62;
-  mat.clearcoat = marble ? 1.0 : tile ? 0.28 : 0.0;
-  mat.clearcoatRoughness = marble ? 0.06 : 0.35;
-  mat.envMapIntensity = marble ? 1.25 : tile ? 0.7 : 0.35;
+  const tile = kind === "tile" || kind === "tile-wet";
+  mat.roughness = marble ? 0.28 : tile ? 0.42 : 0.62;
+  mat.envMapIntensity = marble ? 0.28 : tile ? 0.2 : 0.12;
+  mat.metalness = 0;
+  if (mat.normalScale) mat.normalScale.set(marble ? 0.45 : 0.7, marble ? 0.45 : 0.7);
   mat.needsUpdate = true;
+}
+
+/** Swap living-floor maps when the user picks Wood / Marble / Tile. */
+export function assignFloorMaps(
+  mat: THREE.MeshStandardMaterial,
+  tex: TexSet,
+  kind: FlooringId,
+): void {
+  mat.map = tex.map;
+  mat.normalMap = tex.normalMap;
+  mat.roughnessMap = tex.roughnessMap;
+  tuneFloorMaterial(mat, kind);
+}
+
+export function hardwareOf(m: Materials, style: StyleId): THREE.MeshStandardMaterial {
+  return style === "luxury" || style === "traditional" ? m.brass : m.blackMetal;
 }

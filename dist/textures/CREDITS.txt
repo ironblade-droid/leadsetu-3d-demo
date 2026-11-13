@@ -20,3 +20,31 @@ Indoor HDRI: studio_small_08 by Greg Zaal, CC0, https://polyhaven.com/a/studio_s
 
 Furniture models: see ../../CREDITS.md and this folder's packed .glb files.
 
+v4 additions (retrieved 13 November 2026, Asia/Calcutta):
+
+- marblevein_*  ambientCG Marble001, CC0
+  https://ambientcg.com/a/Marble001
+  1K JPEG Color, NormalGL and Roughness. Used for the Marble flooring option
+  (white slab with visible grey-green veining). The earlier Poly Haven marble_01
+  tiled limestone remains on disk as marble_*.jpg but is unused in v4.
+
+- fabric_nor.jpg, fabric_rough.jpg  Poly Haven Fabric Pattern 07, CC0
+  https://polyhaven.com/a/fabric_pattern_07  by Rob Tuytel
+  1K JPEG OpenGL normal and roughness (cotton weave). The gingham colour maps
+  are not used — sofa, bed, curtains and mattress are tinted by style and
+  take weave from these two maps.
+
+- brushed_nor.jpg, brushed_rough.jpg, brushed_diff.jpg, brushed_metal.jpg
+  ambientCG Metal032, CC0
+  https://ambientcg.com/a/Metal032
+  1K JPEG NormalGL and Roughness used for brushed brass and matte-black
+  hardware (colour comes from the material tint). Albedo and metalness maps
+  are on disk but unused.
+
+Indoor HDRI: studio_small_08 by Greg Zaal, CC0, https://polyhaven.com/a/studio_small_08
+(1K HDR, used as a reflection environment only.)
+
+City / skyline HDRI: modern_buildings_2 by Alexander Scholten, CC0,
+https://polyhaven.com/a/modern_buildings_2
+(1K HDR, in public/hdris/modern_buildings_2_1k.hdr, used as the sky /
+window backdrop — not as the indoor reflection environment.)

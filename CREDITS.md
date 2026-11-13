@@ -58,9 +58,17 @@ The packed catalog on disk is about **5.4 MB**. Only the potted plant is instant
 From [Poly Haven](https://polyhaven.com), CC0. See `public/textures/CREDITS.txt`.
 
 - Floor, wall and ground textures as listed in that file (wood, marble, tile, terracotta, granite, plaster, concrete, grass, paving).
-- Indoor studio HDRI: [Studio Small 08](https://polyhaven.com/a/studio_small_08) by Greg Zaal, 1K HDR, in `public/hdris/studio_small_08_1k.hdr`. Used only as a reflection environment (the sky stays a solid colour so morning, golden hour and night still read clearly).
+- Indoor studio HDRI: [Studio Small 08](https://polyhaven.com/a/studio_small_08) by Greg Zaal, 1K HDR, in `public/hdris/studio_small_08_1k.hdr`. Used only as a reflection environment.
+- City / skyline HDRI: [Modern Buildings 2](https://polyhaven.com/a/modern_buildings_2) by Alexander Scholten, 1K HDR, in `public/hdris/modern_buildings_2_1k.hdr`. Used as the sky (window views). Morning / golden hour / night change exposure, rotation and intensity; there is no separate night-city HDRI.
+- Fabric weave (normal + roughness only): [Fabric Pattern 07](https://polyhaven.com/a/fabric_pattern_07) by Rob Tuytel, 1K JPEG, CC0. Applied to sofas, beds, curtains and mattresses; colour is a style tint, not the original gingham albedo.
+- Veined white marble: [Marble001](https://ambientcg.com/a/Marble001) from ambientCG, CC0, 1K JPEG. Used for the Marble flooring option.
+- Brushed metal (normal + roughness): [Metal032](https://ambientcg.com/a/Metal032) from ambientCG, CC0, 1K JPEG. Used for brushed-brass and matte-black hardware.
 
 ## Runtime
 
 - [three.js](https://threejs.org) 0.170, MIT
 - Draco decoder from the three.js examples, Apache 2.0 / Google Draco licence, self-hosted in `public/draco/`
+
+## v4 presentation (original)
+
+Skirting boards, living/master cove ceilings with recessed downlights, folded curtains, contact-AO decals, and procedural wall-art canvases are original geometry and generated textures, not third-party models. GTAO is the three.js 0.170 example pass (`three/examples/jsm/postprocessing/GTAOPass.js`, MIT), used on desktop/high-tier GPUs only.

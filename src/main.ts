@@ -1,7 +1,7 @@
 import "./styles.css";
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadHdriEnvironment, type Engine } from "./engine";
+import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBackground, loadHdriEnvironment, portraitPitchBias, type Engine } from "./engine";
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
@@ -83,9 +83,10 @@ class App {
     this.mats = await loadMaterials(this.engine.renderer, (p) => setLoad(0.05 + p * 0.55));
     const catP = loadCatalog(this.engine.renderer, (p) => setLoad(0.6 + p * 0.2));
     const hdriP = loadHdriEnvironment(this.engine, `${import.meta.env.BASE_URL}hdris/studio_small_08_1k.hdr`);
+    const cityP = loadCityBackground(this.engine, `${import.meta.env.BASE_URL}hdris/modern_buildings_2_1k.hdr`);
     this.plans = await loadPlans();
     this.catalog = await catP;
-    await hdriP;
+    await Promise.all([hdriP, cityP]);
     setLoad(0.88);
 
     this.engine.scene.add(this.world);
@@ -176,10 +177,10 @@ class App {
         } else {
           l.color.set("#f4efe6");
           l.groundColor.set("#8a7a68");
-          l.intensity = walk ? 0.9 : 0.45;
+          l.intensity = walk ? 0.28 : 0.4;
         }
       } else if (l instanceof THREE.DirectionalLight) {
-        l.intensity = night ? 0.06 : golden ? (walk ? 0.35 : 0.55) : walk ? 0.55 : 0.9;
+        l.intensity = night ? 0.06 : golden ? (walk ? 0.28 : 0.55) : walk ? 0.2 : 0.75;
         l.color.set(night ? "#a0b4e0" : golden ? "#ffb060" : "#fff4df");
       }
     }
@@ -321,6 +322,7 @@ class App {
     this.view = { kind: "tower", hoverFloor: null };
     this.engine.setHudLift(0);
     this.engine.setWalkFov(null);
+    this.engine.aimWalkLighting(null, null, 0);
     this.hud.setView(this.view);
     this.applySceneTime();
     const [cx, cz] = plateCenter();
@@ -348,6 +350,9 @@ class App {
     this.hud.spec = null;
     this.view = { kind: "floor", floor, hoverUnit: null };
     this.hud.setView(this.view);
+    this.engine.setHudLift(0);
+    this.engine.setWalkFov(null);
+    this.engine.aimWalkLighting(null, null, 0);
     this.applySceneTime();
 
     const y = floorY(floor);
@@ -360,6 +365,7 @@ class App {
         y,
         cutaway: true,
         catalog: this.catalog,
+        mobile: this.engine.mobile,
       });
       built.group.userData.unitId = unitCode(floor, slot.suffix);
       built.group.userData.slot = slot;
@@ -434,6 +440,7 @@ class App {
       cutaway: cam === "dollhouse",
       hotspots: true,
       catalog: this.catalog,
+      mobile: this.engine.mobile,
     });
     this.interiorRoot.add(built.group);
     this.interiors.push(built);
@@ -455,15 +462,26 @@ class App {
       this.interiorRoot.add(studio);
     }
 
-    const fill = new THREE.HemisphereLight("#f4efe6", "#8a7a68", cam === "walk" ? 0.9 : 0.45);
+    // Modest extra fill only. The engine sun is aimed through the windows
+    // in walk mode (soft shadows + warm fill); a second 0.9 hemi washed
+    // floors and killed contact AO.
+    const fill = new THREE.HemisphereLight("#f4efe6", "#8a7a68", cam === "walk" ? 0.28 : 0.4);
     this.interiorRoot.add(fill);
     this.roomLights.push(fill);
-    const sun2 = new THREE.DirectionalLight("#fff4df", cam === "walk" ? 0.55 : 0.9);
-    sun2.position.set(8, 12, 6);
-    sun2.castShadow = cam === "dollhouse" && !this.engine.mobile;
-    this.interiorRoot.add(sun2);
-    this.roomLights.push(sun2);
+    if (cam === "dollhouse") {
+      const sun2 = new THREE.DirectionalLight("#fff4df", 0.75);
+      sun2.position.set(8, 12, 6);
+      sun2.castShadow = !this.engine.mobile;
+      this.interiorRoot.add(sun2);
+      this.roomLights.push(sun2);
+    }
     this.applySceneTime();
+    if (cam === "walk") {
+      const lit = built.lighting;
+      this.engine.aimWalkLighting(lit.center, lit.incoming, lit.radius);
+    } else {
+      this.engine.aimWalkLighting(null, null, 0);
+    }
 
     for (const h of built.hotspots) {
       h.labelEl?.addEventListener("click", (e) => {
@@ -490,7 +508,7 @@ class App {
         let sx = spawnAt?.x ?? built.spawn.x;
         let sz = spawnAt?.z ?? built.spawn.z;
         let yaw = spawnAt?.yaw ?? built.spawn.yaw;
-        let pitch = spawnAt?.yaw !== undefined ? -0.18 : (built.spawn.pitch ?? -0.18);
+        let pitch = spawnAt?.yaw !== undefined ? -0.18 + portraitPitchBias() : (built.spawn.pitch ?? -0.18) + portraitPitchBias();
         if (keepCam && !spawnAt && prevPos.y > 0.5 && this.walker.isWalkable(prevPos.x, prevPos.z)) {
           sx = prevPos.x;
           sz = prevPos.z;
@@ -577,8 +595,9 @@ class App {
     const fromYaw = this.cameraYaw();
     const fromPitch = this.cameraPitch();
     try {
-      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, stop.pitch, 1.15);
-      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw, stop.pitch);
+      const pitch = stop.pitch + portraitPitchBias();
+      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, pitch, 1.15);
+      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw, pitch);
       this.walker.apply(this.engine.camera);
       this.walker.enabled = true;
     } finally {
@@ -887,6 +906,101 @@ class App {
       currentRoom: () => this.currentRoom,
       tour: () => this.tour,
       prefs: () => this.prefs,
+      fps: () => this.engine.fps(),
+      ao: () => ({ enabled: this.engine.aoEnabled(), highTier: this.engine.highTier, software: this.engine.softwareGpu }),
+      lighting: () => this.interiors[0]?.lighting ?? null,
+      camInfo: () => ({
+        pos: this.engine.camera.position.toArray(),
+        rot: [this.engine.camera.rotation.x, this.engine.camera.rotation.y, this.engine.camera.rotation.z],
+        fov: this.engine.camera.fov,
+        near: this.engine.camera.near,
+        far: this.engine.camera.far,
+        aspect: this.engine.camera.aspect,
+        view: this.engine.camera.view,
+      }),
+      rayFloor: () => {
+        const ray = new THREE.Raycaster();
+        // Several NDC points looking at the lower half of the frame (the floor).
+        const pts = [[0, -0.2], [0, -0.45], [0.2, -0.3], [-0.2, -0.3], [0, 0]];
+        const out: unknown[] = [];
+        for (const [x, y] of pts) {
+          ray.setFromCamera(new THREE.Vector2(x, y), this.engine.camera);
+          const hits = ray.intersectObject(this.engine.scene, true);
+          out.push({
+            ndc: [x, y],
+            hits: hits.slice(0, 6).map((h) => {
+              const mat = h.object instanceof THREE.Mesh ? (h.object.material as THREE.MeshStandardMaterial) : null;
+              const img = mat?.map?.image as { src?: string } | undefined;
+              return {
+                name: h.object.name,
+                type: h.object.type,
+                y: h.object.position.y,
+                dist: Math.round(h.distance * 1000) / 1000,
+                point: h.point.toArray().map((n) => Math.round(n * 1000) / 1000),
+                visible: h.object.visible,
+                mat: mat?.type,
+                color: mat?.color?.getHexString?.(),
+                map: img?.src?.slice(-40) ?? null,
+                parent: h.object.parent?.name ?? (h.object.parent?.type ?? null),
+              };
+            }),
+          });
+        }
+        return out;
+      },
+      paintFloors: (hex: string, basic = false) => {
+        for (const interior of this.interiors) {
+          for (const m of interior.floorMeshes) {
+            const prev = m.material as THREE.MeshStandardMaterial;
+            if (basic && prev.map) {
+              m.material = new THREE.MeshBasicMaterial({ map: prev.map, color: "#ffffff" });
+            } else {
+              prev.map = null;
+              prev.normalMap = null;
+              prev.roughnessMap = null;
+              prev.color.set(hex);
+              prev.needsUpdate = true;
+            }
+          }
+        }
+      },
+
+      floorDebug: () => {
+        const out: unknown[] = [];
+        for (const interior of this.interiors) {
+          for (const m of interior.floorMeshes) {
+            const mat = m.material as THREE.MeshStandardMaterial;
+            const img = mat.map?.image as { width?: number; src?: string } | undefined;
+            const uv = m.geometry.getAttribute("uv");
+            const pos = m.geometry.getAttribute("position");
+            const nrm = m.geometry.getAttribute("normal");
+            out.push({
+              name: m.name,
+              visible: m.visible,
+              y: m.position.y,
+              color: mat.color.getHexString(),
+              type: mat.type,
+              side: mat.side,
+              rough: mat.roughness,
+              env: mat.envMapIntensity,
+              map: mat.map
+                ? {
+                    w: img?.width ?? 0,
+                    src: String(img?.src ?? "").slice(-50),
+                    repeat: mat.map.repeat.toArray(),
+                    wrap: mat.map.wrapS,
+                    colorSpace: mat.map.colorSpace,
+                  }
+                : null,
+              uv0: uv ? [uv.getX(0), uv.getY(0), uv.getX(1), uv.getY(1), uv.getX(2), uv.getY(2)] : null,
+              pos0: pos ? [pos.getX(0), pos.getY(0), pos.getZ(0), pos.getX(1), pos.getY(1), pos.getZ(1)] : null,
+              n0: nrm ? [nrm.getX(0), nrm.getY(0), nrm.getZ(0)] : null,
+              verts: pos?.count,
+            });
+          }
+        }
+        return out;
+      },
     };
     (window as unknown as { __leadsetu: typeof api }).__leadsetu = api;
   }

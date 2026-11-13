@@ -699,7 +699,7 @@ class App {
     try {
       const pitch = stop.pitch + portraitPitchBias();
       await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, pitch, 0.5);
-      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw, pitch);
+      this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw, pitch, true);
       this.walker.apply(this.engine.camera);
       this.walker.enabled = true;
     } finally {

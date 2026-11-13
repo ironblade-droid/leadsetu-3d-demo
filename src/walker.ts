@@ -39,8 +39,10 @@ export class Walker {
     this.rooms = rooms ?? [];
   }
 
-  spawn(x: number, y: number, z: number, yaw: number, pitch = -0.18) {
-    const clear = this.nearestClear(x, z);
+  spawn(x: number, y: number, z: number, yaw: number, pitch = -0.18, exact = false) {
+    // Room-stop cameras are already settled; nearestClear with a 0.3 m
+    // radius would shove a tight bathroom or 2BHK bedroom onto a wall or bed.
+    const clear = exact ? { x, z } : this.nearestClear(x, z);
     this.position.set(clear.x, y || EYE, clear.z);
     this.minY = y || EYE;
     this.yaw = yaw;

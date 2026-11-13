@@ -755,10 +755,20 @@ function planBath(ctx: PlanCtx): void {
     return Math.min(...doorCenters.map((c) => Math.hypot(x - c.x, z - c.z)));
   };
   corners.sort((p, q) => distDoor(q[0], q[1]) - distDoor(p[0], p[1]));
+  // Glass screens sit on the two back walls of the chosen corner (local -X
+  // and -Z of the shower mesh). rot: 0 is the SW corner; other corners need
+  // a yaw so we don't plant a frontal glass wall in the doorway view.
+  const showerRot = (x: number, z: number) => {
+    const east = x > a.cx, north = z > a.cz;
+    if (east && north) return Math.PI;
+    if (east && !north) return -Math.PI / 2;
+    if (!east && north) return Math.PI / 2;
+    return 0;
+  };
   if (a.w * a.d >= 3.2) {
     for (const [x, z] of corners) {
       if (tryPush(ctx, {
-        id: "shower", kind: "shower", x, z, rot: 0,
+        id: "shower", kind: "shower", x, z, rot: showerRot(x, z),
         w: sh, d: sh, h: 2.1, wallHug: true, tight: true, group: "bath",
       })) break;
     }

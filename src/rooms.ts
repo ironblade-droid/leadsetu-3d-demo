@@ -198,7 +198,7 @@ function roomOverview(
   cols: Collision[],
   doors: Door[],
   unitCenter?: { x: number; z: number },
-  lookBias?: { x: number; z: number; fx?: number; fz?: number; depth?: number; width?: number },
+  lookBias?: { x: number; z: number; fx?: number; fz?: number; depth?: number; width?: number; showerX?: number; showerZ?: number },
 ): Viewpoint {
   const a = aabb(poly);
   const area = room.area_m2 || a.w * a.d;
@@ -315,22 +315,44 @@ function roomOverview(
     lookZ = a.cz;
   }
 
-  // Bathroom: stand at the doorway looking at the fixtures, with enough
-  // distance that we frame the basin and WC — not a single nearby wall.
+  // Bathroom: stand at the doorway or the corner farthest from the shower,
+  // looking at the basin and WC. Never stare into the shower enclosure —
+  // it is a solid partition and reads as a wall close-up.
   if (kind === "bathroom") {
+    const shower = (lookBias?.showerX !== undefined && lookBias?.showerZ !== undefined)
+      ? { x: lookBias.showerX, z: lookBias.showerZ }
+      : null;
     if (lookBias) {
-      lookX = lookBias.x * 0.55 + a.cx * 0.45;
-      lookZ = lookBias.z * 0.55 + a.cz * 0.45;
+      lookX = lookBias.x * 0.4 + a.cx * 0.6;
+      lookZ = lookBias.z * 0.4 + a.cz * 0.6;
+    }
+    const bathCorners: [number, number][] = [
+      [a.minX + 0.22, a.minZ + 0.22],
+      [a.maxX - 0.22, a.minZ + 0.22],
+      [a.minX + 0.22, a.maxZ - 0.22],
+      [a.maxX - 0.22, a.maxZ - 0.22],
+    ];
+    if (shower) {
+      bathCorners.sort((p, q) =>
+        Math.hypot(q[0] - shower.x, q[1] - shower.z) - Math.hypot(p[0] - shower.x, p[1] - shower.z),
+      );
+      consider(bathCorners[0][0], bathCorners[0][1], 100, 0.16);
+      consider(bathCorners[1][0], bathCorners[1][1], 74, 0.16);
     }
     for (const door of doors) {
       const inv = doorInward(door, poly);
       if (!inv) continue;
       const sx = -inv.iz, sz = inv.ix;
-      consider(inv.mx + inv.ix * 0.22, inv.mz + inv.iz * 0.22, 72, 0.14);
-      consider(inv.mx + inv.ix * 0.48, inv.mz + inv.iz * 0.48, 78, 0.16);
-      consider(inv.mx + inv.ix * 0.78, inv.mz + inv.iz * 0.78, 64, 0.16);
-      consider(inv.mx + inv.ix * 0.55 + sx * 0.30, inv.mz + inv.iz * 0.55 + sz * 0.30, 56, 0.16);
-      consider(inv.mx + inv.ix * 0.55 - sx * 0.30, inv.mz + inv.iz * 0.55 - sz * 0.30, 56, 0.16);
+      let ox = 0, oz = 0;
+      if (shower) {
+        const along = (inv.mx - shower.x) * sx + (inv.mz - shower.z) * sz;
+        const sign = along >= 0 ? 1 : -1;
+        ox = sx * sign * 0.38;
+        oz = sz * sign * 0.38;
+      }
+      consider(inv.mx + inv.ix * 0.28 + ox, inv.mz + inv.iz * 0.28 + oz, 90, 0.14);
+      consider(inv.mx + inv.ix * 0.52 + ox, inv.mz + inv.iz * 0.52 + oz, 94, 0.16);
+      consider(inv.mx + inv.ix * 0.30, inv.mz + inv.iz * 0.30, 58, 0.14);
     }
     const ahead = (x: number, z: number, ux: number, uz: number) => {
       for (let s = 0.06; s < 5; s += 0.06) {
@@ -338,16 +360,32 @@ function roomOverview(
       }
       return 5;
     };
+    const obst = (x: number, z: number, ux: number, uz: number) => {
+      for (let s = 0.12; s < 4; s += 0.08) {
+        if (hitsCollision(cols, x + ux * s, z + uz * s, 0.12)) return s;
+      }
+      return 4;
+    };
     for (const c of cands) {
       const dx = lookX - c.x, dz = lookZ - c.z;
       const dist = Math.hypot(dx, dz) || 0.01;
-      const wallAhead = ahead(c.x, c.z, dx / dist, dz / dist);
-      if (wallAhead < 0.7) c.score -= 90;
-      else if (wallAhead < 1.05) c.score -= 35;
-      c.score += Math.min(wallAhead, 2.2) * 16;
+      const ux = dx / dist, uz = dz / dist;
+      const wallAhead = ahead(c.x, c.z, ux, uz);
+      const hit = obst(c.x, c.z, ux, uz);
+      if (hit < 0.9) c.score -= 130;
+      else if (hit < 1.35) c.score -= 45;
+      c.score += Math.min(hit, 2.4) * 22;
+      if (wallAhead < 0.7) c.score -= 80;
+      c.score += Math.min(wallAhead, 2.2) * 12;
       c.score += Math.min(dist, 2.0) * 12;
-      const wallClear = distToPoly(poly, c.x, c.z);
-      if (wallClear < 0.22) c.score -= 40;
+      if (shower) {
+        const toSx = shower.x - c.x, toSz = shower.z - c.z;
+        const sLen = Math.hypot(toSx, toSz) || 1;
+        const facing = (toSx / sLen) * ux + (toSz / sLen) * uz;
+        // Shower dead ahead at short range = wall close-up.
+        if (facing > 0.8 && sLen < 1.65) c.score -= 80;
+        c.score += Math.min(sLen, 2.0) * 10;
+      }
     }
   }
 
@@ -443,7 +481,7 @@ function roomOverview(
   const horiz = Math.hypot(lookX - cam.x, lookZ - cam.z) || 1;
   let pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : kind === "bathroom" ? (-18 * Math.PI) / 180 : kind === "bedroom" ? (-10 * Math.PI) / 180 : PITCH_DOWN;
   // Bathrooms: look at fixture height, not the upper wall a short pitch hits.
-  let lookY = kind === "bathroom" ? 0.95 : EYE + Math.tan(pitch) * horiz;
+  let lookY = kind === "bathroom" ? 1.15 : EYE + Math.tan(pitch) * horiz;
   if (kind === "bathroom") pitch = Math.atan((lookY - EYE) / horiz);
 
   let fov = defaultFov(kind, area);
@@ -569,11 +607,16 @@ export function buildRoomStops(
           return b ? { x: b.x, z: b.z, fx: b.fx, fz: b.fz, depth: b.depth, width: b.width } : undefined;
         })()
       : meta.type === "bathroom" ? (() => {
-          const xs = (anchorsByRoom.get(room.id) ?? []).filter((x) => x.kind === "basin" || x.kind === "bath");
-          if (!xs.length) return undefined;
+          const all = anchorsByRoom.get(room.id) ?? [];
+          const xs = all.filter((x) => x.kind === "basin" || x.kind === "bath");
+          const sh = all.find((x) => x.kind === "shower");
+          if (!xs.length && !sh) return undefined;
+          const src = xs.length ? xs : [sh!];
           return {
-            x: xs.reduce((s, a) => s + a.x, 0) / xs.length,
-            z: xs.reduce((s, a) => s + a.z, 0) / xs.length,
+            x: src.reduce((s, a) => s + a.x, 0) / src.length,
+            z: src.reduce((s, a) => s + a.z, 0) / src.length,
+            showerX: sh?.x,
+            showerZ: sh?.z,
           };
         })()
       : undefined;

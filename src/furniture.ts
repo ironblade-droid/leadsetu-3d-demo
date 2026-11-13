@@ -18,6 +18,7 @@ export interface Anchor {
     | "kitchen"
     | "bath"
     | "basin"
+    | "shower"
     | "outdoor"
     | "foyer"
     | "wardrobe";
@@ -1040,7 +1041,7 @@ export function furnishFromPlacements(
       case "shower":
         // 3dassets shower_enclosure scales into a solid partition in these rooms.
         shower(p, group, mats);
-        anchors.push(anchorOf("bath", p));
+        anchors.push(anchorOf("shower", p));
         break;
       case "loungeChair":
         loungeChair(p, group, mats);

@@ -1,10 +1,11 @@
-import type { Collision, Door, Prefs, Room, Transform, UnitPlan } from "./types";
+import type { Collision, Door, Prefs, Room, Transform, UnitPlan, Wall } from "./types";
 import { planToWorld } from "./layout";
 import {
   aabb,
   doorInward,
   doorwayClearBox,
   front,
+  inspectBeds,
   inspectLayout,
   orientedBox,
   overlapArea,
@@ -75,12 +76,16 @@ export interface Placement {
   variant?: string;
 }
 
+type Box = { minX: number; maxX: number; minZ: number; maxZ: number };
+type WallId = "north" | "south" | "east" | "west";
+
 interface PlanCtx {
   room: Room;
   a: ReturnType<typeof aabb>;
   prefs: Prefs;
   avoid: [number, number][][];
-  doorBoxes: { minX: number; maxX: number; minZ: number; maxZ: number }[];
+  doorBoxes: Box[];
+  windowBoxes: Box[];
   out: Placement[];
 }
 
@@ -161,10 +166,16 @@ export function planRoom(
   prefs: Prefs,
   avoid: [number, number][][] = [],
   doors: Door[] = [],
+  windows: Wall[] = [],
 ): Placement[] {
   const a = aabb(room.polygon);
   if (a.w < 0.8 || a.d < 0.8) return [];
-  const ctx: PlanCtx = { room, a, prefs, avoid, doorBoxes: doorBoxesOf(room, doors), out: [] };
+  const ctx: PlanCtx = {
+    room, a, prefs, avoid,
+    doorBoxes: doorBoxesOf(room, doors),
+    windowBoxes: windows.map((w) => ({ minX: w.x, maxX: w.x + w.w, minZ: w.z, maxZ: w.z + w.d })),
+    out: [],
+  };
   switch (room.type) {
     case "living":
       planLiving(ctx);
@@ -503,90 +514,227 @@ function planKitchen(ctx: PlanCtx): void {
   }
 }
 
+function wallStrip(a: ReturnType<typeof aabb>, wall: WallId, pad = 0.55): Box {
+  switch (wall) {
+    case "south": return { minX: a.minX, maxX: a.maxX, minZ: a.minZ - 0.2, maxZ: a.minZ + pad };
+    case "north": return { minX: a.minX, maxX: a.maxX, minZ: a.maxZ - pad, maxZ: a.maxZ + 0.2 };
+    case "west":  return { minX: a.minX - 0.2, maxX: a.minX + pad, minZ: a.minZ, maxZ: a.maxZ };
+    case "east":  return { minX: a.maxX - pad, maxX: a.maxX + 0.2, minZ: a.minZ, maxZ: a.maxZ };
+  }
+}
+
+function coverage(strip: Box, boxes: Box[]): number {
+  let s = 0;
+  for (const b of boxes) s += overlapArea(strip, b);
+  return s;
+}
+
+function openingsAlong(strip: Box, boxes: Box[], axis: "x" | "z", lo: number, hi: number): [number, number][] {
+  const out: [number, number][] = [];
+  for (const b of boxes) {
+    if (overlapArea(strip, b) < 0.02) continue;
+    if (axis === "x") out.push([Math.max(lo, b.minX), Math.min(hi, b.maxX)]);
+    else out.push([Math.max(lo, b.minZ), Math.min(hi, b.maxZ)]);
+  }
+  return out.filter(([u, v]) => v - u > 0.04);
+}
+
+function solidGaps(lo: number, hi: number, openings: [number, number][]): [number, number][] {
+  const ops = openings.slice().sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const o of ops) {
+    if (!merged.length || o[0] > merged[merged.length - 1][1] + 0.02) merged.push([o[0], o[1]]);
+    else merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], o[1]);
+  }
+  const gaps: [number, number][] = [];
+  let cur = lo;
+  for (const [u, v] of merged) {
+    if (u > cur + 0.04) gaps.push([cur, u]);
+    cur = Math.max(cur, v);
+  }
+  if (hi > cur + 0.04) gaps.push([cur, hi]);
+  return gaps;
+}
+
+const OPPOSITE: Record<WallId, WallId> = { north: "south", south: "north", east: "west", west: "east" };
+const ADJACENT: Record<WallId, [WallId, WallId]> = {
+  north: ["east", "west"], south: ["east", "west"], east: ["north", "south"], west: ["north", "south"],
+};
+
+interface HeadSlot {
+  wall: WallId;
+  rot: number;
+  x: number;
+  z: number;
+  usedD: number;
+  realW: number;
+  score: number;
+  gap: [number, number];
+}
+
+function pickHeadSlots(ctx: PlanCtx, realW0: number, bedD0: number): HeadSlot[] {
+  const { a } = ctx;
+  const walls: WallId[] = ["north", "south", "east", "west"];
+  const doorC: Record<WallId, number> = { north: 0, south: 0, east: 0, west: 0 };
+  const winC: Record<WallId, number> = { north: 0, south: 0, east: 0, west: 0 };
+  const slots: HeadSlot[] = [];
+  for (const wall of walls) {
+    const strip = wallStrip(a, wall);
+    doorC[wall] = coverage(strip, ctx.doorBoxes);
+    winC[wall] = coverage(strip, ctx.windowBoxes);
+  }
+  for (const wall of walls) {
+    const alongX = wall === "north" || wall === "south";
+    const lo = alongX ? a.minX : a.minZ;
+    const hi = alongX ? a.maxX : a.maxZ;
+    const depthAvail = alongX ? a.d : a.w;
+    const usedD = Math.min(bedD0, Math.max(1.7, depthAvail - 0.7));
+    if (depthAvail < usedD + 0.35) continue;
+    const realW = Math.min(realW0, (hi - lo) - 0.3);
+    if (realW < 1.15) continue;
+    const strip = wallStrip(a, wall);
+    const openings = [
+      ...openingsAlong(strip, ctx.doorBoxes, alongX ? "x" : "z", lo, hi),
+      ...openingsAlong(strip, ctx.windowBoxes, alongX ? "x" : "z", lo, hi),
+    ];
+    const gaps = solidGaps(lo, hi, openings);
+    const neededFull = realW + 2 * (DIM.nightW + DIM.nightGap);
+    const neededMin = realW + 0.06;
+    const fitting = gaps.filter((g) => g[1] - g[0] >= neededMin);
+    if (!fitting.length) continue;
+    // Prefer a gap that also fits nightstands; otherwise the longest that fits the bed.
+    fitting.sort((g, h) => (h[1] - h[0]) - (g[1] - g[0]));
+    const withNs = fitting.filter((g) => g[1] - g[0] >= neededFull);
+    const gap = (withNs[0] ?? fitting[0]);
+    // Detect doors with a thicker strip so a jamb 0.4–0.7 m off the plane still counts.
+    const doorNear = coverage(wallStrip(a, wall, 0.95), ctx.doorBoxes);
+    const winNear = winC[wall];
+    const solid = winNear < 0.05 && doorNear < 0.05;
+    let score = (gap[1] - gap[0]);
+    // Never put a headboard under a window if any solid alternative exists.
+    score -= winNear * 200;
+    score -= doorNear * 80;
+    if (solid) score += 100;
+    else if (winNear < 0.05) score += 8;
+    if (winC[OPPOSITE[wall]] > 0.12) score += 20; // opposite a window
+    if (ADJACENT[wall].some((w) => winC[w] > 0.12)) score += 10; // beside a window
+    // Place the bed AND nightstands as a unit in the solid gap.
+    const pref = alongX ? a.cx : a.cz;
+    const ens = (gap[1] - gap[0] >= neededFull + 0.06) ? neededFull : realW;
+    const half = ens / 2;
+    let along = pref;
+    if (along - half < gap[0] + 0.04 || along + half > gap[1] - 0.04) {
+      along = (gap[0] + gap[1]) / 2;
+    }
+    along = Math.max(gap[0] + half + 0.03, Math.min(gap[1] - half - 0.03, along));
+    let x: number, z: number, rot: number;
+    switch (wall) {
+      case "south":
+        x = along; z = a.minZ + 0.06 + usedD / 2; rot = 0; break;
+      case "north":
+        x = along; z = a.maxZ - 0.06 - usedD / 2; rot = Math.PI; break;
+      case "west":
+        x = a.minX + 0.06 + usedD / 2; z = along; rot = Math.PI / 2; break;
+      case "east":
+        x = a.maxX - 0.06 - usedD / 2; z = along; rot = -Math.PI / 2; break;
+    }
+    slots.push({ wall, rot, x, z, usedD, realW, score, gap });
+  }
+  slots.sort((p, q) => q.score - p.score);
+  return slots;
+}
+
 function planBedroom(ctx: PlanCtx, master: boolean): void {
   const { a, prefs } = ctx;
   const bedW0 = master ? DIM.bedMasterW : DIM.bedW;
   const bedD0 = master ? DIM.bedMasterD : DIM.bedD;
-  // Prefer the head on the wall opposite the busiest door wall.
-  const doorWall = dominantDoorWall(a, ctx.doorBoxes);
-  const headAtMaxZ = doorWall !== "north";
-  const usedD = Math.min(bedD0, Math.max(1.8, a.d - 0.7));
-  const realW = Math.min(bedW0, a.w - 1.15);
-  const headZ = headAtMaxZ ? a.maxZ - 0.06 : a.minZ + 0.06;
-  const usedZ = headAtMaxZ ? headZ - usedD / 2 : headZ + usedD / 2;
-  const bedRot = headAtMaxZ ? Math.PI : 0;
-  const cx = a.cx;
-  tryPush(ctx, {
-    id: "bed", kind: "bed", x: cx, z: usedZ, rot: bedRot,
-    w: realW, d: usedD, h: 0.95, wallHug: true, group: "bed",
-    variant: prefs.style + (master ? "-master" : ""),
-  });
-  const nsAlong = headAtMaxZ ? headZ - 0.35 : headZ + 0.35;
-  const nsX1 = cx - realW / 2 - DIM.nightGap - DIM.nightW / 2;
-  const nsX2 = cx + realW / 2 + DIM.nightGap + DIM.nightW / 2;
-  tryPush(ctx, {
-    id: "night-l", kind: "nightstand", x: nsX1, z: nsAlong, rot: 0,
-    w: DIM.nightW, d: DIM.nightD, h: 0.5, tight: true, wallHug: true, group: "bed",
-    variant: prefs.style,
-  });
-  tryPush(ctx, {
-    id: "night-r", kind: "nightstand", x: nsX2, z: nsAlong, rot: 0,
-    w: DIM.nightW, d: DIM.nightD, h: 0.5, tight: true, wallHug: true, group: "bed",
-    variant: prefs.style,
-  });
-  const wardLen = Math.min(1.8, Math.max(1.0, a.d * 0.45));
-  const wardTries: { x: number; z: number; rot: number }[] = [];
-  const footZ = headAtMaxZ ? a.minZ + 0.15 + wardLen / 2 : a.maxZ - 0.15 - wardLen / 2;
-  const midZ = a.cz;
-  wardTries.push(
-    { x: a.minX + 0.05 + DIM.wardD / 2, z: footZ, rot: Math.PI / 2 },
-    { x: a.maxX - 0.05 - DIM.wardD / 2, z: footZ, rot: -Math.PI / 2 },
-    { x: a.minX + 0.05 + DIM.wardD / 2, z: midZ, rot: Math.PI / 2 },
-    { x: a.maxX - 0.05 - DIM.wardD / 2, z: midZ, rot: -Math.PI / 2 },
-  );
-  for (const t of wardTries) {
-    // Must clear the bed's side.
-    const bedWest = cx - realW / 2;
-    const bedEast = cx + realW / 2;
-    if (t.rot > 0 && t.x + DIM.wardD / 2 > bedWest - 0.06) continue;
-    if (t.rot < 0 && t.x - DIM.wardD / 2 < bedEast + 0.06) continue;
+  const slots = pickHeadSlots(ctx, bedW0, bedD0);
+  let placed: HeadSlot | null = null;
+  for (const s of slots) {
     if (tryPush(ctx, {
-      id: "wardrobe", kind: "wardrobe", x: t.x, z: t.z, rot: t.rot,
+      id: "bed", kind: "bed", x: s.x, z: s.z, rot: s.rot,
+      w: s.realW, d: s.usedD, h: 0.95, wallHug: true, group: "bed",
+      variant: prefs.style + (master ? "-master" : ""),
+    })) { placed = s; break; }
+  }
+  if (!placed) return;
+  const { fx, fz } = front(placed.rot);
+  const cx = placed.x, cz = placed.z;
+  const realW = placed.realW, usedD = placed.usedD;
+  // Nightstands flank the headboard, on the head wall.
+  const hx = cx - fx * usedD / 2;
+  const hz = cz - fz * usedD / 2;
+  const nsFront = 0.35;
+  const px = -fz, pz = fx; // lateral
+  const lateral = realW / 2 + DIM.nightGap + DIM.nightW / 2;
+  for (const [id, side] of [["night-l", 1], ["night-r", -1]] as const) {
+    const nx = hx + fx * nsFront + px * side * lateral;
+    const nz = hz + fz * nsFront + pz * side * lateral;
+    const tries = [
+      { x: nx, z: nz },
+      { x: hx + fx * 0.22 + px * side * (realW / 2 + DIM.nightW / 2 + 0.02), z: hz + fz * 0.22 + pz * side * (realW / 2 + DIM.nightW / 2 + 0.02) },
+      { x: hx + fx * 0.35 + px * side * (realW / 2 + DIM.nightGap * 0.4 + DIM.nightW / 2), z: hz + fz * 0.35 + pz * side * (realW / 2 + DIM.nightGap * 0.4 + DIM.nightW / 2) },
+    ];
+    for (const tr of tries) {
+      if (tryPush(ctx, {
+        id, kind: "nightstand", x: tr.x, z: tr.z, rot: placed.rot,
+        w: DIM.nightW, d: DIM.nightD, h: 0.5, tight: true, wallHug: true, group: "bed",
+        variant: prefs.style,
+      })) break;
+    }
+  }
+  // Wardrobe on a side wall, toward the foot, clear of the bed.
+  const wardLen = Math.min(1.8, Math.max(1.0, Math.min(a.w, a.d) * 0.45));
+  const footX = cx + fx * usedD / 2;
+  const footZ = cz + fz * usedD / 2;
+  const midX = cx + fx * 0.15;
+  const midZ = cz + fz * 0.15;
+  const wardTries: { x: number; z: number; rot: number }[] = [];
+  // Two side walls (perpendicular to the head wall), at the foot and mid.
+  const sideWalls: { x: number; z: number; rot: number }[] =
+    placed.wall === "north" || placed.wall === "south"
+      ? [
+          { x: a.minX + 0.05 + DIM.wardD / 2, z: 0, rot: Math.PI / 2 },
+          { x: a.maxX - 0.05 - DIM.wardD / 2, z: 0, rot: -Math.PI / 2 },
+        ]
+      : [
+          { x: 0, z: a.minZ + 0.05 + DIM.wardD / 2, rot: 0 },
+          { x: 0, z: a.maxZ - 0.05 - DIM.wardD / 2, rot: Math.PI },
+        ];
+  for (const base of sideWalls) {
+    if (placed.wall === "north" || placed.wall === "south") {
+      wardTries.push({ x: base.x, z: footZ, rot: base.rot });
+      wardTries.push({ x: base.x, z: midZ, rot: base.rot });
+    } else {
+      wardTries.push({ x: footX, z: base.z, rot: base.rot });
+      wardTries.push({ x: midX, z: base.z, rot: base.rot });
+    }
+  }
+  for (const tr of wardTries) {
+    const box = orientedBox(tr.x, tr.z, wardLen, DIM.wardD, tr.rot);
+    const bedBox = orientedBox(cx, cz, realW, usedD, placed.rot);
+    // keep a sliver of clearance beside the bed
+    const pad = 0.06;
+    const inflated = { minX: bedBox.minX - pad, maxX: bedBox.maxX + pad, minZ: bedBox.minZ - pad, maxZ: bedBox.maxZ + pad };
+    if (overlapArea(box, inflated) > 0.008) continue;
+    if (tryPush(ctx, {
+      id: "wardrobe", kind: "wardrobe", x: tr.x, z: tr.z, rot: tr.rot,
       w: wardLen, d: DIM.wardD, h: DIM.wardH, wallHug: true, variant: prefs.style,
     })) break;
   }
-  if (master && usedD + 0.55 < a.d) {
-    const benchZ = headAtMaxZ ? usedZ - usedD / 2 - 0.28 : usedZ + usedD / 2 + 0.28;
+  const depthAvail = (placed.wall === "north" || placed.wall === "south") ? a.d : a.w;
+  if (master && usedD + 0.55 < depthAvail) {
+    const bx = cx + fx * (usedD / 2 + 0.28);
+    const bz = cz + fz * (usedD / 2 + 0.28);
     tryPush(ctx, {
-      id: "bench", kind: "bench", x: cx, z: benchZ, rot: 0,
+      id: "bench", kind: "bench", x: bx, z: bz, rot: placed.rot,
       w: realW * 0.65, d: 0.38, h: 0.42, tight: true, group: "bed", variant: prefs.style,
     });
   }
   tryPush(ctx, {
-    id: "rug", kind: "rug", x: cx, z: usedZ, rot: 0,
+    id: "rug", kind: "rug", x: cx, z: cz, rot: placed.rot,
     w: realW + 0.45, d: usedD + 0.35, h: 0.02, ghost: true, tight: true,
   });
-}
-
-function dominantDoorWall(
-  a: ReturnType<typeof aabb>,
-  doors: PlanCtx["doorBoxes"],
-): "north" | "south" | "east" | "west" | null {
-  if (!doors.length) return null;
-  const strips: Record<"north" | "south" | "east" | "west", { minX: number; maxX: number; minZ: number; maxZ: number }> = {
-    south: { minX: a.minX, maxX: a.maxX, minZ: a.minZ, maxZ: a.minZ + 0.7 },
-    north: { minX: a.minX, maxX: a.maxX, minZ: a.maxZ - 0.7, maxZ: a.maxZ },
-    west: { minX: a.minX, maxX: a.minX + 0.7, minZ: a.minZ, maxZ: a.maxZ },
-    east: { minX: a.maxX - 0.7, maxX: a.maxX, minZ: a.minZ, maxZ: a.maxZ },
-  };
-  let best: "north" | "south" | "east" | "west" | null = null;
-  let bestA = 0;
-  for (const k of Object.keys(strips) as (keyof typeof strips)[]) {
-    let s = 0;
-    for (const d of doors) s += overlapArea(strips[k], d);
-    if (s > bestA) { bestA = s; best = k; }
-  }
-  return bestA > 0.01 ? best : null;
 }
 
 function planBath(ctx: PlanCtx): void {
@@ -775,7 +923,7 @@ export function planUnit(
     const avoid = r.type === "living"
       ? plan.rooms.filter((o) => o.id !== r.id).map((o) => o.polygon)
       : [];
-    placementsPlan.push(...planRoom(r, prefs, avoid, plan.doors));
+    placementsPlan.push(...planRoom(r, prefs, avoid, plan.doors, plan.windows));
   }
   const walls: Collision[] = plan.walls.map((w) => ({
     minX: w.x, maxX: w.x + w.w, minZ: w.z, maxZ: w.z + w.d,
@@ -785,7 +933,10 @@ export function planUnit(
       .filter((r) => doorInward(door, r.polygon))
       .map((r) => ({ poly: r.polygon, door })),
   );
-  const issues = inspectLayout(footprintsOf(placementsPlan), walls, doors, coffeePairsOf(placementsPlan));
+  const issues = [
+    ...inspectLayout(footprintsOf(placementsPlan), walls, doors, coffeePairsOf(placementsPlan)),
+    ...inspectBeds(plan.rooms, placementsPlan, plan.doors, plan.windows ?? []),
+  ];
   const placements = t ? placementsPlan.map((p) => transformPlacement(p, t)) : placementsPlan;
   const rooms = plan.rooms.map((r) => ({ ...r, polygon: worldPoly(r.polygon, t) }));
   return { placements, footprints: footprintsOf(placements), issues, rooms };

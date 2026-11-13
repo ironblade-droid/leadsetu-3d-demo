@@ -26,6 +26,8 @@ export interface Anchor {
   fx: number;
   fz: number;
   width: number;
+  /** Footprint depth along the facing axis (beds: head-to-foot). */
+  depth?: number;
   height: number;
   roomId?: string;
 }
@@ -858,7 +860,7 @@ function rugMesh(p: Placement, g: THREE.Group, mats: Materials, style: StyleId):
 
 function anchorOf(kind: Anchor["kind"], p: Placement): Anchor {
   const { fx, fz } = front(p.rot);
-  return { kind, x: p.x, z: p.z, fx, fz, width: p.w, height: p.h, roomId: p.roomId };
+  return { kind, x: p.x, z: p.z, fx, fz, width: p.w, depth: p.d, height: p.h, roomId: p.roomId };
 }
 
 function placeCatalog(

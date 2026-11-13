@@ -197,7 +197,7 @@ function roomOverview(
   cols: Collision[],
   doors: Door[],
   unitCenter?: { x: number; z: number },
-  lookBias?: { x: number; z: number },
+  lookBias?: { x: number; z: number; fx?: number; fz?: number; depth?: number },
 ): Viewpoint {
   const a = aabb(poly);
   const area = room.area_m2 || a.w * a.d;
@@ -225,6 +225,17 @@ function roomOverview(
   if (outdoor) {
     lookX = a.cx;
     lookZ = a.cz;
+  }
+
+  // Bedroom: look at the headboard (anchor facing is footward).
+  const bed = kind === "bedroom" && lookBias && lookBias.fx !== undefined && lookBias.fz !== undefined && lookBias.depth
+    ? lookBias as { x: number; z: number; fx: number; fz: number; depth: number }
+    : null;
+  if (bed) {
+    const hx = bed.x - bed.fx * (bed.depth / 2);
+    const hz = bed.z - bed.fz * (bed.depth / 2);
+    lookX = hx * 0.6 + bed.x * 0.4;
+    lookZ = hz * 0.6 + bed.z * 0.4;
   }
 
   type Cand = { x: number; z: number; score: number };
@@ -303,11 +314,45 @@ function roomOverview(
     lookZ = a.cz;
   }
 
-  // Bedroom: prefer a long diagonal so portrait shows the bed AND a side wall.
+  // Bedroom: stand in a foot-side corner, looking at the headboard on its wall.
+  // Stay off the mattress — a stand 0.6 m past the foot often collides with
+  // the wardrobe or bench and gets pulled onto the bed.
   if (kind === "bedroom") {
-    for (const c of cands) {
-      const d = Math.hypot(c.x - a.cx, c.z - a.cz);
-      c.score += d * 1.6;
+    if (bed) {
+      const px = -bed.fz, pz = bed.fx;
+      const footX = bed.x + bed.fx * (bed.depth / 2);
+      const footZ = bed.z + bed.fz * (bed.depth / 2);
+      const corners: [number, number][] = [
+        [a.minX + inset, a.minZ + inset],
+        [a.maxX - inset, a.minZ + inset],
+        [a.minX + inset, a.maxZ - inset],
+        [a.maxX - inset, a.maxZ - inset],
+      ];
+      for (const [cx, cz] of corners) {
+        const along = (cx - bed.x) * bed.fx + (cz - bed.z) * bed.fz;
+        if (along > 0.15) consider(cx, cz, 56 + along * 6);
+      }
+      for (const side of [1, -1]) {
+        consider(footX + bed.fx * 0.85 + px * side * 1.25, footZ + bed.fz * 0.85 + pz * side * 1.25, 44);
+        consider(footX + bed.fx * 0.4 + px * side * 1.45, footZ + bed.fz * 0.4 + pz * side * 1.45, 38);
+      }
+      for (const c of cands) {
+        const dx = c.x - bed.x, dz = c.z - bed.z;
+        const dist = Math.hypot(dx, dz);
+        const along = dx * bed.fx + dz * bed.fz;
+        if (dist < 1.2) c.score -= 90; // on or astride the bed
+        if (along < 0.1) c.score -= 50; // head-side
+        c.score += Math.min(dist, 2.6) * 8;
+        const toHeadX = lookX - c.x, toHeadZ = lookZ - c.z;
+        const len = Math.hypot(toHeadX, toHeadZ) || 1;
+        const align = (toHeadX / len) * (-bed.fx) + (toHeadZ / len) * (-bed.fz);
+        c.score += align * 16;
+      }
+    } else {
+      for (const c of cands) {
+        const d = Math.hypot(c.x - a.cx, c.z - a.cz);
+        c.score += d * 1.6;
+      }
     }
   }
 
@@ -423,7 +468,12 @@ export function buildRoomStops(
   for (const room of worldRooms) {
     if (room.type === "utility" && (room.area_m2 ?? 0) < 2) continue;
     const meta = displayName(room);
-    const hint = meta.type === "kitchen" ? kitHint(room.id) : undefined;
+    const hint = meta.type === "kitchen" ? kitHint(room.id)
+      : meta.type === "bedroom" ? (() => {
+          const b = (anchorsByRoom.get(room.id) ?? []).find((x) => x.kind === "bed");
+          return b ? { x: b.x, z: b.z, fx: b.fx, fz: b.fz, depth: b.depth } : undefined;
+        })()
+      : undefined;
     const vp = roomOverview(room, room.polygon, meta.type, cols, doors, unitCenter, hint);
     stops.push(makeStop(room.id, meta.name, meta.short, meta.type, room.area_m2, vp, cols, walkRooms, room.notes));
 

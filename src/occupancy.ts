@@ -23,7 +23,7 @@ export interface LayoutIssue {
   severity: "error" | "warn";
   a: string;
   b: string;
-  kind: "overlap" | "doorway" | "coffee-gap" | "wall";
+  kind: "overlap" | "doorway" | "coffee-gap" | "wall" | "bed";
   message: string;
 }
 
@@ -211,6 +211,99 @@ export function inspectLayout(
     }
   }
 
+  return issues;
+}
+
+
+/** Headboard must sit on a solid wall; bench at the foot; nightstands at the head. */
+export function inspectBeds(
+  rooms: { id: string; type: string; polygon: [number, number][] }[],
+  pieces: { id: string; roomId: string; kind: string; x: number; z: number; rot: number; w: number; d: number }[],
+  doors: Door[],
+  windows: { x: number; z: number; w: number; d: number }[],
+): LayoutIssue[] {
+  const issues: LayoutIssue[] = [];
+  const winBoxes = windows.map((w) => ({ minX: w.x, maxX: w.x + w.w, minZ: w.z, maxZ: w.z + w.d }));
+  for (const room of rooms) {
+    if (room.type !== "bedroom") continue;
+    const a = aabb(room.polygon);
+    const beds = pieces.filter((p) => p.roomId === room.id && p.kind === "bed");
+    const nights = pieces.filter((p) => p.roomId === room.id && p.kind === "nightstand");
+    const benches = pieces.filter((p) => p.roomId === room.id && p.kind === "bench");
+    if (!beds.length) {
+      issues.push({
+        severity: "warn", a: `${room.id}`, b: "bed", kind: "bed",
+        message: `${room.id} has no bed`,
+      });
+      continue;
+    }
+    for (const bed of beds) {
+      const { fx, fz } = front(bed.rot);
+      const head = { x: bed.x - fx * bed.d / 2, z: bed.z - fz * bed.d / 2 };
+      const foot = { x: bed.x + fx * bed.d / 2, z: bed.z + fz * bed.d / 2 };
+      const distWall = Math.min(
+        Math.abs(head.z - a.minZ), Math.abs(head.z - a.maxZ),
+        Math.abs(head.x - a.minX), Math.abs(head.x - a.maxX),
+      );
+      if (distWall > 0.18) {
+        issues.push({
+          severity: "error", a: `${room.id}/${bed.id}`, b: "wall", kind: "bed",
+          message: `headboard is ${distWall.toFixed(2)} m from the nearest wall (should hug a solid wall)`,
+        });
+      }
+      // A thin box at the head, overlapping the wall plane, must not sit on a window or door.
+      const headBox = orientedBox(head.x, head.z, bed.w, 0.4, bed.rot);
+      // Expand slightly so windows sitting in the wall thickness still count.
+      const headHit = {
+        minX: headBox.minX - 0.15, maxX: headBox.maxX + 0.15,
+        minZ: headBox.minZ - 0.15, maxZ: headBox.maxZ + 0.15,
+      };
+      let winA = 0;
+      for (const w of winBoxes) winA += overlapArea(headHit, w);
+      if (winA > 0.08) {
+        issues.push({
+          severity: "error", a: `${room.id}/${bed.id}`, b: "window", kind: "bed",
+          message: `headboard sits under a window (${winA.toFixed(2)} m² overlap)`,
+        });
+      }
+      const invs = doors.map((d) => doorInward(d, room.polygon)).filter((x) => x !== null);
+      for (const inv of invs) {
+        const box = doorwayClearBox(inv, 0.5);
+        if (overlapArea(headHit, box) > 0.05) {
+          issues.push({
+            severity: "error", a: `${room.id}/${bed.id}`, b: "doorway", kind: "bed",
+            message: `headboard sits in a doorway`,
+          });
+        }
+      }
+      for (const b of benches) {
+        const dh = Math.hypot(b.x - head.x, b.z - head.z);
+        const df = Math.hypot(b.x - foot.x, b.z - foot.z);
+        if (dh < df - 0.05) {
+          issues.push({
+            severity: "error", a: `${room.id}/${b.id}`, b: `${bed.id}`, kind: "bed",
+            message: `bench is at the headboard (${dh.toFixed(2)} m) instead of the foot (${df.toFixed(2)} m)`,
+          });
+        }
+      }
+      for (const n of nights) {
+        const dh = Math.hypot(n.x - head.x, n.z - head.z);
+        const df = Math.hypot(n.x - foot.x, n.z - foot.z);
+        if (df < dh - 0.05) {
+          issues.push({
+            severity: "error", a: `${room.id}/${n.id}`, b: `${bed.id}`, kind: "bed",
+            message: `nightstand is at the foot (${df.toFixed(2)} m) instead of the head (${dh.toFixed(2)} m)`,
+          });
+        }
+      }
+      if (nights.length < 2 && a.w * a.d > 9) {
+        issues.push({
+          severity: "warn", a: `${room.id}`, b: "nightstand", kind: "bed",
+          message: `${room.id} has ${nights.length} nightstand(s); expected one on each side of the headboard`,
+        });
+      }
+    }
+  }
   return issues;
 }
 

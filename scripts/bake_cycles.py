@@ -1296,20 +1296,15 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
     )
     dt = time.time() - t0
     print(f"  done {rid} in {dt:.1f}s", flush=True)
-    # Remove the temporary joined mesh (and any leftover copies).
-    leftover = [joined] + [c for c in copies if c.name in bpy.data.objects]
-    seen = set()
-    for c in leftover:
-        if c.name in seen:
-            continue
-        seen.add(c.name)
-        try:
-            mesh = c.data
-            bpy.data.objects.remove(c, do_unlink=True)
-            if mesh and mesh.users == 0:
-                bpy.data.meshes.remove(mesh)
-        except ReferenceError:
-            pass
+    # Join consumed the copies; only the joined object remains. Do not
+    # touch the stale copy references (StructRNA ... has been removed).
+    try:
+        mesh = joined.data
+        bpy.data.objects.remove(joined, do_unlink=True)
+        if mesh and mesh.users == 0:
+            bpy.data.meshes.remove(mesh)
+    except (ReferenceError, KeyError) as e:
+        print(f"  cleanup note: {e}", flush=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     png = denoise_and_tonemap(img, out_path.with_suffix(".png"), apply_filmic=apply_filmic)
     return png, dt, img

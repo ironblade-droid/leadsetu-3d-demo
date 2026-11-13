@@ -67,8 +67,13 @@ export function bakedKey(planId: string, style: string): string {
   return `${planId}-${style}`;
 }
 
-/** Wall colour this unit was baked at. Any other swatch falls back to v5. */
-export const BAKED_WALL_COLOR = "#f4f1ea";
+/** Wall colour each baked unit was produced at. Any other swatch falls back to v5. */
+export const BAKED_WALL: Record<string, string> = {
+  "2bhk-modern": "#f4f1ea",
+};
+
+/** @deprecated use BAKED_WALL[bakedKey(plan, style)] */
+export const BAKED_WALL_COLOR = BAKED_WALL["2bhk-modern"];
 
 function sameHex(a: string | undefined, b: string): boolean {
   if (!a) return true;
@@ -76,9 +81,9 @@ function sameHex(a: string | undefined, b: string): boolean {
 }
 
 export function hasBaked(planId: string, style: string, wallColor?: string): boolean {
-  // 2BHK Modern only, and only when the wall colour matches the bake.
-  // Other plans, styles, and a different swatch stay on procedural v5.
-  return planId === "2bhk" && style === "modern" && sameHex(wallColor, BAKED_WALL_COLOR);
+  const wall = BAKED_WALL[bakedKey(planId, style)];
+  if (!wall) return false;
+  return sameHex(wallColor, wall);
 }
 
 export function loadBaked(

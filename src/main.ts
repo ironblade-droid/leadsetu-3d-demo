@@ -552,11 +552,12 @@ class App {
     this.interiorRoot.add(fill);
     this.roomLights.push(fill);
 
-    // Cycles-baked 2BHK Modern (walk only): hide procedural visuals and
-    // drop in the pre-lit glTF, lightmaps on uv2, wall colour as a multiply.
-    if (cam === "walk" && hasBaked((plan.id ?? "2bhk"), this.prefs.style, this.prefs.wallColor)) {
+    // Cycles-baked walkthrough: hide procedural visuals and drop in the
+    // pre-lit glTF, lightmaps on uv2. Wall-colour changes need a rebake.
+    const planId = plan.id ?? "2bhk";
+    if (cam === "walk" && hasBaked(planId, this.prefs.style, this.prefs.wallColor)) {
       try {
-        const baked = await loadBaked("2bhk", this.prefs.style, slot.transform, 0);
+        const baked = await loadBaked(planId, this.prefs.style, slot.transform, 0);
         if (baked) {
           hideProceduralVisuals(built.group);
           this.interiorRoot.add(baked.group);

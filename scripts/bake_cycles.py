@@ -57,6 +57,8 @@ def reset():
     sc.cycles.denoiser = "OPENIMAGEDENOISE"
     sc.cycles.use_adaptive_sampling = True
     sc.cycles.adaptive_threshold = 0.02
+    sc.cycles.sample_clamp_indirect = 8.0
+    sc.cycles.sample_clamp_direct = 16.0
     sc.cycles.samples = 128
     sc.cycles.bake_type = "DIFFUSE"
     sc.render.bake.use_pass_direct = True

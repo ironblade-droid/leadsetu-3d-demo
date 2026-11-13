@@ -465,12 +465,18 @@ function addRailing(
     const dz = b[1] - a[1];
     const len = Math.hypot(dx, dz);
     if (len < 0.3) continue;
-    // Skip edges that sit against the building (shared with a livable room) —
-    // a simple heuristic: skip if the midpoint is more than 0.4m "inside" a
-    // large run that is likely an interior wall. We still add all edges; interior
-    // walls already occupy those lines. Thin glass over a wall is fine.
+    // Skip edges that sit against an interior wall (shared with a livable
+    // room). Without this, a balcony rail can appear behind a bedroom
+    // headboard when the partition is a few centimetres off the polygon.
     const cx = (a[0] + b[0]) / 2;
     const cz = (a[1] + b[1]) / 2;
+    const againstWall = collisions.some((c) => {
+      const thick = (c.maxX - c.minX > 0.14) || (c.maxZ - c.minZ > 0.14);
+      if (!thick) return false;
+      return cx >= c.minX - 0.16 && cx <= c.maxX + 0.16
+        && cz >= c.minZ - 0.16 && cz <= c.maxZ + 0.16;
+    });
+    if (againstWall) continue;
     const ang = Math.atan2(dx, dz);
     const glass = new THREE.Mesh(new THREE.BoxGeometry(0.03, h, len), mats.glassRail);
     glass.position.set(cx, h / 2, cz);

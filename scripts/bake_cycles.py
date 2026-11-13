@@ -1237,22 +1237,79 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
         attach_bake_target(o, img)
     sc = bpy.context.scene
     sc.cycles.samples = samples
+    # Denoising a bake through Cycles' beauty denoiser is a no-op and
+    # has been seen to keep re-syncing a large scene; we OIDN afterwards.
+    sc.cycles.use_denoising = False
+    # Join a temporary copy of every target into ONE mesh. Baking 73
+    # selected objects in this scene never finished a single target
+    # (infinite Synchronize/Initialize loop). A single joined mesh
+    # bakes the whole atlas in one Cycles pass; originals are untouched.
+    copies = []
     bpy.ops.object.select_all(action="DESELECT")
     for o in meshes:
         o.hide_set(False)
         o.hide_render = False
-        o.select_set(True)
-    bpy.context.view_layer.objects.active = meshes[0]
+        c = o.copy()
+        c.data = o.data.copy()
+        c.name = f"_baketmp_{o.name}"[:60]
+        c.parent = None
+        c.matrix_world = o.matrix_world.copy()
+        bpy.context.scene.collection.objects.link(c)
+        c.hide_set(False)
+        c.hide_select = False
+        c.select_set(True)
+        copies.append(c)
+    bpy.context.view_layer.objects.active = copies[0]
+    if len(copies) > 1:
+        bpy.ops.object.join()
+    joined = bpy.context.view_layer.objects.active
+    joined.name = f"_BAKEJOIN-{rid}"
+    attach_bake_target(joined, img)
+    # Every material slot needs the bake-target node.
+    if joined.data.materials:
+        for mat in joined.data.materials:
+            if mat is None:
+                continue
+            nt = mat.node_tree
+            if nt is None:
+                continue
+            node = None
+            for n in nt.nodes:
+                if n.type == "TEX_IMAGE" and n.image == img:
+                    node = n
+                    break
+            if node is None:
+                node = nt.nodes.new("ShaderNodeTexImage")
+                node.image = img
+                node.label = "BAKE_TARGET"
+            node.select = True
+            nt.nodes.active = node
+    bpy.ops.object.select_all(action="DESELECT")
+    joined.select_set(True)
+    bpy.context.view_layer.objects.active = joined
     t0 = time.time()
-    print(f"BAKE {rid} {size}px {samples}spp COMBINED {len(meshes)} meshes ...", flush=True)
+    print(f"BAKE {rid} {size}px {samples}spp COMBINED joined from {len(meshes)} meshes ...", flush=True)
     bpy.ops.object.bake(
         type="COMBINED",
-        pass_filter={"DIRECT", "INDIRECT", "COLOR", "DIFFUSE", "GLOSSY", "EMIT"},
         margin=12,
         margin_type="EXTEND",
     )
     dt = time.time() - t0
     print(f"  done {rid} in {dt:.1f}s", flush=True)
+    # Remove the temporary joined mesh (and any leftover copies).
+    leftover = [joined] + [c for c in copies if c.name in bpy.data.objects]
+    seen = set()
+    for c in leftover:
+        if c.name in seen:
+            continue
+        seen.add(c.name)
+        try:
+            mesh = c.data
+            bpy.data.objects.remove(c, do_unlink=True)
+            if mesh and mesh.users == 0:
+                bpy.data.meshes.remove(mesh)
+        except ReferenceError:
+            pass
     out_path.parent.mkdir(parents=True, exist_ok=True)
     png = denoise_and_tonemap(img, out_path.with_suffix(".png"), apply_filmic=apply_filmic)
     return png, dt, img

@@ -4,7 +4,10 @@ import type { Collision, Transform, UnitPlan, Wall } from "./types";
 export const FLOOR_TO_FLOOR = 3.15;
 export const TYPICAL_FLOORS = 7;
 export const PENTHOUSE_FLOOR = 8;
-export const PLINTH = 0.35;
+/** Podium slab thickness under the lobby. */
+export const PLINTH = 0.45;
+/** Double-height ground lobby, so residential floor 1 sits at a real piano-nobile height. */
+export const LOBBY_H = 6.4;
 
 /** 2BHK plan is 11 × 9 m; 3BHK is 10.5 × 10 m; penthouse house footprint is 12.192 × 15.240 m. */
 export const UNIT_A: Transform = {
@@ -118,7 +121,7 @@ export function wallCollision(w: Wall): Collision {
 }
 
 export function floorY(floor: number): number {
-  return PLINTH + (floor - 1) * FLOOR_TO_FLOOR;
+  return LOBBY_H + (floor - 1) * FLOOR_TO_FLOOR;
 }
 
 export function plateCenter(): [number, number] {

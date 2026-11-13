@@ -1,7 +1,7 @@
 import "./styles.css";
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBackground, loadHdriEnvironment, portraitPitchBias, type Engine } from "./engine";
+import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBackground, loadHdriEnvironment, loadNightBackground, portraitPitchBias, type Engine } from "./engine";
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
@@ -67,6 +67,9 @@ class App {
   currentRoom: string | null = null;
   tour: TourState | null = null;
   private tourTimer: number | null = null;
+  private introPlayed = false;
+  private walkMarker: THREE.Group | null = null;
+  private unitOutlines = new Map<string, THREE.Mesh>();
 
   constructor() {
     const q = new URLSearchParams(location.search);
@@ -84,16 +87,20 @@ class App {
     const catP = loadCatalog(this.engine.renderer, (p) => setLoad(0.6 + p * 0.2));
     const hdriP = loadHdriEnvironment(this.engine, `${import.meta.env.BASE_URL}hdris/studio_small_08_1k.hdr`);
     const cityP = loadCityBackground(this.engine, `${import.meta.env.BASE_URL}hdris/modern_buildings_2_1k.hdr`);
+    const nightP = loadNightBackground(this.engine, `${import.meta.env.BASE_URL}hdris/shanghai_bund_1k.hdr`);
     this.plans = await loadPlans();
     this.catalog = await catP;
-    await Promise.all([hdriP, cityP]);
+    await Promise.all([hdriP, cityP, nightP]);
     setLoad(0.88);
 
     this.engine.scene.add(this.world);
     this.engine.scene.add(this.interiorRoot);
 
-    this.tower = buildTower(this.mats);
+    this.tower = buildTower(this.mats, { mobile: this.engine.mobile });
+    this.tower.setEnv(this.engine.cityEnv, this.engine.cityEnvNight);
     this.world.add(this.tower.group);
+    this.walkMarker = makeWalkMarker();
+    this.engine.scene.add(this.walkMarker);
 
     this.walker = new Walker(canvas);
     this.walker.tv = this.tv;
@@ -124,6 +131,12 @@ class App {
 
     this.bindPointer(canvas);
     this.bindKeys();
+    ui.addEventListener("pointerdown", (e) => {
+      const el = e.target as Element | null;
+      if (el?.closest("input, select, textarea, .sheet, .dock, .prefs, .joy-wrap, .zoom-stack, button, a, .unit-card, .hotspot-lab")) {
+        e.stopPropagation();
+      }
+    }, true);
     this.showTower(false);
     this.hud.setView(this.view);
 
@@ -149,6 +162,10 @@ class App {
 
     this.engine.start((dt) => this.tick(dt), () => this.afterRender());
     this.exposeApi();
+    if (!this.introPlayed) {
+      this.introPlayed = true;
+      void this.playTowerIntro();
+    }
   }
 
   setTime(tm: TimeOfDay) {
@@ -167,9 +184,9 @@ class App {
     for (const l of this.roomLights) {
       if (l instanceof THREE.HemisphereLight) {
         if (night) {
-          l.color.set("#2a3a58");
-          l.groundColor.set("#161018");
-          l.intensity = 0.16;
+          l.color.set("#3a4c78");
+          l.groundColor.set("#1a1520");
+          l.intensity = 0.4;
         } else if (golden) {
           l.color.set("#ffd9a8");
           l.groundColor.set("#8a5a38");
@@ -180,13 +197,15 @@ class App {
           l.intensity = walk ? 0.28 : 0.4;
         }
       } else if (l instanceof THREE.DirectionalLight) {
-        l.intensity = night ? 0.06 : golden ? (walk ? 0.28 : 0.55) : walk ? 0.2 : 0.75;
+        l.intensity = night ? 0.18 : golden ? (walk ? 0.28 : 0.55) : walk ? 0.2 : 0.75;
         l.color.set(night ? "#a0b4e0" : golden ? "#ffb060" : "#fff4df");
       }
     }
   }
 
   tick(dt: number) {
+    this.tower.tick(dt);
+    this.updateWalkMarker();
     if (this.flying) return;
     if (this.view.kind === "flat" && this.view.cam === "walk") {
       this.engine.orbit.enabled = false;
@@ -199,6 +218,30 @@ class App {
 
   afterRender() {
     this.syncHotspotLabels();
+  }
+
+  private updateWalkMarker() {
+    const m = this.walkMarker;
+    if (!m) return;
+    const tgt = this.walker.getWalkTarget();
+    const walking = this.view.kind === "flat" && this.view.cam === "walk" && !!tgt;
+    m.visible = walking;
+    if (!walking || !tgt) return;
+    m.position.set(tgt.x, 0.04, tgt.z);
+    const s = 1 + 0.12 * Math.sin(performance.now() / 180);
+    m.scale.setScalar(s);
+  }
+
+  private async playTowerIntro() {
+    const [cx, cz] = plateCenter();
+    // Establishing shot is already set by showTower(false); fly to the hero 3/4.
+    await flyCamera(
+      this.engine.camera,
+      this.engine.orbit,
+      new THREE.Vector3(44, 11, -30),
+      new THREE.Vector3(cx, 8, 6),
+      2.4,
+    );
   }
 
   syncHotspotLabels() {
@@ -325,13 +368,15 @@ class App {
     this.engine.aimWalkLighting(null, null, 0);
     this.hud.setView(this.view);
     this.applySceneTime();
+    this.engine.setOutlined([]);
     const [cx, cz] = plateCenter();
-    const pos = new THREE.Vector3(38, 30, 42);
-    const target = new THREE.Vector3(cx, 10, cz);
-    if (fly) await flyCamera(this.engine.camera, this.engine.orbit, pos, target, 1.1);
+    const pos = new THREE.Vector3(44, 11, -30);
+    const target = new THREE.Vector3(cx, 8, 6);
+    if (fly) await flyCamera(this.engine.camera, this.engine.orbit, pos, target, 0.55);
     else {
-      this.engine.camera.position.copy(pos);
-      this.engine.orbit.target.copy(target);
+      // First load: a low, wide establishing shot; playTowerIntro flies in.
+      this.engine.camera.position.set(62, 5, -52);
+      this.engine.orbit.target.set(cx, 5, 4);
       this.engine.orbit.update();
     }
   }
@@ -397,16 +442,47 @@ class App {
     this.interiorRoot.add(coreLab);
     this.unitLabels.push(coreLab);
 
+    this.installUnitOutlines(y);
+
     if (!keepCam) {
       const [cx, cz] = plateCenter();
       await flyCamera(
         this.engine.camera,
         this.engine.orbit,
-        new THREE.Vector3(cx + 0.8, y + 28, cz + 4.5),
-        new THREE.Vector3(cx, y + 0.2, cz),
-        1.0,
+        new THREE.Vector3(cx + 2.2, y + 18, cz + 6),
+        new THREE.Vector3(cx, y + 1.2, cz),
+        0.5,
       );
     }
+  }
+
+  private installUnitOutlines(y: number) {
+    this.unitOutlines.clear();
+    for (const built of this.interiors) {
+      const id = built.group.userData.unitId as string | undefined;
+      if (!id) continue;
+      const bb = new THREE.Box3().setFromObject(built.group);
+      const size = bb.getSize(new THREE.Vector3());
+      const center = bb.getCenter(new THREE.Vector3());
+      const mat = new THREE.MeshBasicMaterial({
+        color: "#f0d48a",
+        side: THREE.BackSide,
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false,
+      });
+      const box = new THREE.Mesh(
+        new THREE.BoxGeometry(Math.max(0.4, size.x) * 1.05, Math.max(0.8, size.y) * 1.08, Math.max(0.4, size.z) * 1.05),
+        mat,
+      );
+      box.position.copy(center);
+      box.name = "unit-outline";
+      box.visible = false;
+      box.userData.unitId = id;
+      built.group.add(box);
+      this.unitOutlines.set(id, box);
+    }
+    void y;
   }
 
   async showFlat(
@@ -541,7 +617,7 @@ class App {
           this.engine.orbit,
           new THREE.Vector3(cx + 8, plan.wallHeight + 7, cz + 9),
           new THREE.Vector3(cx, 1.0, cz),
-          0.9,
+          0.5,
         );
       }
     }
@@ -596,7 +672,7 @@ class App {
     const fromPitch = this.cameraPitch();
     try {
       const pitch = stop.pitch + portraitPitchBias();
-      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, pitch, 1.15);
+      await flyEye(this.engine.camera, fromPos, fromYaw, fromPitch, stop.position, stop.yaw, pitch, 0.5);
       this.walker.spawn(stop.walkX, 1.6, stop.walkZ, stop.yaw, pitch);
       this.walker.apply(this.engine.camera);
       this.walker.enabled = true;
@@ -687,7 +763,7 @@ class App {
     try {
       const wasWalk = this.view.kind === "flat" && this.view.cam === "walk";
       if (wasWalk) this.walker.enabled = false;
-      await flyCamera(this.engine.camera, this.engine.orbit, pos, look, 0.8);
+      await flyCamera(this.engine.camera, this.engine.orbit, pos, look, 0.5);
       if (wasWalk) {
         this.engine.orbit.enabled = false;
         const yaw = Math.atan2(-(look.x - pos.x), -(look.z - pos.z));
@@ -713,6 +789,7 @@ class App {
       this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
       if (this.view.kind === "tower") this.hoverTower();
+      if (this.view.kind === "floor") this.hoverFloorUnits();
     };
     const onUp = (e: PointerEvent) => {
       if (this.dragging) return;
@@ -734,6 +811,35 @@ class App {
     if (f !== this.view.hoverFloor) {
       this.tower.highlight(f);
       this.hud.setHoverFloor(f);
+      this.engine.setOutlined(this.tower.outlined());
+    }
+  }
+
+  hoverFloorUnits() {
+    if (this.view.kind !== "floor") return;
+    this.ray.setFromCamera(this.pointer, this.engine.camera);
+    const meshes: THREE.Object3D[] = [];
+    for (const i of this.interiors) {
+      i.group.traverse((o) => { if (o instanceof THREE.Mesh && o.name !== "unit-outline") meshes.push(o); });
+    }
+    const hits = this.ray.intersectObjects(meshes, false);
+    let id: string | null = null;
+    if (hits.length) {
+      let o: THREE.Object3D | null = hits[0].object;
+      while (o) {
+        if (o.userData.unitId) { id = o.userData.unitId as string; break; }
+        o = o.parent;
+      }
+    }
+    if (this.view.kind === "floor" && id !== this.view.hoverUnit) {
+      this.view = { ...this.view, hoverUnit: id };
+      this.tower.highlightUnit(id);
+      const outlined: THREE.Object3D[] = [];
+      for (const [k, mesh] of this.unitOutlines) {
+        mesh.visible = k === id;
+        if (k === id) outlined.push(mesh.parent ?? mesh);
+      }
+      this.engine.setOutlined(outlined);
     }
   }
 
@@ -874,6 +980,17 @@ class App {
       ready: true,
       view: () => this.view,
       gotoTower: () => this.showTower(),
+      highlightFloor: (f: number | null) => {
+        this.tower.highlight(f);
+        this.engine.setOutlined(this.tower.outlined());
+        this.hud.setHoverFloor(f);
+      },
+      setCamPose: (pos: number[], target: number[]) => {
+        cancelFly();
+        this.engine.camera.position.set(pos[0], pos[1], pos[2]);
+        this.engine.orbit.target.set(target[0], target[1], target[2]);
+        this.engine.orbit.update();
+      },
       gotoFloor: (f: number) => this.showFloor(f),
       gotoFlat: (f: number, id: string, cam: "dollhouse" | "walk" = "dollhouse") => this.showFlat(f, id, cam),
       setCam: (cam: "dollhouse" | "walk") => {
@@ -1080,3 +1197,36 @@ new App().start().catch((err) => {
   const sub = document.querySelector(".load-sub");
   if (sub) sub.textContent = "Could not load the walkthrough. Check the console.";
 });
+
+
+function makeWalkMarker(): THREE.Group {
+  const g = new THREE.Group();
+  g.name = "walk-marker";
+  g.visible = false;
+  g.renderOrder = 10;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.22, 0.34, 48),
+    new THREE.MeshBasicMaterial({
+      color: "#e8c878",
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  ring.rotation.x = -Math.PI / 2;
+  const inner = new THREE.Mesh(
+    new THREE.RingGeometry(0.04, 0.09, 28),
+    new THREE.MeshBasicMaterial({
+      color: "#fff6d8",
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  inner.rotation.x = -Math.PI / 2;
+  inner.position.y = 0.012;
+  g.add(ring, inner);
+  return g;
+}

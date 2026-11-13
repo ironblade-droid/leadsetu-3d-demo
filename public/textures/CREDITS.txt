@@ -48,3 +48,17 @@ City / skyline HDRI: modern_buildings_2 by Alexander Scholten, CC0,
 https://polyhaven.com/a/modern_buildings_2
 (1K HDR, in public/hdris/modern_buildings_2_1k.hdr, used as the sky /
 window backdrop — not as the indoor reflection environment.)
+
+
+v5 additions (retrieved 13 November 2026, Asia/Calcutta):
+
+- oakplank_*  Poly Haven oak_wood_planks, CC0
+  https://polyhaven.com/a/oak_wood_planks
+  1K JPEG Diffuse, NormalGL and Roughness. Light matte European oak
+  used for living-room wood flooring (roughness 0.6). Replaces
+  wood_floor_deck, which remains on disk unused.
+
+- shanghai_bund_1k.hdr  Poly Haven Shanghai Bund, CC0
+  https://polyhaven.com/a/shanghai_bund
+  1K HDR night-city skyline with lit windows. Used as the night
+  background (not a darkened day HDRI).

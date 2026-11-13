@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { Materials } from "./materials";
 import { applyKitchen, applyStyleLook, applyWorldXZUVs, assignFloorMaps, flooringSet, hardwareOf, makeFloorMaterial, uvScaleFor } from "./materials";
+import { applyTriplanar } from "./triplanar";
 import { addFalseCeiling, addRoomSkirting } from "./deco";
 import { furnishFromPlacements, aabb, addCurtains, type Anchor } from "./furniture";
 import { planUnit } from "./planner";
@@ -92,7 +93,7 @@ export function buildInterior(
   const geos: THREE.BufferGeometry[] = [];
   const extraMats: THREE.Material[] = [];
 
-  const wallMat = mats.wall.clone();
+  const wallMat = applyTriplanar(mats.wall.clone(), 0.42);
   wallMat.color.set(prefs.wallColor);
   extraMats.push(wallMat);
   applyKitchen(mats, prefs.kitchen);
@@ -290,19 +291,65 @@ export function buildInterior(
   ceil.receiveShadow = true;
   ceil.name = "ceiling";
   group.add(ceil);
-  // A wide plane so first-person never looks up into the sky through gaps in the footprint slab.
+  // A modest cover over the unit's indoor rooms only — the old 36 m plane
+  // stuck a grey triangle into the balcony night sky (it overhung the facade).
   if (opts.showCeiling && !opts.cutaway) {
-    const cover = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), mats.ceiling);
-    cover.rotation.x = Math.PI / 2;
-    cover.position.y = plan.wallHeight - 0.015;
-    cover.name = "ceiling-cover";
-    group.add(cover);
+    const indoor = plan.rooms.filter((r) => r.type !== "terrace" && r.type !== "balcony");
+    if (indoor.length) {
+      let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+      for (const r of indoor) {
+        for (const [x, z] of worldPoly(r.polygon, t)) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+        }
+      }
+      const cw = Math.max(1, maxX - minX) + 0.7;
+      const cd = Math.max(1, maxZ - minZ) + 0.7;
+      const cover = new THREE.Mesh(new THREE.PlaneGeometry(cw, cd), mats.ceiling);
+      cover.rotation.x = Math.PI / 2;
+      cover.position.set((minX + maxX) / 2, plan.wallHeight - 0.015, (minZ + maxZ) / 2);
+      cover.name = "ceiling-cover";
+      group.add(cover);
+    }
   }
-  // Ceiling discs + point lights (on at night)
+  // Ceiling discs + point lights (on at night). Balconies get a soffit
+  // downlight and a wall sconce so the night walk is a dusk render, not a cave.
   const roomLights: THREE.PointLight[] = [];
   const glowMats: THREE.MeshStandardMaterial[] = [];
+  const balconyLights: THREE.PointLight[] = [];
   for (const room of plan.rooms) {
-    if (room.type === "terrace" || room.type === "balcony") continue;
+    if (room.type === "terrace" || room.type === "balcony") {
+      const bb = aabb(worldPoly(room.polygon, t));
+      const glow = mats.emissive.clone();
+      glow.emissive.set("#ffc078");
+      glow.emissiveIntensity = 0.3;
+      glowMats.push(glow);
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 16), glow);
+      disc.position.set(bb.cx, plan.wallHeight - 0.08, bb.cz);
+      disc.visible = opts.showCeiling && !opts.cutaway;
+      group.add(disc);
+      const light = new THREE.PointLight("#ffc078", 0, 6.5, 2);
+      light.position.set(bb.cx, plan.wallHeight - 0.35, bb.cz);
+      light.visible = false;
+      light.userData.balcony = true;
+      group.add(light);
+      balconyLights.push(light);
+      // Wall sconce on the building-side of the balcony (closest to unit centre)
+      const sc = mats.emissive.clone();
+      sc.emissive.set("#ffd0a0");
+      sc.emissiveIntensity = 0.35;
+      glowMats.push(sc);
+      const sconce = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.08), sc);
+      sconce.position.set(bb.cx, 1.75, bb.cz);
+      group.add(sconce);
+      const sl = new THREE.PointLight("#ffd0a0", 0, 4.5, 2);
+      sl.position.set(bb.cx, 1.7, bb.cz);
+      sl.visible = false;
+      sl.userData.balcony = true;
+      group.add(sl);
+      balconyLights.push(sl);
+      continue;
+    }
     const bb = aabb(worldPoly(room.polygon, t));
     const glow = mats.emissive.clone();
     glow.emissive.set("#ffd9a0");
@@ -342,12 +389,17 @@ export function buildInterior(
     const night = time === "night";
     const golden = time === "golden";
     for (const l of roomLights) {
-      l.intensity = night ? (opts.cutaway ? 1.05 : 1.45) : golden ? 0.15 : 0;
+      l.intensity = night ? (opts.cutaway ? 1.15 : 1.7) : golden ? 0.22 : 0;
       l.visible = night || golden;
       l.color.set(night ? "#ffd7a3" : "#ffc888");
     }
+    for (const l of balconyLights) {
+      l.intensity = night ? 1.65 : golden ? 0.3 : 0;
+      l.visible = night || golden;
+      l.color.set("#ffc078");
+    }
     for (const m of glowMats) {
-      m.emissiveIntensity = night ? 2.1 : golden ? 0.7 : 0.3;
+      m.emissiveIntensity = night ? 2.4 : golden ? 0.75 : 0.3;
       m.emissive.set(night ? "#ffcc88" : "#ffe8c0");
     }
   }

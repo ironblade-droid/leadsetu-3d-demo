@@ -48,11 +48,29 @@ export function installGestures(
     orbit.update();
   }
 
+  const _dollyDir = new THREE.Vector3();
+
+  /** Cursor-anchored zoom: camera dollies along the pointer ray, target follows. */
+  function zoomToPoint(clientX: number, clientY: number, factor: number) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
+    const my = -((clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1;
+    _dollyDir.set(mx, my, 1).unproject(camera).sub(camera.position).normalize();
+    const prev = camera.position.distanceTo(orbit.target);
+    const next = Math.max(orbit.minDistance, Math.min(orbit.maxDistance, prev * factor));
+    const delta = prev - next;
+    camera.position.addScaledVector(_dollyDir, delta);
+    camera.updateMatrixWorld();
+    const fwd = new THREE.Vector3(0, 0, -1).transformDirection(camera.matrix);
+    orbit.target.copy(camera.position).addScaledVector(fwd, next);
+    camera.lookAt(orbit.target);
+    orbit.update();
+  }
+
   function zoom(dir: 1 | -1) {
     if (opts.isWalk()) return;
-    captureSpherical();
-    spherical.radius *= dir < 0 ? 0.82 : 1.22;
-    applySpherical();
+    // Zoom toward the frame centre for the +/- buttons (no cursor).
+    zoomToPoint(window.innerWidth / 2, window.innerHeight / 2, dir < 0 ? 0.82 : 1.22);
   }
 
   function twoStats() {
@@ -116,8 +134,7 @@ export function installGestures(
       if (mode === "pinch") {
         if (last.dist > 1 && s.dist > 1) {
           const factor = last.dist / s.dist;
-          spherical.radius *= factor;
-          applySpherical();
+          zoomToPoint(s.midX, s.midY, factor);
         }
       } else if (mode === "pan") {
         const dx = s.midX - last.midX;

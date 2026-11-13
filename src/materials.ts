@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { FlooringId, KitchenId, Prefs, StyleId } from "./types";
+import { applyTriplanar } from "./triplanar";
 
 export interface TexSet {
   map: THREE.Texture;
@@ -46,7 +47,7 @@ const BASE = () => `${import.meta.env.BASE_URL}textures/`;
 
 /** World-space metres covered by one repeat of each floor texture. */
 export const FLOOR_TILE_M: Record<string, number> = {
-  wood: 2.15,
+  wood: 1.5,
   marble: 3.4,
   tile: 1.7,
   "tile-wet": 1.7,
@@ -103,7 +104,7 @@ export async function loadMaterials(
 
   const [wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed] =
     await Promise.all([
-      set(loader, "wood", aniso, 1),
+      set(loader, "oakplank", aniso, 1),
       set(loader, "marblevein", aniso, 1),
       set(loader, "tile", aniso, 1),
       set(loader, "terra", aniso, 1),
@@ -136,7 +137,7 @@ export async function loadMaterials(
 
   return {
     wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed,
-    wall: std("#f4f1ea", { roughness: 0.85, metalness: 0, map: plaster.map, normalMap: plaster.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), roughnessMap: plaster.roughnessMap }),
+    wall: applyTriplanar(std("#f4f1ea", { roughness: 0.85, metalness: 0, map: plaster.map, normalMap: plaster.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), roughnessMap: plaster.roughnessMap }), 0.42),
     ceiling: std("#f7f4ee", { roughness: 0.92, metalness: 0, envMapIntensity: 0.2 }),
     glass: new THREE.MeshPhysicalMaterial({
       color: "#eef4f8",
@@ -196,7 +197,7 @@ export async function loadMaterials(
     }),
     cabinet: std("#f3f1ec", { roughness: 0.55 }),
     woodFur: std("#8b5a2b", {
-      roughness: 0.58,
+      roughness: 0.62,
       metalness: 0.02,
       map: wood.map,
       roughnessMap: wood.roughnessMap,
@@ -373,9 +374,9 @@ export function makeFloorMaterial(
     map: tex.map,
     normalMap: tex.normalMap,
     roughnessMap: tex.roughnessMap,
-    roughness: marble ? 0.28 : wet ? 0.42 : 0.62,
+    roughness: marble ? 0.28 : wet ? 0.42 : 0.6,
     metalness: 0.0,
-    envMapIntensity: marble ? 0.28 : wet ? 0.2 : 0.12,
+    envMapIntensity: marble ? 0.28 : wet ? 0.2 : 0.1,
     normalScale: new THREE.Vector2(marble ? 0.45 : 0.7, marble ? 0.45 : 0.7),
     side: THREE.DoubleSide,
   });
@@ -384,7 +385,7 @@ export function makeFloorMaterial(
 export function tuneFloorMaterial(mat: THREE.MeshStandardMaterial, kind: FlooringId | "tile-wet" | "terra"): void {
   const marble = kind === "marble";
   const tile = kind === "tile" || kind === "tile-wet";
-  mat.roughness = marble ? 0.28 : tile ? 0.42 : 0.62;
+  mat.roughness = marble ? 0.28 : tile ? 0.42 : 0.6;
   mat.envMapIntensity = marble ? 0.28 : tile ? 0.2 : 0.12;
   mat.metalness = 0;
   if (mat.normalScale) mat.normalScale.set(marble ? 0.45 : 0.7, marble ? 0.45 : 0.7);

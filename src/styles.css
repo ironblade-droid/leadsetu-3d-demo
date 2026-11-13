@@ -813,3 +813,44 @@ body.tv .menu-pop { width: min(320px, 46vw); }
 /* Hide any leftover absolute pill if old markup appears */
 .time-pill { display: none !important; }
 .hint { display: none; }
+
+
+/* ---------- v5: mobile controls ~1.5×, sliders capture touch ---------- */
+#ui input, #ui select, #ui textarea, #ui input[type="range"],
+#ui .sheet, #ui .dock, #ui .prefs, #ui .joy-wrap, #ui .zoom-stack {
+  touch-action: none;
+}
+#ui input[type="range"] {
+  pointer-events: auto;
+}
+
+/* Joystick and zoom only — do not bump --tap globally (that reflows the compact HUD). */
+body.touch .joy-wrap,
+body.touch .joy-base {
+  width: 168px;
+  height: 168px;
+}
+body.touch .joy-knob {
+  width: 78px;
+  height: 78px;
+  left: 45px;
+  top: 45px;
+}
+body.touch .zoom-stack .icon-btn {
+  width: calc(var(--tap) * 1.5);
+  height: calc(var(--tap) * 1.5);
+  min-width: calc(var(--tap) * 1.5);
+  min-height: calc(var(--tap) * 1.5);
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  body.touch .joy-wrap,
+  body.touch .joy-base { width: 132px; height: 132px; }
+  body.touch .joy-knob { width: 60px; height: 60px; left: 36px; top: 36px; }
+  body.touch .zoom-stack .icon-btn {
+    width: calc(var(--tap) * 1.25);
+    height: calc(var(--tap) * 1.25);
+    min-width: calc(var(--tap) * 1.25);
+    min-height: calc(var(--tap) * 1.25);
+  }
+}

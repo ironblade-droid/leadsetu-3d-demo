@@ -333,13 +333,19 @@ function roomOverview(
     lookZ = cam.z + (dz / len) * lookDist;
   }
 
-  const pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : PITCH_DOWN;
+  const pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : kind === "bathroom" ? (-14 * Math.PI) / 180 : kind === "bedroom" ? (-10 * Math.PI) / 180 : PITCH_DOWN;
   const horiz = Math.hypot(lookX - cam.x, lookZ - cam.z) || 1;
   const lookY = EYE + Math.tan(pitch) * horiz;
 
   let fov = defaultFov(kind, area);
   if (kind === "kitchen" && area < 18) fov = 80;
   if (outdoor && shallow) fov = 80;
+  // Widen the master (and generous bedrooms) so the whole bed reads, and
+  // small bathrooms so the WC and vanity are both in frame.
+  const master = kind === "bedroom" && (/master/i.test(room.name || "") || area >= 14);
+  if (master) fov = Math.max(fov, 82);
+  else if (kind === "bedroom") fov = Math.max(fov, 76);
+  if (kind === "bathroom") fov = Math.max(fov, 90);
 
   return { camX: cam.x, camZ: cam.z, lookX, lookZ, lookY, fov, pitch };
 }

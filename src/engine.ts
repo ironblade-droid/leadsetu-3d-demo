@@ -7,6 +7,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { GTAOPass } from "three/examples/jsm/postprocessing/GTAOPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass.js";
 
 export interface Engine {
   renderer: THREE.WebGLRenderer;
@@ -32,7 +33,11 @@ export interface Engine {
   /** Aim the sun through the unit's windows (walk) or restore the tower sun. */
   aimWalkLighting: (center: THREE.Vector3 | null, incoming: THREE.Vector3 | null, radius: number) => void;
   cityBg: THREE.Texture | null;
+  cityBgNight: THREE.Texture | null;
+  cityEnv: THREE.Texture | null;
+  cityEnvNight: THREE.Texture | null;
   walkLit: boolean;
+  setOutlined: (objects: THREE.Object3D[]) => void;
   dispose: () => void;
 }
 
@@ -75,23 +80,24 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#b9cbe0");
-  scene.fog = new THREE.Fog("#c5d4e3", 90, 220);
+  scene.fog = new THREE.Fog("#c5d4e3", 160, 480);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.06).texture;
   scene.environmentIntensity = 0.55;
 
   const fov = mobile ? 58 : 50;
-  const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.05, 400);
-  camera.position.set(36, 28, 38);
+  const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.05, 900);
+  camera.position.set(56, 5.5, 78);
 
   const orbit = new OrbitControls(camera, renderer.domElement);
   orbit.enableDamping = true;
   orbit.dampingFactor = 0.08;
-  orbit.maxPolarAngle = Math.PI * 0.48;
+  orbit.maxPolarAngle = Math.PI * 0.495;
   orbit.minDistance = 2;
-  orbit.maxDistance = 90;
-  orbit.target.set(13.7, 8, 10);
+  orbit.maxDistance = 140;
+  orbit.zoomToCursor = true;
+  orbit.target.set(13.7, 6, 10);
   orbit.update();
   orbit.touches.ONE = THREE.TOUCH.ROTATE;
   orbit.touches.TWO = THREE.TOUCH.DOLLY_PAN;
@@ -110,10 +116,10 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   const map = mobile ? 1024 : 2048;
   sun.shadow.mapSize.set(map, map);
   sun.shadow.camera.near = 4;
-  sun.shadow.camera.far = 140;
-  sun.shadow.camera.left = -50;
-  sun.shadow.camera.right = 50;
-  sun.shadow.camera.top = 50;
+  sun.shadow.camera.far = 200;
+  sun.shadow.camera.left = -60;
+  sun.shadow.camera.right = 60;
+  sun.shadow.camera.top = 70;
   sun.shadow.camera.bottom = -50;
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.035;
@@ -133,6 +139,10 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   let gtaoPass: GTAOPass | null = null;
   let aoOn = highTier;
   let cityBg: THREE.Texture | null = null;
+  let cityBgNight: THREE.Texture | null = null;
+  let cityEnv: THREE.Texture | null = null;
+  let cityEnvNight: THREE.Texture | null = null;
+  let outlinePass: OutlinePass | null = null;
 
   if (highTier) {
     const w = window.innerWidth;
@@ -156,6 +166,15 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
       scale: 1.15,
     });
     composer.addPass(gtaoPass);
+    outlinePass = new OutlinePass(new THREE.Vector2(w, h), scene, camera);
+    outlinePass.edgeStrength = 3.4;
+    outlinePass.edgeGlow = 0.4;
+    outlinePass.edgeThickness = 1.5;
+    outlinePass.visibleEdgeColor.set("#f0d48a");
+    outlinePass.hiddenEdgeColor.set("#8a6a30");
+    outlinePass.pulsePeriod = 2.4;
+    outlinePass.downSampleRatio = 1.5;
+    composer.addPass(outlinePass);
     composer.addPass(new OutputPass());
   }
 
@@ -185,8 +204,12 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
     }
     tickFn(dt);
     if (orbit.enabled) orbit.update();
-    if (composer && aoOn) composer.render();
-    else renderer.render(scene, camera);
+    if (composer) {
+      if (gtaoPass) gtaoPass.enabled = aoOn;
+      composer.render();
+    } else {
+      renderer.render(scene, camera);
+    }
     labels.render(scene, camera);
     afterFn();
   }
@@ -258,6 +281,7 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
       composer.setPixelRatio(pr);
       composer.setSize(w, h);
       resizeGtao(Math.round(w * pr), Math.round(h * pr));
+      outlinePass?.setSize(w, h);
     }
   }
   window.addEventListener("resize", resize);
@@ -266,7 +290,16 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
     renderer, scene, camera, orbit, labels, sun, hemi, fill, mobile, highTier, softwareGpu,
     get cityBg() { return cityBg; },
     set cityBg(t) { cityBg = t; },
+    get cityBgNight() { return cityBgNight; },
+    set cityBgNight(t) { cityBgNight = t; },
+    get cityEnv() { return cityEnv; },
+    set cityEnv(t) { cityEnv = t; },
+    get cityEnvNight() { return cityEnvNight; },
+    set cityEnvNight(t) { cityEnvNight = t; },
     walkLit: false,
+    setOutlined(objects: THREE.Object3D[]) {
+      if (outlinePass) outlinePass.selectedObjects = objects;
+    },
     start(tick, after) {
       tickFn = tick;
       afterFn = after ?? (() => {});
@@ -347,7 +380,7 @@ export function flyCamera(
   orbit: OrbitControls,
   pos: THREE.Vector3,
   target: THREE.Vector3,
-  duration = 1.15,
+  duration = 0.5,
 ): Promise<void> {
   const gen = ++flyGen;
   const fromP = camera.position.clone();
@@ -385,7 +418,7 @@ export function flyEye(
   toPos: THREE.Vector3,
   toYaw: number,
   toPitch = 0,
-  duration = 1.05,
+  duration = 0.5,
   onFrame?: (pos: THREE.Vector3, yaw: number, pitch: number) => void,
 ): Promise<void> {
   const gen = ++flyGen;
@@ -429,7 +462,7 @@ export function applyTimeOfDay(engine: Engine, time: TimeOfDay): void {
     fill.color.set("#f0e0c4");
     fill.intensity = 0.42;
     renderer.toneMappingExposure = 1.08;
-    scene.fog = new THREE.Fog("#c5d4e3", 110, 240);
+    scene.fog = new THREE.Fog("#c5d4e3", 160, 480);
     if (engine.cityBg) {
       scene.background = engine.cityBg;
       scene.backgroundIntensity = 1.05;
@@ -448,7 +481,7 @@ export function applyTimeOfDay(engine: Engine, time: TimeOfDay): void {
     fill.color.set("#ffb07a");
     fill.intensity = 0.38;
     renderer.toneMappingExposure = 1.0;
-    scene.fog = new THREE.Fog("#e0a070", 90, 200);
+    scene.fog = new THREE.Fog("#e0a070", 150, 420);
     if (engine.cityBg) {
       scene.background = engine.cityBg;
       scene.backgroundIntensity = 0.78;
@@ -458,21 +491,25 @@ export function applyTimeOfDay(engine: Engine, time: TimeOfDay): void {
       scene.background = new THREE.Color("#eeb07a");
     }
   } else {
-    if (!engine.walkLit) sun.position.set(-30, 28, 40);
-    sun.color.set("#b0c0e8");
-    sun.intensity = 0.18;
-    hemi.color.set("#1a2848");
-    hemi.groundColor.set("#0a0c12");
-    hemi.intensity = 0.22;
-    fill.color.set("#3a5080");
-    fill.intensity = 0.1;
-    renderer.toneMappingExposure = 0.82;
-    scene.fog = new THREE.Fog("#101828", 60, 160);
-    if (engine.cityBg) {
-      scene.background = engine.cityBg;
-      scene.backgroundIntensity = 0.12;
-      scene.backgroundBlurriness = 0.08;
-      scene.backgroundRotation.set(0, 2.2, 0);
+    // Night is a real night-city HDRI plus practicals (rooms, lamps, facade),
+    // not a darkened day sky. Exposure stays in a dusk-render range so the
+    // balcony and lobby still read.
+    if (!engine.walkLit) sun.position.set(-24, 42, 36);
+    sun.color.set("#b8c8e8");
+    sun.intensity = 0.32;
+    hemi.color.set("#3a4c78");
+    hemi.groundColor.set("#1a1520");
+    hemi.intensity = 0.42;
+    fill.color.set("#ffb070");
+    fill.intensity = 0.38;
+    renderer.toneMappingExposure = 0.98;
+    scene.fog = new THREE.Fog("#0c1220", 180, 480);
+    const nightBg = engine.cityBgNight ?? engine.cityBg;
+    if (nightBg) {
+      scene.background = nightBg;
+      scene.backgroundIntensity = 0.7;
+      scene.backgroundBlurriness = 0.045;
+      scene.backgroundRotation.set(0, 0.85, 0);
     } else {
       scene.background = new THREE.Color("#0b1020");
     }
@@ -500,7 +537,7 @@ export async function loadHdriEnvironment(engine: Engine, url: string): Promise<
   }
 }
 
-/** City / skyline HDRI used as the sky (window views), not as the reflection env. */
+/** City / skyline HDRI used as the sky (window views), and as a PMREM for facade glass. */
 export async function loadCityBackground(engine: Engine, url: string): Promise<void> {
   try {
     const loader = new RGBELoader();
@@ -511,8 +548,26 @@ export async function loadCityBackground(engine: Engine, url: string): Promise<v
     engine.scene.backgroundIntensity = 1.05;
     engine.scene.backgroundBlurriness = 0.015;
     engine.scene.backgroundRotation.set(0, 0.35, 0);
+    const pmrem = new THREE.PMREMGenerator(engine.renderer);
+    engine.cityEnv = pmrem.fromEquirectangular(tex).texture;
+    pmrem.dispose();
   } catch (err) {
     console.warn("[engine] city HDRI failed, keeping solid sky", err);
+  }
+}
+
+/** Night-city HDRI (lit windows, dusk sky) — never a darkened day sky. */
+export async function loadNightBackground(engine: Engine, url: string): Promise<void> {
+  try {
+    const loader = new RGBELoader();
+    const tex = await loader.loadAsync(url);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    engine.cityBgNight = tex;
+    const pmrem = new THREE.PMREMGenerator(engine.renderer);
+    engine.cityEnvNight = pmrem.fromEquirectangular(tex).texture;
+    pmrem.dispose();
+  } catch (err) {
+    console.warn("[engine] night HDRI failed", err);
   }
 }
 

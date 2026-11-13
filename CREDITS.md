@@ -72,3 +72,24 @@ From [Poly Haven](https://polyhaven.com), CC0. See `public/textures/CREDITS.txt`
 ## v4 presentation (original)
 
 Skirting boards, living/master cove ceilings with recessed downlights, folded curtains, contact-AO decals, and procedural wall-art canvases are original geometry and generated textures, not third-party models. GTAO is the three.js 0.170 example pass (`three/examples/jsm/postprocessing/GTAOPass.js`, MIT), used on desktop/high-tier GPUs only.
+
+
+## v5 additions (13 November 2026, Asia/Calcutta)
+
+### HDRIs (Poly Haven, CC0)
+
+- [Shanghai Bund](https://polyhaven.com/a/shanghai_bund) — 1K HDR, night-city skyline used as the walk-mode and exterior night sky. Day sky remains [Modern Buildings 2](https://polyhaven.com/a/modern_buildings_2). Indoor reflections remain [Studio Small 08](https://polyhaven.com/a/studio_small_08) by Greg Zaal.
+
+### Floors (Poly Haven, CC0)
+
+- [Oak Wood Planks](https://polyhaven.com/a/oak_wood_planks) — light matte European oak (`oakplank_diff/nor/rough.jpg`, roughness 0.6). Replaces the orange glossy `wood_floor_deck` on living-room Wood flooring.
+
+### Furniture models (CC0, on disk, being wired)
+
+`public/models/v5/` — [3dassets.dev](https://3dassets.dev) packs *Bedroom and Living Room Furniture* and *Fitted Kitchen and Bathroom Builder*, licence **CC0 1.0 Universal**. AI-generated untextured glTF (Muse Spark / T3 Code); style tints and scanned PBR maps are applied at runtime. Credit is not required.
+
+The earlier Victorian Poly Haven set in `public/models/` is no longer the show-flat catalog; removal follows the furniture swap.
+
+### Trees and podium
+
+Podium trees in this pass are instanced procedural meshes with CC0 bark (oak/wood maps) and a tinted plant material, not a third-party glTF — a real CC0 tree will be preferred if a compressed glTF fits the budget.

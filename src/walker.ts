@@ -78,6 +78,8 @@ export class Walker {
 
   cancelWalkTo() { this.walkTarget = null; }
 
+  getWalkTarget(): THREE.Vector3 | null { return this.walkTarget; }
+
   requestLock = () => {
     if (this.skipLockOnce) { this.skipLockOnce = false; return; }
     if (!this.enabled || this.tv) return;
@@ -200,7 +202,7 @@ export function attachJoystick(
   const base = el;
   let tracking: number | null = null;
   const set = (cx: number, cy: number, x: number, y: number) => {
-    const r = 42;
+    const r = Math.max(36, base.getBoundingClientRect().width * 0.375);
     let dx = x - cx, dy = y - cy;
     const l = Math.hypot(dx, dy) || 1;
     if (l > r) { dx = (dx / l) * r; dy = (dy / l) * r; }

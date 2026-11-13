@@ -74,7 +74,11 @@ function shapePlate(): THREE.Shape {
 
 function plateGeo(thickness: number, shape?: THREE.Shape): THREE.ExtrudeGeometry {
   const geo = new THREE.ExtrudeGeometry(shape ?? shapePlate(), { depth: thickness, bevelEnabled: false });
-  geo.rotateX(-Math.PI / 2);
+  // +π/2 maps shape Y → world +Z (same convention as interior floors).
+  // The previous -π/2 mirrored the T-plate to z ∈ [-19.2, 0], so every
+  // floor slab and the podium sat south of the facade as floating shelves.
+  geo.rotateX(Math.PI / 2);
+  geo.translate(0, thickness, 0); // keep the top at local y = thickness
   geo.computeVertexNormals();
   return geo;
 }
@@ -83,12 +87,13 @@ function plateGeo(thickness: number, shape?: THREE.Shape): THREE.ExtrudeGeometry
 function shapePodiumOpen(): THREE.Shape {
   const s = shapePlate();
   const hole = new THREE.Path();
-  // Must sit strictly inside the plate (south edge is z=0, stem 8.45–18.95)
-  // and wind opposite the outer path so ExtrudeGeometry keeps the hole.
-  const x0 = 8.6;
-  const x1 = 18.8;
-  const z0 = 0.08;
-  const z1 = 2.2;
+  // Hollow the full lobby stem (south curtain at z=0, junction at z=10)
+  // so the curtain wall is not backed by a solid cream fill. The path
+  // sits strictly inside the plate and winds opposite the outer (CW) path.
+  const x0 = 8.55;
+  const x1 = 18.85;
+  const z0 = 0.02;
+  const z1 = 9.85;
   hole.moveTo(x0, z0);
   hole.lineTo(x0, z1);
   hole.lineTo(x1, z1);
@@ -98,8 +103,19 @@ function shapePodiumOpen(): THREE.Shape {
   return s;
 }
 
-function plateMesh(mat: THREE.Material, thickness: number, y: number): THREE.Mesh {
-  const m = new THREE.Mesh(plateGeo(thickness), mat);
+/** East-west bar only (z = 10–19.2). The south stem is the lobby and stays hollow. */
+function shapeNorthBar(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.2, 10);
+  s.lineTo(0.2, 19.2);
+  s.lineTo(27.2, 19.2);
+  s.lineTo(27.2, 10);
+  s.closePath();
+  return s;
+}
+
+function plateMesh(mat: THREE.Material, thickness: number, y: number, shape?: THREE.Shape): THREE.Mesh {
+  const m = new THREE.Mesh(plateGeo(thickness, shape), mat);
   m.position.y = y;
   m.castShadow = true;
   m.receiveShadow = true;
@@ -249,14 +265,15 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   });
   glassMats.push(glass);
   const lobbyGlass = new THREE.MeshPhysicalMaterial({
-    color: "#b7c8d2",
-    metalness: 0.22,
+    color: "#6a8290",
+    metalness: 0.08,
     roughness: 0.04,
     transparent: true,
-    opacity: 0.34,
-    envMapIntensity: 2.1,
-    clearcoat: 0.85,
+    opacity: 0.18,
+    envMapIntensity: 1.4,
+    clearcoat: 0.5,
     clearcoatRoughness: 0.06,
+    depthWrite: false,
   });
   glassMats.push(lobbyGlass);
   const railGlass = mats.glassRail.clone();
@@ -286,7 +303,7 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   const lobbyGlow = new THREE.MeshStandardMaterial({
     color: "#f0d4a8",
     emissive: "#ffc888",
-    emissiveIntensity: 0.15,
+    emissiveIntensity: 0.7,
     roughness: 1,
     metalness: 0,
     side: THREE.DoubleSide,
@@ -342,7 +359,8 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   driveShape.lineTo(-5.6, -9);
   driveShape.closePath();
   const driveGeo = new THREE.ExtrudeGeometry(driveShape, { depth: 0.07, bevelEnabled: false });
-  driveGeo.rotateX(-Math.PI / 2);
+  driveGeo.rotateX(Math.PI / 2);
+  driveGeo.translate(0, 0.07, 0);
   const drive = new THREE.Mesh(driveGeo, driveMat);
   drive.position.set(13.7, 0.03, 0);
   drive.receiveShadow = true;
@@ -612,7 +630,8 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
     for (const l of practicals) {
       const nightI = (l.userData.nightI as number) ?? 1.2;
       const goldenI = (l.userData.goldenI as number) ?? 0;
-      l.intensity = night ? nightI : golden ? goldenI : 0;
+      const morningI = (l.userData.morningI as number) ?? 0;
+      l.intensity = night ? nightI : golden ? goldenI : morningI;
       l.visible = l.intensity > 0.01;
     }
     for (const m of glowMats) {
@@ -621,7 +640,7 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
         if ("emissiveIntensity" in m) m.emissiveIntensity = night ? 0.55 : 0;
         continue;
       }
-      m.emissiveIntensity = night ? (m === lobbyGlow ? 2.4 : 2.8) : golden ? 0.7 : (m === lobbyGlow ? 0.18 : 0);
+      m.emissiveIntensity = night ? (m === lobbyGlow ? 2.6 : 2.8) : golden ? 0.85 : (m === lobbyGlow ? 0.7 : 0);
     }
     group.traverse((o) => {
       const fn = o.userData.setCityNight as ((n: boolean, g: boolean) => void) | undefined;
@@ -634,10 +653,11 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
         m.needsUpdate = true;
       }
       if (m === lobbyGlass) {
-        m.emissive.set(night ? "#ffc888" : "#000000");
-        m.emissiveIntensity = night ? 0.55 : golden ? 0.12 : 0;
-        m.opacity = night ? 0.55 : 0.34;
-        m.color.set(night ? "#e8c898" : "#b7c8d2");
+        m.emissive.set(night ? "#ffc888" : golden ? "#ffd8b0" : "#f0e0c8");
+        m.emissiveIntensity = night ? 0.65 : golden ? 0.18 : 0.08;
+        m.opacity = night ? 0.42 : 0.18;
+        m.color.set(night ? "#e8c898" : "#6a8290");
+        m.transparent = true;
         continue;
       }
       if (night) {
@@ -743,11 +763,11 @@ function makeSharedGeos(): SharedGeos {
     clad: new THREE.BoxGeometry(module - 0.04, FLOOR_TO_FLOOR - 0.42, 0.24),
     fin: new THREE.BoxGeometry(0.1, FLOOR_TO_FLOOR - 0.42, 0.38),
     slab: plateGeo(0.32),
-    balSlab: new THREE.BoxGeometry(5.15, 0.28, 2.25),
+    balSlab: new THREE.BoxGeometry(5.15, 0.28, 1.8),
     balRail: new THREE.BoxGeometry(4.85, 1.1, 0.024),
-    balRailS: new THREE.BoxGeometry(0.024, 1.1, 2.05),
+    balRailS: new THREE.BoxGeometry(0.024, 1.1, 1.62),
     cap: new THREE.BoxGeometry(4.9, 0.028, 0.05),
-    capS: new THREE.BoxGeometry(0.05, 0.028, 2.1),
+    capS: new THREE.BoxGeometry(0.05, 0.028, 1.66),
   };
 }
 
@@ -785,17 +805,19 @@ function makeTypicalFloor(
   slab.receiveShadow = true;
   slab.userData.ghostable = true;
   g.add(slab);
-  // Expressed slab band — a slightly larger, thinner plate sitting on the edge
+  // Thin expressed edge band — a 4 cm lip around the exact plate, not a
+  // uniformly scaled-up slab (scale around the origin used to throw the
+  // east/north edges out by a third of a metre).
   const band = new THREE.Mesh(shared.slab, M.slabMat);
   band.position.y = y0 + 0.02;
-  band.scale.set(1.018, 0.7, 1.018);
+  band.scale.set(1, 0.55, 1);
   band.castShadow = true;
   band.userData.facade = true;
   g.add(band);
 
   const top = new THREE.Mesh(shared.slab, M.slabMat);
   top.position.y = y0 + FLOOR_TO_FLOOR - 0.12;
-  top.scale.set(1.008, 0.35, 1.008);
+  top.scale.set(1, 0.35, 1);
   top.userData.ghostable = true;
   top.userData.hideInCutaway = true;
   top.castShadow = true;
@@ -905,7 +927,9 @@ function addFacadeInstanced(
   const winH = 1.55;
   const sillY = 0.95; // solid spandrel under the punch window
   for (const f of facadeFaces()) {
-    const n = Math.max(1, Math.floor(f.len / module));
+    const n = Math.max(1, Math.round(f.len / module));
+    const modW = f.len / n;
+    const sx = modW / (module - 0.04);
     for (let i = 0; i < n; i++) {
       const u = (i + 0.5) / n;
       const px = f.alongX ? f.x + u * f.len : f.x;
@@ -915,8 +939,9 @@ function addFacadeInstanced(
       const oz = f.alongX ? f.inward * 0.13 : 0;
       const door = isBalconyModule(f, px, pz);
       // Full-width solid cladding is the wall. Windows are punched into it,
-      // with a solid spandrel below (not an all-glass grid).
-      cladM.push(compose(px, y + h / 2, pz, ry, 1, 1, 1));
+      // with a solid spandrel below (not an all-glass grid). Modules are
+      // stretched so each face is covered end-to-end (no corner gaps).
+      cladM.push(compose(px, y + h / 2, pz, ry, sx, 1, 1));
       const thisH = door ? 2.25 : winH;
       const cy = y + (door ? 0.15 + thisH / 2 : sillY + winH / 2);
       glassM.push(compose(px + ox, cy, pz + oz, ry, door ? 1.2 : 1, thisH / winH, 1));
@@ -973,7 +998,7 @@ function addDeepBalconies(
   const xs = [5.35, 16.55];
   const z = 19.05;
   const w = 5.15;
-  const d = 2.25;
+  const d = 1.8;
   const slabM: THREE.Matrix4[] = [];
   const soffM: THREE.Matrix4[] = [];
   const railNM: THREE.Matrix4[] = [];
@@ -1282,11 +1307,11 @@ function addLobby(
   // Full-footprint stone podium — same plan as the tower, so it is grounded
   // (not a cream box, not a stilted cage). The lobby curtain is a framed
   // opening in the south face, not a separate volume.
-  const podium = plateMesh(stone, PLINTH, 0);
+  const podium = plateMesh(stone, PLINTH, 0, shapeNorthBar());
   mark(podium);
   // Solid podium, with a punched south opening so the lobby curtain can read
   // (a full-plate fill was a blank cream wall at the arrival).
-  const podiumFillGeo = plateGeo(LOBBY_H - 0.35, shapePodiumOpen());
+  const podiumFillGeo = plateGeo(LOBBY_H - 0.35, shapeNorthBar());
   const podiumFill = new THREE.Mesh(podiumFillGeo, stone);
   podiumFill.position.y = 0.02;
   podiumFill.castShadow = true;
@@ -1300,7 +1325,7 @@ function addLobby(
   transfer.position.z = 10.6 * (1 - 1.04);
   mark(transfer);
   // Rusticated base band at grade, wrapping the plate.
-  const rust = plateMesh(stone, 0.85, 0);
+  const rust = plateMesh(stone, 0.85, 0, shapeNorthBar());
   rust.scale.set(1.04, 1, 1.04);
   rust.position.x = 13.7 * (1 - 1.04);
   rust.position.z = 10.6 * (1 - 1.04);
@@ -1368,14 +1393,16 @@ function addLobby(
   const lobbyLit = new THREE.PointLight("#ffd4a0", 0, 16, 2);
   lobbyLit.position.set(lx, 3.6, lz);
   lobbyLit.userData.nightI = 3.4;
-  lobbyLit.userData.goldenI = 0.8;
+  lobbyLit.userData.goldenI = 1.1;
+  lobbyLit.userData.morningI = 1.6;
   practicals.push(lobbyLit);
   mark(lobbyLit);
   if (!mobile) {
     const lobbyLit2 = new THREE.PointLight("#ffe0b0", 0, 12, 2);
     lobbyLit2.position.set(lx, 2.4, lz - 2);
     lobbyLit2.userData.nightI = 2.2;
-    lobbyLit2.userData.goldenI = 0.45;
+    lobbyLit2.userData.goldenI = 0.6;
+    lobbyLit2.userData.morningI = 1.0;
     practicals.push(lobbyLit2);
     mark(lobbyLit2);
   }

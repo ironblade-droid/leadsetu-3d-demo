@@ -1264,6 +1264,19 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
         bpy.ops.object.join()
     joined = bpy.context.view_layer.objects.active
     joined.name = f"_BAKEJOIN-{rid}"
+    # Join often leaves UV0 (albedo) as the active layer. Cycles bakes
+    # into the *active* UV — if that is not UVLightmap, the packed atlas
+    # stays black (this is what happened on the first joined bake).
+    uvs = joined.data.uv_layers
+    print("  joined UV layers:", [(u.name, u.active) for u in uvs], "faces", len(joined.data.polygons), flush=True)
+    if "UVLightmap" in [u.name for u in uvs]:
+        uvs["UVLightmap"].active = True
+        layer = uvs["UVLightmap"]
+        us = [float(d.uv[0]) for d in layer.data]
+        vs = [float(d.uv[1]) for d in layer.data]
+        print(f"  joined UVLightmap u={min(us):.3f}..{max(us):.3f} v={min(vs):.3f}..{max(vs):.3f} n={len(us)}", flush=True)
+    else:
+        print("  ERROR: joined mesh has no UVLightmap", flush=True)
     attach_bake_target(joined, img)
     # Every material slot needs the bake-target node.
     if joined.data.materials:
@@ -1306,6 +1319,14 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
     except (ReferenceError, KeyError) as e:
         print(f"  cleanup note: {e}", flush=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    raw = out_path.parent / (out_path.stem + "-raw.exr")
+    try:
+        img.filepath_raw = str(raw)
+        img.file_format = "OPEN_EXR"
+        img.save()
+        print(f"  raw EXR {raw} {raw.stat().st_size}", flush=True)
+    except Exception as e:
+        print("  raw EXR save failed", e, flush=True)
     png = denoise_and_tonemap(img, out_path.with_suffix(".png"), apply_filmic=apply_filmic)
     return png, dt, img
 

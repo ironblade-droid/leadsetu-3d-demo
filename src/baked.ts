@@ -67,10 +67,9 @@ export function bakedKey(planId: string, style: string): string {
 }
 
 export function hasBaked(planId: string, style: string): boolean {
-  // Off until the in-engine look is clearly better than v5 procedural
-  // AND matches the Cycles preview (soft GI, sun patches, clean walls).
-  // Flip this to `planId === "2bhk" && style === "modern"` after that pass.
-  return false;
+  // Temporary local QA flip for v6d. Revert / do not deploy until living,
+  // kitchen and bedroom clearly beat v5 and match the Cycles preview.
+  return planId === "2bhk" && style === "modern";
 }
 
 export function loadBaked(
@@ -202,6 +201,7 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
       g.setAttribute("uv2", g.getAttribute("uv1"));
     }
     const rid = roomIdOf(mesh, rooms, zFlip);
+    const kind = shellKind(mesh);
     const lm = rid ? dayMaps.get(rid) : undefined;
     const isFloor = /^floor-/.test(mesh.name) || /^OakFloor$/i.test((mesh.material as THREE.Material).name ?? "");
     const isCeil = /^ceil-/.test(mesh.name);
@@ -224,6 +224,21 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
           depthWrite: false,
         });
         next.push(glass);
+        continue;
+      }
+      // Imported furniture stays live PBR (UV0, original albedo). Combined
+      // lightmap unwraps were unique but too low-res, which showed as X-smears
+      // on sofas, beds and tables. Shells / cabinets stay baked.
+      if (kind === "furn") {
+        const mat = raw.clone() as THREE.MeshStandardMaterial;
+        if (mat.isMeshStandardMaterial) {
+          mat.lightMap = null;
+          mat.side = THREE.DoubleSide;
+          mat.envMapIntensity = 0.55;
+          mat.toneMapped = true;
+          mat.needsUpdate = true;
+        }
+        next.push(mat);
         continue;
       }
       if (lm) {
@@ -282,8 +297,9 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
       }
     }
     mesh.material = next.length === 1 ? next[0] : next;
-    mesh.castShadow = false;
-    mesh.receiveShadow = false;
+    const live = kind === "furn" || isGlass;
+    mesh.castShadow = live;
+    mesh.receiveShadow = live;
     mesh.frustumCulled = false;
   });
 
@@ -309,6 +325,16 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
     },
     dispose: () => {},
   };
+}
+
+function shellKind(mesh: THREE.Mesh): string | null {
+  const ud = (mesh.userData ?? {}) as Record<string, unknown>;
+  const extras = (ud.extras ?? ud) as Record<string, unknown>;
+  const k = extras.ls_shell ?? ud.ls_shell;
+  if (typeof k === "string") return k;
+  const n = mesh.name || "";
+  const m = /^(floor|ceil|wall|furn|glass|frame|shell|curtain|rail|cabinet|rod|krun|splash|counter|hob)-/.exec(n);
+  return m ? m[1] : null;
 }
 
 function pointInPoly(poly: [number, number][], x: number, z: number): boolean {

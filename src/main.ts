@@ -563,8 +563,8 @@ class App {
           baked.setWallColor(this.prefs.wallColor);
           baked.setTime(this.time === "night");
           this.bakedUnits.push(baked);
-          // MeshBasic ignores lights; keep a faint fill for leftover glass only.
-          fill.intensity = 0.12;
+          // Shells are MeshBasic (ignore lights). Furniture is live PBR and
+          // uses this fill plus the engine sun; applySceneTime sets the value.
         }
       } catch (e) {
         console.warn("baked unit failed, falling back to procedural", e);

@@ -172,6 +172,7 @@ interface Viewpoint {
   lookY?: number;
   fov?: number;
   pitch?: number;
+  alts?: { x: number; z: number }[];
 }
 
 const PITCH_DOWN = (-8 * Math.PI) / 180;
@@ -197,7 +198,7 @@ function roomOverview(
   cols: Collision[],
   doors: Door[],
   unitCenter?: { x: number; z: number },
-  lookBias?: { x: number; z: number; fx?: number; fz?: number; depth?: number },
+  lookBias?: { x: number; z: number; fx?: number; fz?: number; depth?: number; width?: number },
 ): Viewpoint {
   const a = aabb(poly);
   const area = room.area_m2 || a.w * a.d;
@@ -229,7 +230,7 @@ function roomOverview(
 
   // Bedroom: look at the headboard (anchor facing is footward).
   const bed = kind === "bedroom" && lookBias && lookBias.fx !== undefined && lookBias.fz !== undefined && lookBias.depth
-    ? lookBias as { x: number; z: number; fx: number; fz: number; depth: number }
+    ? lookBias as { x: number; z: number; fx: number; fz: number; depth: number; width?: number }
     : null;
   if (bed) {
     const hx = bed.x - bed.fx * (bed.depth / 2);
@@ -241,8 +242,8 @@ function roomOverview(
   type Cand = { x: number; z: number; score: number };
   const cands: Cand[] = [];
 
-  const consider = (x: number, z: number, bonus: number) => {
-    const pulled = pullInside(poly, x, z, small ? 0.36 : 0.32);
+  const consider = (x: number, z: number, bonus: number, pad?: number) => {
+    const pulled = pullInside(poly, x, z, pad ?? (kind === "bathroom" ? 0.18 : small ? 0.36 : 0.32));
     if (!pointInPoly(poly, pulled.x, pulled.z)) return;
     let px = pulled.x, pz = pulled.z;
     if (hitsCollision(cols, px, pz, radius)) {
@@ -314,6 +315,42 @@ function roomOverview(
     lookZ = a.cz;
   }
 
+  // Bathroom: stand at the doorway looking at the fixtures, with enough
+  // distance that we frame the basin and WC — not a single nearby wall.
+  if (kind === "bathroom") {
+    if (lookBias) {
+      lookX = lookBias.x * 0.55 + a.cx * 0.45;
+      lookZ = lookBias.z * 0.55 + a.cz * 0.45;
+    }
+    for (const door of doors) {
+      const inv = doorInward(door, poly);
+      if (!inv) continue;
+      const sx = -inv.iz, sz = inv.ix;
+      consider(inv.mx + inv.ix * 0.22, inv.mz + inv.iz * 0.22, 72, 0.14);
+      consider(inv.mx + inv.ix * 0.48, inv.mz + inv.iz * 0.48, 78, 0.16);
+      consider(inv.mx + inv.ix * 0.78, inv.mz + inv.iz * 0.78, 64, 0.16);
+      consider(inv.mx + inv.ix * 0.55 + sx * 0.30, inv.mz + inv.iz * 0.55 + sz * 0.30, 56, 0.16);
+      consider(inv.mx + inv.ix * 0.55 - sx * 0.30, inv.mz + inv.iz * 0.55 - sz * 0.30, 56, 0.16);
+    }
+    const ahead = (x: number, z: number, ux: number, uz: number) => {
+      for (let s = 0.06; s < 5; s += 0.06) {
+        if (!pointInPoly(poly, x + ux * s, z + uz * s)) return s;
+      }
+      return 5;
+    };
+    for (const c of cands) {
+      const dx = lookX - c.x, dz = lookZ - c.z;
+      const dist = Math.hypot(dx, dz) || 0.01;
+      const wallAhead = ahead(c.x, c.z, dx / dist, dz / dist);
+      if (wallAhead < 0.7) c.score -= 90;
+      else if (wallAhead < 1.05) c.score -= 35;
+      c.score += Math.min(wallAhead, 2.2) * 16;
+      c.score += Math.min(dist, 2.0) * 12;
+      const wallClear = distToPoly(poly, c.x, c.z);
+      if (wallClear < 0.22) c.score -= 40;
+    }
+  }
+
   // Bedroom: stand in a foot-side corner, looking at the headboard on its wall.
   // Stay off the mattress — a stand 0.6 m past the foot often collides with
   // the wardrobe or bench and gets pulled onto the bed.
@@ -335,18 +372,43 @@ function roomOverview(
       for (const side of [1, -1]) {
         consider(footX + bed.fx * 0.85 + px * side * 1.25, footZ + bed.fz * 0.85 + pz * side * 1.25, 44);
         consider(footX + bed.fx * 0.4 + px * side * 1.45, footZ + bed.fz * 0.4 + pz * side * 1.45, 38);
+        consider(footX + bed.fx * 1.15 + px * side * 0.95, footZ + bed.fz * 1.15 + pz * side * 0.95, 62);
       }
+      // Straight past the foot — usually the most spacious stand in a tight room.
+      consider(footX + bed.fx * 1.15, footZ + bed.fz * 1.15, 74);
+      consider(footX + bed.fx * 1.45, footZ + bed.fz * 1.45, 70);
+      consider(footX + bed.fx * 1.8, footZ + bed.fz * 1.8, 58);
+      const halfW = (bed.width ?? 1.6) / 2;
+      const onMattress = (x: number, z: number) => {
+        const along = (x - bed.x) * bed.fx + (z - bed.z) * bed.fz;
+        const side = (x - bed.x) * px + (z - bed.z) * pz;
+        return Math.abs(along) < bed.depth / 2 + 0.3 && Math.abs(side) < halfW + 0.22;
+      };
       for (const c of cands) {
         const dx = c.x - bed.x, dz = c.z - bed.z;
         const dist = Math.hypot(dx, dz);
         const along = dx * bed.fx + dz * bed.fz;
-        if (dist < 1.2) c.score -= 90; // on or astride the bed
-        if (along < 0.1) c.score -= 50; // head-side
-        c.score += Math.min(dist, 2.6) * 8;
+        if (onMattress(c.x, c.z)) c.score -= 160;
+        if (dist < 1.35) c.score -= 90; // on or astride the bed
+        if (along < 0.25) c.score -= 55; // head-side
+        c.score += Math.min(dist, 2.8) * 10;
         const toHeadX = lookX - c.x, toHeadZ = lookZ - c.z;
         const len = Math.hypot(toHeadX, toHeadZ) || 1;
         const align = (toHeadX / len) * (-bed.fx) + (toHeadZ / len) * (-bed.fz);
         c.score += align * 16;
+        // Prefer the corner with leftover walk space (2BHK SE is ~2 cm).
+        let clear = 1.4;
+        for (const col of cols) {
+          const ix = Math.max(col.minX - c.x, 0, c.x - col.maxX);
+          const iz = Math.max(col.minZ - c.z, 0, c.z - col.maxZ);
+          const inside = c.x >= col.minX && c.x <= col.maxX && c.z >= col.minZ && c.z <= col.maxZ;
+          const d = inside ? 0 : Math.hypot(ix, iz);
+          if (d < clear) clear = d;
+        }
+        c.score += Math.min(clear, 0.85) * 28;
+        const wallClear = distToPoly(poly, c.x, c.z);
+        if (wallClear < 0.28) c.score -= 28;
+        c.score += Math.min(wallClear, 0.7) * 12;
       }
     } else {
       for (const c of cands) {
@@ -378,9 +440,11 @@ function roomOverview(
     lookZ = cam.z + (dz / len) * lookDist;
   }
 
-  const pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : kind === "bathroom" ? (-14 * Math.PI) / 180 : kind === "bedroom" ? (-10 * Math.PI) / 180 : PITCH_DOWN;
   const horiz = Math.hypot(lookX - cam.x, lookZ - cam.z) || 1;
-  const lookY = EYE + Math.tan(pitch) * horiz;
+  let pitch = shallow ? (-20 * Math.PI) / 180 : outdoor ? (-14 * Math.PI) / 180 : kind === "bathroom" ? (-18 * Math.PI) / 180 : kind === "bedroom" ? (-10 * Math.PI) / 180 : PITCH_DOWN;
+  // Bathrooms: look at fixture height, not the upper wall a short pitch hits.
+  let lookY = kind === "bathroom" ? 0.95 : EYE + Math.tan(pitch) * horiz;
+  if (kind === "bathroom") pitch = Math.atan((lookY - EYE) / horiz);
 
   let fov = defaultFov(kind, area);
   if (kind === "kitchen" && area < 18) fov = 80;
@@ -390,9 +454,12 @@ function roomOverview(
   const master = kind === "bedroom" && (/master/i.test(room.name || "") || area >= 14);
   if (master) fov = Math.max(fov, 82);
   else if (kind === "bedroom") fov = Math.max(fov, 76);
-  if (kind === "bathroom") fov = Math.max(fov, 90);
+  if (kind === "bathroom") fov = Math.max(fov, area < 4 ? 96 : 92);
+  if (kind === "bedroom" && horiz < 2.4) fov = Math.max(fov, 88);
+  if (kind === "bedroom" && horiz < 1.85) fov = Math.max(fov, 95);
 
-  return { camX: cam.x, camZ: cam.z, lookX, lookZ, lookY, fov, pitch };
+  const alts = cands.slice(0, 6).map((c) => ({ x: c.x, z: c.z }));
+  return { camX: cam.x, camZ: cam.z, lookX, lookZ, lookY, fov, pitch, alts };
 }
 
 function pullInside(poly: [number, number][], x: number, z: number, pad = 0.34): { x: number; z: number } {
@@ -417,11 +484,39 @@ function makeStop(
   walkRooms: { polygon: [number, number][] }[],
   note?: string,
 ): RoomStop {
-  let clear = findClearPoint({ x: vp.camX, z: vp.camZ }, cols, walkRooms, type === "bathroom" ? 0.22 : 0.28);
-  const home = walkRooms.find((r) => pointInPoly(r.polygon, vp.camX, vp.camZ))
-    ?? walkRooms.find((r) => pointInPoly(r.polygon, vp.lookX, vp.lookZ))
-    ?? walkRooms[0];
-  if (home) clear = pullInside(home.polygon, clear.x, clear.z, type === "bathroom" || type === "utility" || type === "dressing" ? 0.36 : 0.32);
+  const raw = { x: vp.camX, z: vp.camZ };
+  const tight = type === "bathroom" || type === "bedroom";
+  const rad = type === "bathroom" ? 0.14 : type === "bedroom" ? 0.22 : 0.28;
+  const settle = (pref: { x: number; z: number }): { x: number; z: number } => {
+    let clear = findClearPoint(pref, cols, walkRooms, rad);
+    const home = walkRooms.find((r) => pointInPoly(r.polygon, pref.x, pref.z))
+      ?? walkRooms.find((r) => pointInPoly(r.polygon, vp.lookX, vp.lookZ))
+      ?? walkRooms[0];
+    if (!home) return clear;
+    const pad = type === "bathroom" ? 0.16
+      : type === "utility" || type === "dressing" ? 0.36
+      : type === "bedroom" ? 0.22
+      : 0.32;
+    const pulled = pullInside(home.polygon, clear.x, clear.z, pad);
+    const drift = Math.hypot(pulled.x - pref.x, pulled.z - pref.z);
+    if (tight && drift > 0.55) {
+      return pullInside(home.polygon, pref.x, pref.z, type === "bathroom" ? 0.14 : 0.2);
+    }
+    return pulled;
+  };
+  let clear = settle(raw);
+  // If the preferred stand got shoved a long way (onto a bed, into a wall),
+  // try the next camera candidates from roomOverview.
+  if (tight && vp.alts) {
+    const drift0 = Math.hypot(clear.x - raw.x, clear.z - raw.z);
+    if (drift0 > 0.45) {
+      for (const alt of vp.alts) {
+        const s = settle(alt);
+        const d = Math.hypot(s.x - alt.x, s.z - alt.z);
+        if (d <= 0.45) { clear = s; break; }
+      }
+    }
+  }
   const look = { x: vp.lookX, z: vp.lookZ };
   const horiz = Math.hypot(look.x - clear.x, look.z - clear.z) || 1;
   const lookY = vp.lookY ?? (EYE + Math.tan(PITCH_DOWN) * horiz);
@@ -471,7 +566,15 @@ export function buildRoomStops(
     const hint = meta.type === "kitchen" ? kitHint(room.id)
       : meta.type === "bedroom" ? (() => {
           const b = (anchorsByRoom.get(room.id) ?? []).find((x) => x.kind === "bed");
-          return b ? { x: b.x, z: b.z, fx: b.fx, fz: b.fz, depth: b.depth } : undefined;
+          return b ? { x: b.x, z: b.z, fx: b.fx, fz: b.fz, depth: b.depth, width: b.width } : undefined;
+        })()
+      : meta.type === "bathroom" ? (() => {
+          const xs = (anchorsByRoom.get(room.id) ?? []).filter((x) => x.kind === "basin" || x.kind === "bath");
+          if (!xs.length) return undefined;
+          return {
+            x: xs.reduce((s, a) => s + a.x, 0) / xs.length,
+            z: xs.reduce((s, a) => s + a.z, 0) / xs.length,
+          };
         })()
       : undefined;
     const vp = roomOverview(room, room.polygon, meta.type, cols, doors, unitCenter, hint);

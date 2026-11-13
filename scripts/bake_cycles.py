@@ -908,7 +908,7 @@ def _basis(normal):
     return u, v
 
 
-def face_islands(obj, min_area=0.02):
+def face_islands(obj, min_area=0.02, dot_limit=0.92):
     """One island per connected coplanar face group. Skips slab backs."""
     mesh = obj.data
     mw = obj.matrix_world
@@ -947,7 +947,7 @@ def face_islands(obj, min_area=0.02):
             fi = stack.pop()
             group.append(fi)
             for nb in adj[fi]:
-                if not visited[nb] and normals[nb].dot(ref) > 0.92:
+                if not visited[nb] and normals[nb].dot(ref) > dot_limit:
                     visited[nb] = True
                     stack.append(nb)
         area = sum(mesh.polygons[fi].area for fi in group)
@@ -1027,24 +1027,73 @@ def furniture_island(obj):
 
 
 
+def _single_face_island(obj, fi):
+    """Planar unwrap of one polygon, in world units."""
+    mesh = obj.data
+    mw = obj.matrix_world
+    rot = mw.to_3x3()
+    p = mesh.polygons[fi]
+    ref = (rot @ p.normal)
+    if ref.length_squared < 1e-10:
+        ref = Vector((0.0, 0.0, 1.0))
+    else:
+        ref = ref.normalized()
+    axis_u, axis_v = _basis(ref)
+    pts, loops = [], []
+    for li in range(p.loop_start, p.loop_start + p.loop_total):
+        c = mw @ mesh.vertices[mesh.loops[li].vertex_index].co
+        pts.append((c.dot(axis_u), c.dot(axis_v)))
+        loops.append(li)
+    us = [q[0] for q in pts]
+    vs = [q[1] for q in pts]
+    min_u, max_u = min(us), max(us)
+    min_v, max_v = min(vs), max(vs)
+    w = max(max_u - min_u, 1e-4)
+    h = max(max_v - min_v, 1e-4)
+    uvs = [
+        (li, (pts[i][0] - min_u) / w, (pts[i][1] - min_v) / h)
+        for i, li in enumerate(loops)
+    ]
+    return (uvs, w, h, max(p.area, 1e-8), ref)
+
+
 def furniture_unique_uv(obj):
     """One 0-1 unique unwrap per furniture mesh, returned as a single
-    atlas rectangle sized to the world AABB (capped). Coplanar face
-    islands are shelf-packed *inside* the rectangle so they do not
-    overlap (unlike a normalized copy of UV0)."""
-    islands = face_islands(obj, min_area=0.002)
+    atlas rectangle sized to the world AABB (capped). Every face is
+    included — a previous min_area=0.002 cut skipped most sofa/bed/table
+    loops, leaving them parked at (0.002, 0.002) and producing the
+    in-engine X-smear. Never fall back to overlapping UV0."""
+    nloops = len(obj.data.loops)
+    nfaces = len(obj.data.polygons)
+    # Include every face. Group only almost-flat neighbours so a curved
+    # cushion does not fold over itself in a single plane projection.
+    islands = face_islands(obj, min_area=0.0, dot_limit=0.98)
+    covered = set()
+    for uvs, w, h, area, ref in islands:
+        for li, _u, _v in uvs:
+            covered.add(li)
+    missing = []
+    for fi, p in enumerate(obj.data.polygons):
+        loops = range(p.loop_start, p.loop_start + p.loop_total)
+        if any(li not in covered for li in loops):
+            missing.append(fi)
+    for fi in missing:
+        islands.append(_single_face_island(obj, fi))
     mn, size = bbox_world([obj])
-    pack_w = max(min(max(size.x, size.y), 2.0), 0.22)
-    pack_h = max(min(max(size.z, min(size.x, size.y)), 1.6), 0.22)
+    pack_w = max(min(max(size.x, size.y), 3.0), 0.22)
+    pack_h = max(min(max(size.z, min(size.x, size.y)), 2.2), 0.22)
     if not islands:
-        uvs, w, h = furniture_island(obj)
+        # Degenerate mesh: still produce a planar 0-1 unwrap, not UV0.
+        uvs, _w, _h = furniture_island(obj)
+        print(f"  furn {obj.name}: no islands, planar fallback loops={len(uvs)}/{nloops}", flush=True)
         return uvs, pack_w, pack_h
     items = [(uvs, max(w, 1e-4), max(h, 1e-4)) for uvs, w, h, area, ref in islands]
+    items.sort(key=lambda it: -(it[1] * it[2]))
     area = sum(w * h for _, w, h in items)
     S = max(math.sqrt(area) * 1.12, max(max(w, h) for _, w, h in items))
     positions = None
-    for _ in range(20):
-        gap = max(S * 0.02, 1e-3)
+    for _ in range(40):
+        gap = max(S * 0.015, 1e-4)
         shelves, y_top, pos = [], 0.0, []
         ok = True
         for uvs, w, h in items:
@@ -1067,17 +1116,30 @@ def furniture_unique_uv(obj):
             break
         S *= 1.15
     if not positions:
-        uvs, w, h = furniture_island(obj)
-        return uvs, pack_w, pack_h
+        # Force a column stack — never overlap, never UV0.
+        y = 0.0
+        positions = []
+        for uvs, w, h in items:
+            positions.append((uvs, 0.0, y, w, h))
+            y += h + 1e-4
+        print(f"  furn {obj.name}: shelf pack failed, stacked {len(items)} islands", flush=True)
     used_w = max(x + w for _, x, _, w, _ in positions)
     used_h = max(y + h for _, _, y, _, h in positions)
     scale = 0.98 / max(used_w, used_h)
     out = []
+    written = set()
     for uvs, x, y, w, h in positions:
         u0, v0 = 0.01 + x * scale, 0.01 + y * scale
         du, dv = w * scale, h * scale
         for li, u, v in uvs:
             out.append((li, u0 + min(max(u, 0), 1) * du, v0 + min(max(v, 0), 1) * dv))
+            written.add(li)
+    print(
+        f"  furn {obj.name}: faces={nfaces} islands={len(items)} "
+        f"loops={len(written)}/{nloops} missing={nloops-len(written)} "
+        f"filled_faces={len(missing)} pack={pack_w:.2f}x{pack_h:.2f}",
+        flush=True,
+    )
     return out, pack_w, pack_h
 
 
@@ -1093,6 +1155,8 @@ def pack_uv2(objs, margin=0.012):
         return
     items = []
     for o in meshes:
+        if o.data.users > 1:
+            o.data = o.data.copy()
         ensure_uv2(o)
         layer = o.data.uv_layers["UVLightmap"]
         for d in layer.data:

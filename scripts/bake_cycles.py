@@ -1300,13 +1300,24 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
     bpy.ops.object.select_all(action="DESELECT")
     joined.select_set(True)
     bpy.context.view_layer.objects.active = joined
+    # The joined copy sits exactly on the originals. If those stay
+    # visible, they occlude every ray and the atlas bakes almost black
+    # (0.45% of pixels lit — the first joined-UVLightmap run).
+    hidden = []
+    for o in meshes:
+        hidden.append((o, o.hide_render))
+        o.hide_render = True
     t0 = time.time()
     print(f"BAKE {rid} {size}px {samples}spp COMBINED joined from {len(meshes)} meshes ...", flush=True)
-    bpy.ops.object.bake(
-        type="COMBINED",
-        margin=12,
-        margin_type="EXTEND",
-    )
+    try:
+        bpy.ops.object.bake(
+            type="COMBINED",
+            margin=12,
+            margin_type="EXTEND",
+        )
+    finally:
+        for o, h in hidden:
+            o.hide_render = h
     dt = time.time() - t0
     print(f"  done {rid} in {dt:.1f}s", flush=True)
     # Join consumed the copies; only the joined object remains. Do not

@@ -44,7 +44,22 @@ v4 additions (retrieved 13 November 2026, Asia/Calcutta):
 Indoor HDRI: studio_small_08 by Greg Zaal, CC0, https://polyhaven.com/a/studio_small_08
 (1K HDR, used as a reflection environment only.)
 
-City / skyline HDRI: modern_buildings_2 by Alexander Scholten, CC0,
-https://polyhaven.com/a/modern_buildings_2
-(1K HDR, in public/hdris/modern_buildings_2_1k.hdr, used as the sky /
+Sky-only HDRIs (Poly Haven, Greg Zaal, CC0, 1K, public/hdris/):
+- kloofendal_43d_clear_puresky_1k.hdr  https://polyhaven.com/a/kloofendal_43d_clear_puresky
+- qwantani_sunset_puresky_1k.hdr       https://polyhaven.com/a/qwantani_sunset_puresky
+- kloppenheim_02_puresky_1k.hdr        https://polyhaven.com/a/kloppenheim_02_puresky
+(City is a distant 3D silhouette, not a photographed skyline.)
 window backdrop — not as the indoor reflection environment.)
+
+
+v5 additions (retrieved 13 November 2026, Asia/Calcutta):
+
+- oakplank_*  Poly Haven oak_wood_planks, CC0
+  https://polyhaven.com/a/oak_wood_planks
+  1K JPEG Diffuse, NormalGL and Roughness. Light matte European oak
+  used for living-room wood flooring (roughness 0.6). Replaces
+  wood_floor_deck, which remains on disk unused.
+
+- (shanghai_bund and modern_buildings_2 retired as backgrounds)
+  1K HDR night-city skyline with lit windows. Used as the night
+  background (not a darkened day HDRI).

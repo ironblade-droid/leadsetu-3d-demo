@@ -554,14 +554,14 @@ class App {
 
     // Cycles-baked 2BHK Modern (walk only): hide procedural visuals and
     // drop in the pre-lit glTF, lightmaps on uv2, wall colour as a multiply.
-    if (cam === "walk" && hasBaked((plan.id ?? "2bhk"), this.prefs.style)) {
+    if (cam === "walk" && hasBaked((plan.id ?? "2bhk"), this.prefs.style, this.prefs.wallColor)) {
       try {
         const baked = await loadBaked("2bhk", this.prefs.style, slot.transform, 0);
         if (baked) {
           hideProceduralVisuals(built.group);
           this.interiorRoot.add(baked.group);
           baked.setWallColor(this.prefs.wallColor);
-          baked.setTime(this.time === "night");
+          await Promise.resolve(baked.setTime(this.time === "night"));
           this.bakedUnits.push(baked);
           // Shells are MeshBasic (ignore lights). Furniture is live PBR and
           // uses this fill plus the engine sun; applySceneTime sets the value.

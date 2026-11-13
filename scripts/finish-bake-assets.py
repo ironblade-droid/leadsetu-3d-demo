@@ -62,10 +62,20 @@ def main():
 
     lm = sum(i.get("bytes", 0) for i in (man.get("lightmaps") or {}).values())
     nm = sum(i.get("bytes", 0) for i in (man.get("nightLightmaps") or {}).values())
-    man["totalBytes"] = lm + nm + man.get("glbBytes", 0)
+    # Initial payload is day atlases + glb. Night is lazy-loaded on first night.
+    man["dayBytes"] = lm + man.get("glbBytes", 0)
+    man["nightBytes"] = nm
+    man["nightMB"] = round(nm / 1024 / 1024, 2)
+    man["totalBytes"] = man["dayBytes"]
     man["totalMB"] = round(man["totalBytes"] / 1024 / 1024, 2)
-    if man.get("totalMB", 0) > 15:
-        print("WARNING: unit exceeds 15 MB phone budget", flush=True)
+    man["fullBytes"] = lm + nm + man.get("glbBytes", 0)
+    man["fullMB"] = round(man["fullBytes"] / 1024 / 1024, 2)
+    if man["totalMB"] > 15:
+        print("WARNING: initial unit exceeds 15 MB phone budget", flush=True)
+    print(
+        f"payload day {man['totalMB']} MB (night +{man['nightMB']} MB lazy, full {man['fullMB']} MB)",
+        flush=True,
+    )
     man_dest = dest / (name + "-manifest.json")
     man_dest.write_text(json.dumps(man, indent=2))
     print("manifest", man_dest, "totalMB", man["totalMB"], flush=True)

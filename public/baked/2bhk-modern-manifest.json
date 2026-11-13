@@ -11,85 +11,196 @@
   "lightmaps": {
     "living": {
       "file": "2bhk-modern-living.webp",
-      "bytes": 457250,
-      "size": 1536,
-      "seconds": 85.97,
+      "png": "2bhk-modern-living.png",
+      "bytes": 154910,
+      "size": 2048,
+      "seconds": 95.24,
       "type": "living",
-      "name": "Living / dining"
+      "name": "Living / dining",
+      "time": "day"
     },
     "kitchen": {
       "file": "2bhk-modern-kitchen.webp",
-      "bytes": 158840,
-      "size": 1024,
-      "seconds": 28.32,
+      "png": "2bhk-modern-kitchen.png",
+      "bytes": 132762,
+      "size": 1536,
+      "seconds": 44.53,
       "type": "kitchen",
-      "name": "Kitchen"
+      "name": "Kitchen",
+      "time": "day"
     },
     "utility": {
       "file": "2bhk-modern-utility.webp",
-      "bytes": 113010,
-      "size": 1024,
-      "seconds": 27.98,
+      "png": "2bhk-modern-utility.png",
+      "bytes": 65854,
+      "size": 1536,
+      "seconds": 70.76,
       "type": "utility",
-      "name": "Utility"
+      "name": "Utility",
+      "time": "day"
     },
     "bedroom1": {
       "file": "2bhk-modern-bedroom1.webp",
-      "bytes": 130642,
-      "size": 1024,
-      "seconds": 28.38,
+      "png": "2bhk-modern-bedroom1.png",
+      "bytes": 93282,
+      "size": 1536,
+      "seconds": 37.23,
       "type": "bedroom",
-      "name": "Bedroom 1"
+      "name": "Bedroom 1",
+      "time": "day"
     },
     "lobby": {
       "file": "2bhk-modern-lobby.webp",
-      "bytes": 184846,
-      "size": 1024,
-      "seconds": 33.56,
+      "png": "2bhk-modern-lobby.png",
+      "bytes": 54442,
+      "size": 1536,
+      "seconds": 82.48,
       "type": "lobby",
-      "name": "Lobby"
+      "name": "Lobby",
+      "time": "day"
     },
     "bathroom": {
       "file": "2bhk-modern-bathroom.webp",
-      "bytes": 225992,
-      "size": 1024,
-      "seconds": 45.42,
+      "png": "2bhk-modern-bathroom.png",
+      "bytes": 63402,
+      "size": 1536,
+      "seconds": 49.01,
       "type": "bathroom",
-      "name": "Bathroom"
+      "name": "Bathroom",
+      "time": "day"
     },
     "bedroom2": {
       "file": "2bhk-modern-bedroom2.webp",
-      "bytes": 194046,
-      "size": 1024,
-      "seconds": 39.72,
+      "png": "2bhk-modern-bedroom2.png",
+      "bytes": 96148,
+      "size": 1536,
+      "seconds": 69.08,
       "type": "bedroom",
-      "name": "Bedroom 2"
+      "name": "Bedroom 2",
+      "time": "day"
     },
     "ensuite": {
       "file": "2bhk-modern-ensuite.webp",
-      "bytes": 190004,
-      "size": 1024,
-      "seconds": 37.69,
+      "png": "2bhk-modern-ensuite.png",
+      "bytes": 89426,
+      "size": 1536,
+      "seconds": 76.39,
       "type": "bathroom",
-      "name": "En-suite"
+      "name": "En-suite",
+      "time": "day"
     },
     "balcony": {
       "file": "2bhk-modern-balcony.webp",
-      "bytes": 191056,
-      "size": 1024,
-      "seconds": 33.03,
+      "png": "2bhk-modern-balcony.png",
+      "bytes": 46894,
+      "size": 1536,
+      "seconds": 14.7,
       "type": "balcony",
-      "name": "Balcony"
+      "name": "Balcony",
+      "time": "day"
+    }
+  },
+  "nightLightmaps": {
+    "living": {
+      "file": "2bhk-modern-night-living.webp",
+      "png": "2bhk-modern-night-living.png",
+      "bytes": 145402,
+      "size": 2048,
+      "seconds": 103.29,
+      "type": "living",
+      "name": "Living / dining",
+      "time": "night"
+    },
+    "kitchen": {
+      "file": "2bhk-modern-night-kitchen.webp",
+      "png": "2bhk-modern-night-kitchen.png",
+      "bytes": 100792,
+      "size": 1536,
+      "seconds": 47.31,
+      "type": "kitchen",
+      "name": "Kitchen",
+      "time": "night"
+    },
+    "utility": {
+      "file": "2bhk-modern-night-utility.webp",
+      "png": "2bhk-modern-night-utility.png",
+      "bytes": 64040,
+      "size": 1536,
+      "seconds": 78.08,
+      "type": "utility",
+      "name": "Utility",
+      "time": "night"
+    },
+    "bedroom1": {
+      "file": "2bhk-modern-night-bedroom1.webp",
+      "png": "2bhk-modern-night-bedroom1.png",
+      "bytes": 87760,
+      "size": 1536,
+      "seconds": 41.26,
+      "type": "bedroom",
+      "name": "Bedroom 1",
+      "time": "night"
+    },
+    "lobby": {
+      "file": "2bhk-modern-night-lobby.webp",
+      "png": "2bhk-modern-night-lobby.png",
+      "bytes": 46184,
+      "size": 1536,
+      "seconds": 92.43,
+      "type": "lobby",
+      "name": "Lobby",
+      "time": "night"
+    },
+    "bathroom": {
+      "file": "2bhk-modern-night-bathroom.webp",
+      "png": "2bhk-modern-night-bathroom.png",
+      "bytes": 64608,
+      "size": 1536,
+      "seconds": 52.13,
+      "type": "bathroom",
+      "name": "Bathroom",
+      "time": "night"
+    },
+    "bedroom2": {
+      "file": "2bhk-modern-night-bedroom2.webp",
+      "png": "2bhk-modern-night-bedroom2.png",
+      "bytes": 101926,
+      "size": 1536,
+      "seconds": 74.26,
+      "type": "bedroom",
+      "name": "Bedroom 2",
+      "time": "night"
+    },
+    "ensuite": {
+      "file": "2bhk-modern-night-ensuite.webp",
+      "png": "2bhk-modern-night-ensuite.png",
+      "bytes": 88722,
+      "size": 1536,
+      "seconds": 86.0,
+      "type": "bathroom",
+      "name": "En-suite",
+      "time": "night"
+    },
+    "balcony": {
+      "file": "2bhk-modern-night-balcony.webp",
+      "png": "2bhk-modern-night-balcony.png",
+      "bytes": 50784,
+      "size": 1536,
+      "seconds": 15.94,
+      "type": "balcony",
+      "name": "Balcony",
+      "time": "night"
     }
   },
   "samples": 96,
-  "engine": "Cycles 4.5.16 OIDN 96spp shells-only face-islands",
-  "neutralAlbedo": true,
-  "glb": "2bhk-modern.glb",
-  "glbBytes": 864624,
-  "totalBytes": 2710310,
-  "totalMB": 2.58,
-  "bakeSeconds": 363.5,
+  "engine": "Cycles 4.5.16 OIDN compositor + Filmic Medium Contrast",
+  "bakeType": "COMBINED",
+  "combinedColor": true,
+  "filmic": true,
+  "toneMapped": false,
+  "neutralAlbedo": false,
+  "zFlip": true,
+  "lightMapIntensity": 1.0,
   "rooms": [
     {
       "id": "living",
@@ -319,6 +430,14 @@
       ]
     }
   ],
-  "zFlip": true,
-  "lightMapIntensity": 1.15
+  "glb": "2bhk-modern.glb",
+  "glbBytes": 1327000,
+  "totalBytes": 2124120,
+  "totalMB": 2.03,
+  "bakeSeconds": 1146.6,
+  "dayBytes": 2124120,
+  "nightBytes": 750218,
+  "nightMB": 0.72,
+  "fullBytes": 2874338,
+  "fullMB": 2.74
 }

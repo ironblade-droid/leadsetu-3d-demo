@@ -51,13 +51,14 @@ export interface BakedUnit {
   group: THREE.Group;
   manifest: BakedManifest;
   setWallColor: (hex: string) => void;
-  setTime: (night: boolean) => void;
+  setTime: (night: boolean) => void | Promise<void>;
   dispose: () => void;
 }
 
 interface LoadedBaked extends BakedUnit {
   dayMaps: Map<string, THREE.Texture>;
   nightMaps: Map<string, THREE.Texture>;
+  ensureNight: () => Promise<Map<string, THREE.Texture>>;
 }
 
 const cache = new Map<string, Promise<LoadedBaked | null>>();
@@ -66,13 +67,18 @@ export function bakedKey(planId: string, style: string): string {
   return `${planId}-${style}`;
 }
 
+/** Wall colour this unit was baked at. Any other swatch falls back to v5. */
+export const BAKED_WALL_COLOR = "#f4f1ea";
+
+function sameHex(a: string | undefined, b: string): boolean {
+  if (!a) return true;
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
 export function hasBaked(planId: string, style: string, wallColor?: string): boolean {
-  // Off until shared-wall occlusion is rebaked (black slabs in living
-  // and bedroom) and the in-engine look clearly beats v5. When flipping,
-  // only 2BHK Modern at the baked wall colour (#f4f1ea); other styles,
-  // units, and a different wall colour fall back to procedural v5.
-  void wallColor;
-  return false;
+  // 2BHK Modern only, and only when the wall colour matches the bake.
+  // Other plans, styles, and a different swatch stay on procedural v5.
+  return planId === "2bhk" && style === "modern" && sameHex(wallColor, BAKED_WALL_COLOR);
 }
 
 export function loadBaked(
@@ -110,15 +116,24 @@ export function loadBaked(
         for (const w of walls) w.color.set(hex);
       },
       setTime: (night: boolean) => {
-        const src = night ? u.nightMaps : u.dayMaps;
-        if (!src || src.size === 0) return;
-        for (const a of assignments) {
-          const tex = src.get(a.rid);
-          if (tex) {
-            a.mat.map = tex;
-            a.mat.needsUpdate = true;
+        const apply = (src: Map<string, THREE.Texture>) => {
+          if (!src || src.size === 0) return;
+          for (const a of assignments) {
+            const tex = src.get(a.rid);
+            if (tex) {
+              a.mat.map = tex;
+              a.mat.needsUpdate = true;
+            }
           }
+        };
+        if (night) {
+          if (u.nightMaps.size > 0) {
+            apply(u.nightMaps);
+            return;
+          }
+          return u.ensureNight().then(apply);
         }
+        apply(u.dayMaps);
       },
       dispose: () => {},
     };
@@ -176,7 +191,19 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
   const combined = !!manifest.combinedColor;
   const toneMapped = manifest.toneMapped ?? !combined;
   const dayMaps = await loadAtlasSet(base, manifest.lightmaps, combined);
-  const nightMaps = await loadAtlasSet(base, manifest.nightLightmaps, combined);
+  // Night atlases are listed in the manifest but fetched on first setTime(true).
+  const nightMaps = new Map<string, THREE.Texture>();
+  let nightPromise: Promise<Map<string, THREE.Texture>> | null = null;
+  const ensureNight = (): Promise<Map<string, THREE.Texture>> => {
+    if (nightMaps.size > 0) return Promise.resolve(nightMaps);
+    if (!nightPromise) {
+      nightPromise = loadAtlasSet(base, manifest.nightLightmaps, combined).then((m) => {
+        for (const [k, v] of m) nightMaps.set(k, v);
+        return nightMaps;
+      });
+    }
+    return nightPromise;
+  };
 
   let oakMap: THREE.Texture | null = null;
   if (!combined) {
@@ -306,25 +333,31 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
     mesh.frustumCulled = false;
   });
 
+  const applyTime = (night: boolean) => {
+    const src = night ? nightMaps : dayMaps;
+    if (!src || src.size === 0) return;
+    for (const a of assignments) {
+      const tex = src.get(a.rid);
+      if (tex) {
+        a.mat.map = tex;
+        a.mat.needsUpdate = true;
+      }
+    }
+  };
+
   return {
     group,
     manifest,
     dayMaps,
     nightMaps,
+    ensureNight,
     setWallColor: (hex: string) => {
       if (combined) return;
       for (const w of walls) w.color.set(hex);
     },
     setTime: (night: boolean) => {
-      const src = night ? nightMaps : dayMaps;
-      if (!src || src.size === 0) return;
-      for (const a of assignments) {
-        const tex = src.get(a.rid);
-        if (tex) {
-          a.mat.map = tex;
-          a.mat.needsUpdate = true;
-        }
-      }
+      if (night && nightMaps.size === 0) return ensureNight().then(() => applyTime(true));
+      applyTime(night);
     },
     dispose: () => {},
   };

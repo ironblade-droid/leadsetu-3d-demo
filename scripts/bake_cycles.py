@@ -39,7 +39,13 @@ def parse():
     p.add_argument("--out", required=True, help="output prefix, relative to root or absolute")
     p.add_argument("--size", type=int, default=2048, help="atlas for living")
     p.add_argument("--samples", type=int, default=96)
+    p.add_argument("--kitchen-samples", type=int, default=192,
+                   help="Cycles samples for the kitchen (blotchy cabinets/backsplash)")
     p.add_argument("--small-size", type=int, default=1536, help="atlas for non-living rooms")
+    p.add_argument("--bake-margin", type=int, default=32,
+                   help="Cycles bake dilation in pixels (seals UV seams at wall/floor joins)")
+    p.add_argument("--uv-pad", type=float, default=0.022,
+                   help="fractional padding around the packed lightmap atlas")
     p.add_argument("--preview-only", action="store_true")
     p.add_argument("--skip-preview", action="store_true")
     p.add_argument("--save-blend", action="store_true")
@@ -447,7 +453,9 @@ def build_shells(scene, mats, root_coll):
             continue
         cx, cy = wx + ww / 2, wz + wd / 2
         rid = nearest_room(rooms, cx, cy)
-        obj = box(f"wall-{i}", cx, cy, h / 2, ww, wd, h, colls[rid], mats["wall"])
+        # Overlap the floor (top at 0.008, 4 cm thick) and ceiling (at h-0.01)
+        # so wall/floor joins don't leave a black sliver.
+        obj = box(f"wall-{i}", cx, cy, h / 2 + 0.01, ww, wd, h + 0.10, colls[rid], mats["wall"])
         obj["ls_room"] = rid
         obj["ls_shell"] = "wall"
         shells[rid]["objs"].append(obj)
@@ -614,6 +622,34 @@ def keep_faces_toward(obj, cx, cy, z=1.4):
     bm.free()
 
 
+def solidify_inward(obj, thickness=0.04):
+    """Give a single-sided inward wall a thin volume so it blocks sun from
+    the outside. Neighbor copies are hidden during the bake (they are
+    coplanar and would otherwise black the atlas); without thickness the
+    sun leaks through and paints diagonal streaks on the opposite wall."""
+    if obj.type != "MESH" or not obj.data.polygons:
+        return
+    # Normals already point toward the room (keep_faces_toward). Offset +1
+    # extrudes along the normal, into the room.
+    mod = obj.modifiers.new("solid-in", "SOLIDIFY")
+    mod.thickness = thickness
+    mod.offset = 1.0
+    try:
+        mod.use_even_offset = True
+        mod.use_quality_normals = True
+    except Exception:
+        pass
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    try:
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    except Exception as e:
+        print(f"  solidify failed on {obj.name}: {e}", flush=True)
+        if mod.name in obj.modifiers:
+            obj.modifiers.remove(mod)
+    obj.select_set(False)
+
+
 def assign_walls_to_touching_rooms(shells, rooms, colls):
     """Every wall that touches a room goes into that room atlas, inward face only."""
     all_walls = []
@@ -636,6 +672,7 @@ def assign_walls_to_touching_rooms(shells, rooms, colls):
             r = room_by_id[rid]
             rcx, rcy = poly_centroid(r["polygon"])
             keep_faces_toward(obj, rcx, rcy)
+            solidify_inward(obj, 0.04)
             obj["ls_room"] = rid
             obj["ls_shell"] = "wall"
             shells[rid]["objs"].append(obj)
@@ -1143,7 +1180,7 @@ def furniture_unique_uv(obj):
     return out, pack_w, pack_h
 
 
-def pack_uv2(objs, margin=0.012):
+def pack_uv2(objs, margin=0.022):
     """Non-overlapping atlas. Shells: coplanar face islands. Furniture:
     one smart-projected rectangle per mesh. Walls get a 1.6x size boost
     so they receive higher texel density than the floor."""
@@ -1171,6 +1208,10 @@ def pack_uv2(objs, margin=0.012):
                 tag = f"{o.name}#{idx}"
                 if kind == "wall":
                     w, h = w * 1.6, h * 1.6
+                elif kind in ("cabinet", "counter"):
+                    # Kitchen fronts and backsplash need more texels so
+                    # OIDN has something to work with (v6f was blotchy).
+                    w, h = w * 1.55, h * 1.55
                 items.append((o, uvs, w, h, tag, kind))
         else:
             # One atlas rectangle per furniture mesh. Inside that rectangle,
@@ -1336,12 +1377,12 @@ def denoise_and_tonemap(img, png_path, apply_filmic=True):
     return png_path
 
 
-def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=True):
+def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=True, bake_margin=32, uv_pad=0.022):
     if not meshes:
         print(f"skip {rid}: no meshes", flush=True)
         return None
     if pack:
-        pack_uv2(meshes)
+        pack_uv2(meshes, margin=uv_pad)
     out_path = Path(out_path)
     img_name = f"LM-{rid}-{out_path.stem}"
     if img_name in bpy.data.images:
@@ -1446,7 +1487,7 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
     try:
         bpy.ops.object.bake(
             type="COMBINED",
-            margin=12,
+            margin=int(bake_margin),
             margin_type="EXTEND",
         )
     finally:
@@ -1476,12 +1517,16 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
     return png, dt, img
 
 
-def bake_room(rid, objs, size, samples, out_path, pack=True, apply_filmic=True):
+def bake_room(rid, objs, size, samples, out_path, pack=True, apply_filmic=True, bake_margin=32, uv_pad=0.022):
     meshes = [
         o for o in objs
         if o.type == "MESH" and o.data.polygons and o.get("ls_shell") in BAKE_KINDS
     ]
-    return bake_meshes(rid, meshes, size, samples, out_path, pack=pack, apply_filmic=apply_filmic)
+    return bake_meshes(
+        rid, meshes, size, samples, out_path,
+        pack=pack, apply_filmic=apply_filmic,
+        bake_margin=bake_margin, uv_pad=uv_pad,
+    )
 
 
 def world_bounds():
@@ -1667,6 +1712,9 @@ def main():
         "lightmaps": {},
         "nightLightmaps": {},
         "samples": args.samples,
+        "kitchenSamples": args.kitchen_samples,
+        "bakeMargin": args.bake_margin,
+        "uvPad": args.uv_pad,
         "engine": "Cycles 4.5.16 OIDN compositor + Filmic Medium Contrast",
         "bakeType": "COMBINED",
         "combinedColor": True,
@@ -1698,13 +1746,16 @@ def main():
                 print(f"skip {rid}: not in --rooms", flush=True)
                 continue
             kind = r["type"]
-            size = args.size if kind == "living" else args.small_size
+            size = args.size if kind in ("living", "kitchen") else args.small_size
+            samples = args.kitchen_samples if kind == "kitchen" else args.samples
             objs = shells[rid]["objs"] if rid in shells else []
             suffix = f"{out.name}-night-{rid}" if when == "night" else f"{out.name}-{rid}"
             result = bake_room(
-                rid, objs, size, args.samples, out.parent / suffix,
+                rid, objs, size, samples, out.parent / suffix,
                 pack=(not packed),
                 apply_filmic=apply_filmic,
+                bake_margin=args.bake_margin,
+                uv_pad=args.uv_pad,
             )
             if not result:
                 continue

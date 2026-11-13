@@ -982,39 +982,47 @@ def face_islands(obj, min_area=0.02):
 
 
 def furniture_island(obj):
-    """One atlas rectangle per furniture mesh: smart-project UVLightmap to 0-1."""
+    """One atlas rectangle per furniture mesh, no bpy.ops (smart_project
+    crashed Blender 4.5 on high-poly glTF after leaving edit mode).
+
+    Prefer a normalized copy of UV0 when it looks unique; otherwise
+    fall back to a world-plane projection of every loop.
+    """
     ensure_uv2(obj)
-    layer = obj.data.uv_layers["UVLightmap"]
-    layer.active = True
-    bpy.ops.object.select_all(action="DESELECT")
-    obj.hide_set(False)
-    obj.hide_select = False
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    try:
-        bpy.ops.object.mode_set(mode="EDIT")
-        bpy.ops.mesh.select_all(action="SELECT")
-        bpy.ops.uv.smart_project(
-            angle_limit=math.radians(66),
-            island_margin=0.03,
-            area_weight=0.0,
-            correct_aspect=True,
-            scale_to_bounds=True,
-        )
-        bpy.ops.object.mode_set(mode="OBJECT")
-    except Exception as e:
-        try:
-            bpy.ops.object.mode_set(mode="OBJECT")
-        except Exception:
-            pass
-        print(f"  smart_project failed on {obj.name}: {e}", flush=True)
-        for li, loop in enumerate(obj.data.loops):
-            c = obj.matrix_world @ obj.data.vertices[loop.vertex_index].co
-            layer.data[li].uv = (c.x * 0.2, c.y * 0.2)
+    mesh = obj.data
+    src = mesh.uv_layers[0] if mesh.uv_layers else None
+    uvs = []
+    if src is not None and len(src.data) > 0:
+        # Copy to plain floats first — holding BMLoopUV references after
+        # a mesh update is what segfaulted the previous listcomp.
+        raw = [(li, float(src.data[li].uv[0]), float(src.data[li].uv[1]))
+               for li in range(len(src.data))]
+        us = [u for _, u, _ in raw]
+        vs = [v for _, _, v in raw]
+        min_u, max_u = min(us), max(us)
+        min_v, max_v = min(vs), max(vs)
+        du = max(max_u - min_u, 1e-6)
+        dv = max(max_v - min_v, 1e-6)
+        # If UV0 is degenerate (all at one point), fall through to planar.
+        if du > 1e-4 and dv > 1e-4:
+            uvs = [(li, (u - min_u) / du, (v - min_v) / dv) for li, u, v in raw]
+    if not uvs:
+        mw = obj.matrix_world
+        coords = [mw @ v.co for v in mesh.vertices]
+        xs = [c.x for c in coords]; ys = [c.y for c in coords]; zs = [c.z for c in coords]
+        span = (max(xs)-min(xs), max(ys)-min(ys), max(zs)-min(zs))
+        # Project onto the two longest axes.
+        axes = sorted(((span[0], 0), (span[1], 1), (span[2], 2)), reverse=True)
+        a, b = axes[0][1], axes[1][1]
+        mins = (min(xs), min(ys), min(zs))
+        dus = (max(span[a], 1e-6), max(span[b], 1e-6))
+        for li, loop in enumerate(mesh.loops):
+            c = coords[loop.vertex_index]
+            xyz = (c.x, c.y, c.z)
+            uvs.append((li, (xyz[a] - mins[a]) / dus[0], (xyz[b] - mins[b]) / dus[1]))
     mn, size = bbox_world([obj])
     w = max(min(max(size.x, size.y), 3.5), 0.20)
     h = max(min(max(size.z, min(size.x, size.y)), 2.8), 0.20)
-    uvs = [(li, layer.data[li].uv[0], layer.data[li].uv[1]) for li in range(len(layer.data))]
     return uvs, w, h
 
 
@@ -1035,8 +1043,13 @@ def pack_uv2(objs, margin=0.012):
         for d in layer.data:
             d.uv = (0.002, 0.002)
         kind = o.get("ls_shell")
-        if kind in SHELL_KINDS:
-            islands = face_islands(o)
+        # Boxes (cabinets, curtains, frames, rails, procedural fallbacks)
+        # get coplanar face islands so opposite faces do not share a lightmap.
+        # High-poly glTF furniture uses a normalized UV0 as one rectangle.
+        use_faces = kind in SHELL_KINDS or kind in ("cabinet", "curtain", "rail", "frame", "counter") \
+            or len(o.data.polygons) <= 16
+        if use_faces:
+            islands = face_islands(o, min_area=0.008 if kind not in SHELL_KINDS else 0.02)
             if not islands:
                 print(f"  UV {o.name}: no islands", flush=True)
             for idx, (uvs, w, h, area, ref) in enumerate(islands):
@@ -1045,6 +1058,7 @@ def pack_uv2(objs, margin=0.012):
                     w, h = w * 1.6, h * 1.6
                 items.append((o, uvs, w, h, tag, kind))
         else:
+            print(f"  UV furn unwrap {o.name} ({len(o.data.polygons)} faces)", flush=True)
             uvs, w, h = furniture_island(o)
             tag = f"{o.name}#obj"
             items.append((o, uvs, w, h, tag, kind))

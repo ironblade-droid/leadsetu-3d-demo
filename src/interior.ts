@@ -394,7 +394,7 @@ export function buildInterior(
       l.color.set(night ? "#ffd7a3" : "#ffc888");
     }
     for (const l of balconyLights) {
-      l.intensity = night ? 1.65 : golden ? 0.3 : 0;
+      l.intensity = night ? 2.15 : golden ? 0.4 : 0;
       l.visible = night || golden;
       l.color.set("#ffc078");
     }

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { Materials } from "./materials";
 import { applyTriplanar } from "./triplanar";
 import {
@@ -26,6 +27,7 @@ export interface TowerBuild {
   setEnv: (day: THREE.Texture | null, night: THREE.Texture | null) => void;
   outlined: () => THREE.Object3D[];
   tick: (dt: number) => void;
+  loadTrees: () => Promise<void>;
   dispose: () => void;
 }
 
@@ -70,11 +72,30 @@ function shapePlate(): THREE.Shape {
   return s;
 }
 
-function plateGeo(thickness: number): THREE.ExtrudeGeometry {
-  const geo = new THREE.ExtrudeGeometry(shapePlate(), { depth: thickness, bevelEnabled: false });
+function plateGeo(thickness: number, shape?: THREE.Shape): THREE.ExtrudeGeometry {
+  const geo = new THREE.ExtrudeGeometry(shape ?? shapePlate(), { depth: thickness, bevelEnabled: false });
   geo.rotateX(-Math.PI / 2);
   geo.computeVertexNormals();
   return geo;
+}
+
+/** Full T-plate with a punched opening on the south lobby curtain. */
+function shapePodiumOpen(): THREE.Shape {
+  const s = shapePlate();
+  const hole = new THREE.Path();
+  // Must sit strictly inside the plate (south edge is z=0, stem 8.45–18.95)
+  // and wind opposite the outer path so ExtrudeGeometry keeps the hole.
+  const x0 = 8.6;
+  const x1 = 18.8;
+  const z0 = 0.08;
+  const z1 = 2.2;
+  hole.moveTo(x0, z0);
+  hole.lineTo(x0, z1);
+  hole.lineTo(x1, z1);
+  hole.lineTo(x1, z0);
+  hole.closePath();
+  s.holes.push(hole);
+  return s;
 }
 
 function plateMesh(mat: THREE.Material, thickness: number, y: number): THREE.Mesh {
@@ -118,30 +139,37 @@ function pbr(
 
 function cityWindowTexture(night: boolean): THREE.CanvasTexture {
   const c = document.createElement("canvas");
-  c.width = 128;
-  c.height = 256;
+  c.width = 256;
+  c.height = 512;
   const g = c.getContext("2d")!;
-  g.fillStyle = night ? "#141820" : "#8b9098";
-  g.fillRect(0, 0, 128, 256);
-  const cols = 8;
-  const rows = 16;
+  g.fillStyle = night ? "#0c0f14" : "#4a5360";
+  g.fillRect(0, 0, 256, 512);
+  const cols = 18;
+  const rows = 36;
+  const cw = 256 / cols;
+  const rh = 512 / rows;
   for (let r = 0; r < rows; r++) {
     for (let col = 0; col < cols; col++) {
-      const on = night ? Math.random() > 0.42 : true;
       if (night) {
-        g.fillStyle = on ? (Math.random() > 0.2 ? "#ffd090" : "#c8d8ff") : "#0c1016";
+        if (Math.random() > 0.38) continue;
+        g.fillStyle = Math.random() > 0.22 ? "#ffd090" : "#c8d8ff";
       } else {
-        g.fillStyle = Math.random() > 0.35 ? "#c5d2dc" : "#9aa4ae";
+        // Day: almost no windows — a distant silhouette, not a Minecraft grid.
+        if (Math.random() > 0.08) continue;
+        g.fillStyle = "rgba(200,214,224,0.28)";
       }
-      const x = 4 + col * 15;
-      const y = 6 + r * 15;
-      g.fillRect(x, y, 9, 10);
+      const x = col * cw + cw * 0.28;
+      const y = r * rh + rh * 0.28;
+      g.fillRect(x, y, cw * 0.38, rh * 0.42);
     }
   }
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
   tex.needsUpdate = true;
   return tex;
 }
@@ -161,29 +189,41 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   const unitOutlines = new Map<string, THREE.Mesh>();
 
   // --- Materials (triplanar so extruded plates and instanced boxes have no UV seams) ---
-  const stone = applyTriplanar(pbr(mats.granite, "#d5c6b0", 0.76), 0.28);
-  const facade = applyTriplanar(pbr(mats.plaster, "#e7dfd1", 0.84), 0.38);
-  const slabMat = applyTriplanar(pbr(mats.concfloor, "#efe8dc", 0.62), 0.18);
+  const stone = applyTriplanar(pbr(mats.plaster, "#e6d9c4", 0.86), 0.32);
+  const facade = applyTriplanar(pbr(mats.plaster, "#efe6d8", 0.86), 0.42);
+  const spandrel = applyTriplanar(pbr(mats.plaster, "#e4d9c8", 0.88), 0.4);
+  const slabMat = applyTriplanar(pbr(mats.concfloor, "#f0ebe1", 0.62), 0.18);
   const soffit = applyTriplanar(pbr(mats.wood, "#8d6a48", 0.7), 0.5);
   const lawnMat = applyTriplanar(
     new THREE.MeshStandardMaterial({
-      color: "#6e8f4e",
+      color: "#3f7a36",
       map: mats.grass.map,
       normalMap: mats.grass.normalMap,
       roughnessMap: mats.grass.roughnessMap,
       roughness: 0.95,
-      envMapIntensity: 0.2,
+      envMapIntensity: 0.22,
     }),
-    0.08,
+    0.22,
   );
-  const paveMat = applyTriplanar(pbr(mats.pave, "#d4cdc0", 0.86), 0.12);
-  const driveMat = applyTriplanar(pbr(mats.concfloor, "#6a6e74", 0.9), 0.14);
+  const paveMat = applyTriplanar(pbr(mats.pave, "#d8d0c4", 0.86), 0.11);
+  const driveMat = applyTriplanar(pbr(mats.concfloor, "#8a8680", 0.9), 0.12);
+  const asphalt = applyTriplanar(pbr(mats.concfloor, "#2c2d30", 0.95), 0.16);
+  const hedgeMat = applyTriplanar(
+    new THREE.MeshStandardMaterial({
+      color: "#1c4a26",
+      map: mats.grass.map,
+      normalMap: mats.grass.normalMap,
+      roughness: 0.95,
+      envMapIntensity: 0.18,
+    }),
+    0.35,
+  );
   const deckMat = applyTriplanar(pbr(mats.wood, "#9a7a55", 0.72), 0.45);
   const finMat = new THREE.MeshStandardMaterial({
-    color: "#8a6d4a",
-    roughness: 0.38,
-    metalness: 0.72,
-    envMapIntensity: 1.05,
+    color: "#c4ab82",
+    roughness: 0.42,
+    metalness: 0.62,
+    envMapIntensity: 1.0,
   });
   const mullion = new THREE.MeshStandardMaterial({
     color: "#1c1e20",
@@ -266,47 +306,66 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   };
 
   // =====================================================================
-  // Ground plane, lawn, podium, drive, pool, boundary, trees, lamps, city
+  // Site: lawn inside the boundary, paved court, drive, road, hedges, pool
   // =====================================================================
-  const lawn = new THREE.Mesh(new THREE.CircleGeometry(160, 64), lawnMat);
-  lawn.rotation.x = -Math.PI / 2;
-  lawn.position.set(13.7, -0.06, 8);
-  lawn.receiveShadow = true;
-  mark(lawn);
-
-  // Soft far ground (darker, no shadows) so the lawn doesn't hard-cut
+  // Far urban ground — muted grey, so the campus doesn't sit on an infinite olive plane.
   const farGround = new THREE.Mesh(
-    new THREE.CircleGeometry(420, 48),
-    new THREE.MeshStandardMaterial({ color: "#5a6a52", roughness: 1, envMapIntensity: 0.1 }),
+    new THREE.CircleGeometry(520, 64),
+    new THREE.MeshStandardMaterial({ color: "#3a3c3a", roughness: 1, envMapIntensity: 0.08 }),
   );
   farGround.rotation.x = -Math.PI / 2;
-  farGround.position.set(13.7, -0.12, 8);
+  farGround.position.set(13.7, -0.16, 8);
   farGround.receiveShadow = true;
   mark(farGround);
 
-  const plaza = new THREE.Mesh(new THREE.CircleGeometry(28, 48), paveMat);
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.set(13.7, 0.01, 9);
+  // Campus lawn — only inside the site boundary (not a 160 m olive disk).
+  const lawn = new THREE.Mesh(new THREE.BoxGeometry(68, 0.04, 82), lawnMat);
+  lawn.position.set(14, -0.02, 5);
+  lawn.receiveShadow = true;
+  mark(lawn);
+
+  // Arrival plaza — light stone court around the tower and under the porte-cochère.
+  const plaza = new THREE.Mesh(new THREE.BoxGeometry(42, 0.05, 36), paveMat);
+  plaza.position.set(13.7, 0.01, 6);
   plaza.receiveShadow = true;
   mark(plaza);
 
-  // Formal drop-off drive from the south, looping under the porte-cochère
+  // Formal drop-off drive from the south gate, looping under the porte-cochère.
   const driveShape = new THREE.Shape();
-  driveShape.moveTo(-4.2, -32);
-  driveShape.lineTo(4.2, -32);
-  driveShape.lineTo(4.6, -8);
-  driveShape.lineTo(10, -8);
-  driveShape.lineTo(10, -2.5);
-  driveShape.lineTo(-10, -2.5);
-  driveShape.lineTo(-10, -8);
-  driveShape.lineTo(-4.6, -8);
+  driveShape.moveTo(-5.2, -36);
+  driveShape.lineTo(5.2, -36);
+  driveShape.lineTo(5.6, -9);
+  driveShape.lineTo(12, -9);
+  driveShape.lineTo(12, -1.8);
+  driveShape.lineTo(-12, -1.8);
+  driveShape.lineTo(-12, -9);
+  driveShape.lineTo(-5.6, -9);
   driveShape.closePath();
-  const driveGeo = new THREE.ExtrudeGeometry(driveShape, { depth: 0.06, bevelEnabled: false });
+  const driveGeo = new THREE.ExtrudeGeometry(driveShape, { depth: 0.07, bevelEnabled: false });
   driveGeo.rotateX(-Math.PI / 2);
   const drive = new THREE.Mesh(driveGeo, driveMat);
-  drive.position.set(13.7, 0.02, 0);
+  drive.position.set(13.7, 0.03, 0);
   drive.receiveShadow = true;
   mark(drive);
+
+  // Public road south of the site, with sidewalk, curb and lane dashes.
+  const road = new THREE.Mesh(new THREE.BoxGeometry(220, 0.06, 11), asphalt);
+  road.position.set(13.7, -0.04, -48);
+  road.receiveShadow = true;
+  mark(road);
+  const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(220, 0.07, 2.6), paveMat);
+  sidewalk.position.set(13.7, 0.0, -41.2);
+  sidewalk.receiveShadow = true;
+  mark(sidewalk);
+  const curb = new THREE.Mesh(new THREE.BoxGeometry(220, 0.16, 0.28), slabMat);
+  curb.position.set(13.7, 0.05, -42.5);
+  mark(curb);
+  const dashM: THREE.Matrix4[] = [];
+  for (let i = -20; i <= 20; i++) {
+    dashM.push(compose(13.7 + i * 6.5, 0.005, -48, 0, 3.2, 0.02, 0.16));
+  }
+  const dashMat = new THREE.MeshStandardMaterial({ color: "#e8e4d8", roughness: 0.7, envMapIntensity: 0.1 });
+  mark(instanced(new THREE.BoxGeometry(1, 1, 1), dashMat, dashM, { shadows: false }), false);
 
   // Pool on the north lawn, facing the 2BHK balconies
   const poolRim = new THREE.Mesh(new THREE.BoxGeometry(12.4, 0.28, 6.4), stone);
@@ -327,14 +386,37 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   practicals.push(poolLight);
   mark(poolLight);
 
-  // Boundary wall with piers and a palisade
+  // Formal box hedges along the drive and inside the boundary.
+  const hedgeM: THREE.Matrix4[] = [];
+  // Drive-side hedges (leave the gate clear)
+  for (const [x, z, w, d, h] of [
+    [6.4, -22, 0.5, 18, 0.85],
+    [21.0, -22, 0.5, 18, 0.85],
+    [6.4, -8, 0.5, 8, 0.85],
+    [21.0, -8, 0.5, 8, 0.85],
+    // Boundary planting beds just inside the walls (not across the gate)
+    [-14, 5, 0.55, 68, 0.95],
+    [42, 5, 0.55, 68, 0.95],
+    [14, 41.4, 52, 0.55, 0.95],
+    [-4, -32.4, 22, 0.55, 0.95],
+    [32, -32.4, 22, 0.55, 0.95],
+    // Plaza edge
+    [2, 16, 8, 0.45, 0.7],
+    [25.4, 16, 8, 0.45, 0.7],
+  ] as [number, number, number, number, number][]) {
+    hedgeM.push(compose(x, h / 2, z, 0, w, h, d));
+  }
+  mark(instanced(new THREE.BoxGeometry(1, 1, 1), hedgeMat, hedgeM));
+
+  // Boundary wall with piers and a palisade — a clear site edge.
   const wallH = 2.15;
   const bounds: [number, number, number, number][] = [
     // x,z,w,d as a box along the perimeter (outer campus)
-    [-18, -34, 64, 0.28],
-    [-18, 44, 64, 0.28],
-    [-18, -34, 0.28, 78.28],
-    [46, -34, 0.28, 78.28],
+    [-18, -34, 27.5, 0.32],
+    [18.5, -34, 27.5, 0.32],
+    [-18, 44, 64, 0.32],
+    [-18, -34, 0.32, 78.32],
+    [46, -34, 0.32, 78.32],
   ];
   const wallMats: THREE.Matrix4[] = [];
   const pierMats: THREE.Matrix4[] = [];
@@ -345,16 +427,16 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
     const len = alongX ? w : d;
     const n = Math.max(2, Math.floor(len / 7));
     for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      const px = alongX ? x + t * w : x + w / 2;
-      const pz = alongX ? z + d / 2 : z + t * d;
+      const tt = i / n;
+      const px = alongX ? x + tt * w : x + w / 2;
+      const pz = alongX ? z + d / 2 : z + tt * d;
       pierMats.push(compose(px, wallH / 2 + 0.15, pz, 0, 0.55, wallH + 0.3, 0.55));
     }
     const palN = Math.floor(len / 0.16);
     for (let i = 0; i < palN; i++) {
-      const t = (i + 0.5) / palN;
-      const px = alongX ? x + t * w : x + w / 2;
-      const pz = alongX ? z + d / 2 : z + t * d;
+      const tt = (i + 0.5) / palN;
+      const px = alongX ? x + tt * w : x + w / 2;
+      const pz = alongX ? z + d / 2 : z + tt * d;
       palMats.push(compose(px, wallH + 0.45, pz, alongX ? 0 : Math.PI / 2, 0.03, 0.9, 0.03));
     }
   }
@@ -385,12 +467,15 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   signObj.position.set(5, 2.3, -18);
   mark(signObj);
 
-  // Street lamps along the drive (instanced poles + practicals)
+  // Street lamps along the ROAD and the drive only (not scattered on empty lawn).
   const lampSpots: [number, number][] = [
-    [8, -28], [19.4, -28], [8, -16], [19.4, -16],
-    [5, -8], [22.4, -8], [4, -3], [23.4, -3],
-    [2, 8], [25.4, 8], [4, 22], [23.4, 22],
-    [6, 36], [21.4, 36],
+    // Road, south of the wall
+    [-20, -45], [-6, -45], [8, -45], [20, -45], [34, -45], [48, -45],
+    // Drive
+    [7.2, -28], [20.2, -28], [7.2, -16], [20.2, -16],
+    [1.2, -6], [26.2, -6],
+    // Plaza sides
+    [1, 8], [26.4, 8],
   ];
   const poleM: THREE.Matrix4[] = [];
   const armM: THREE.Matrix4[] = [];
@@ -404,7 +489,7 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   mark(instanced(poleGeo, mullion, poleM));
   mark(instanced(new THREE.BoxGeometry(0.9, 0.05, 0.06), capRail, armM, { shadows: false }));
   mark(instanced(new THREE.SphereGeometry(0.14, 10, 8), lampGlow, globeM, { shadows: false }));
-  const lampBudget = mobile ? 6 : lampSpots.length;
+  const lampBudget = mobile ? 8 : lampSpots.length;
   for (let i = 0; i < lampBudget; i++) {
     const [lx, lz] = lampSpots[i];
     const pl = new THREE.PointLight("#ffd4a0", 0, 14, 2);
@@ -415,10 +500,8 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
     mark(pl);
   }
 
-  // Trees — instanced trunk + two canopy spheres, varied scale
-  addInstancedTrees(group, structure, mats, soffit);
-
-  // Soft distant city (instanced blocks + window maps)
+  // Trees are loaded asynchronously (CC0 Quaternius glTF) via loadTrees().
+  // Distant 3D city as a far silhouette — never a city HDRI behind the tower.
   addDistantCity(group, structure, mobile);
 
   // =====================================================================
@@ -627,7 +710,12 @@ export function buildTower(mats: Materials, opts: { mobile?: boolean } = {}): To
   (group as unknown as { _unitOutlines: Map<string, THREE.Mesh> })._unitOutlines = unitOutlines;
 
   void hlUnit;
-  return { group, floorHits, unitHits, highlight, highlightUnit, setIsolated, setTime, setEnv, outlined, tick, dispose };
+
+  async function loadTrees(): Promise<void> {
+    await loadSiteTrees(group, structure);
+  }
+
+  return { group, floorHits, unitHits, highlight, highlightUnit, setIsolated, setTime, setEnv, outlined, tick, loadTrees, dispose };
 }
 
 interface SharedGeos {
@@ -645,20 +733,21 @@ interface SharedGeos {
 }
 
 function makeSharedGeos(): SharedGeos {
-  const winW = 1.18;
-  const winH = 2.22;
+  const winW = 1.55;
+  const winH = 1.55;
+  const module = 3.0;
   return {
-    win: new THREE.BoxGeometry(winW, winH, 0.04),
-    mullV: new THREE.BoxGeometry(0.04, winH + 0.08, 0.055),
-    mullH: new THREE.BoxGeometry(winW + 0.08, 0.04, 0.055),
-    clad: new THREE.BoxGeometry(1.46, FLOOR_TO_FLOOR - 0.46, 0.2),
-    fin: new THREE.BoxGeometry(0.08, FLOOR_TO_FLOOR - 0.42, 0.34),
+    win: new THREE.BoxGeometry(winW, winH, 0.05),
+    mullV: new THREE.BoxGeometry(0.045, winH + 0.06, 0.06),
+    mullH: new THREE.BoxGeometry(winW + 0.06, 0.045, 0.06),
+    clad: new THREE.BoxGeometry(module - 0.04, FLOOR_TO_FLOOR - 0.42, 0.24),
+    fin: new THREE.BoxGeometry(0.1, FLOOR_TO_FLOOR - 0.42, 0.38),
     slab: plateGeo(0.32),
-    balSlab: new THREE.BoxGeometry(5.0, 0.16, 2.05),
-    balRail: new THREE.BoxGeometry(5.0, 1.1, 0.024),
+    balSlab: new THREE.BoxGeometry(5.15, 0.28, 2.25),
+    balRail: new THREE.BoxGeometry(4.85, 1.1, 0.024),
     balRailS: new THREE.BoxGeometry(0.024, 1.1, 2.05),
-    cap: new THREE.BoxGeometry(5.02, 0.022, 0.045),
-    capS: new THREE.BoxGeometry(0.045, 0.022, 2.07),
+    cap: new THREE.BoxGeometry(4.9, 0.028, 0.05),
+    capS: new THREE.BoxGeometry(0.05, 0.028, 2.1),
   };
 }
 
@@ -699,14 +788,14 @@ function makeTypicalFloor(
   // Expressed slab band — a slightly larger, thinner plate sitting on the edge
   const band = new THREE.Mesh(shared.slab, M.slabMat);
   band.position.y = y0 + 0.02;
-  band.scale.set(1.035, 1, 1.035);
+  band.scale.set(1.018, 0.7, 1.018);
   band.castShadow = true;
   band.userData.facade = true;
   g.add(band);
 
-  const top = new THREE.Mesh(shared.slab, M.soffit);
-  top.position.y = y0 + FLOOR_TO_FLOOR - 0.16;
-  top.scale.set(1.02, 0.55, 1.02);
+  const top = new THREE.Mesh(shared.slab, M.slabMat);
+  top.position.y = y0 + FLOOR_TO_FLOOR - 0.12;
+  top.scale.set(1.008, 0.35, 1.008);
   top.userData.ghostable = true;
   top.userData.hideInCutaway = true;
   top.castShadow = true;
@@ -805,13 +894,16 @@ function addFacadeInstanced(
   shared: SharedGeos,
 ) {
   const cladM: THREE.Matrix4[] = [];
+  const spanM: THREE.Matrix4[] = [];
   const glassM: THREE.Matrix4[] = [];
   const mullVM: THREE.Matrix4[] = [];
   const mullHM: THREE.Matrix4[] = [];
-  const h = FLOOR_TO_FLOOR - 0.5;
-  const module = 1.5;
-  const winW = 1.18;
-  const winH = 2.22;
+  const sillM: THREE.Matrix4[] = [];
+  const h = FLOOR_TO_FLOOR - 0.42;
+  const module = 3.0;
+  const winW = 1.55;
+  const winH = 1.55;
+  const sillY = 0.95; // solid spandrel under the punch window
   for (const f of facadeFaces()) {
     const n = Math.max(1, Math.floor(f.len / module));
     for (let i = 0; i < n; i++) {
@@ -819,29 +911,42 @@ function addFacadeInstanced(
       const px = f.alongX ? f.x + u * f.len : f.x;
       const pz = f.alongX ? f.z : f.z + u * f.len;
       const ry = f.alongX ? 0 : Math.PI / 2;
-      const ox = f.alongX ? 0 : f.inward * 0.12;
-      const oz = f.alongX ? f.inward * 0.12 : 0;
+      const ox = f.alongX ? 0 : f.inward * 0.13;
+      const oz = f.alongX ? f.inward * 0.13 : 0;
       const door = isBalconyModule(f, px, pz);
-      const thisH = door ? h * 0.92 : winH;
-      const cy = y + (door ? thisH / 2 : h * 0.48);
-      cladM.push(compose(px, y + h / 2, pz, ry));
-      glassM.push(compose(px + ox, cy, pz + oz, ry, door ? 1.15 : 1, thisH / winH, 1));
-      // Mullions: two verticals + mid bar + head/sill
+      // Full-width solid cladding is the wall. Windows are punched into it,
+      // with a solid spandrel below (not an all-glass grid).
+      cladM.push(compose(px, y + h / 2, pz, ry, 1, 1, 1));
+      const thisH = door ? 2.25 : winH;
+      const cy = y + (door ? 0.15 + thisH / 2 : sillY + winH / 2);
+      glassM.push(compose(px + ox, cy, pz + oz, ry, door ? 1.2 : 1, thisH / winH, 1));
       const mx = px + ox;
       const mz = pz + oz;
-      mullVM.push(compose(mx + (f.alongX ? -winW / 2 : 0) + (f.alongX ? 0 : ox * 0.1), cy, mz + (f.alongX ? oz * 0.1 : -winW / 2), ry, 1, thisH / winH, 1));
-      mullVM.push(compose(mx + (f.alongX ? winW / 2 : 0) + (f.alongX ? 0 : ox * 0.1), cy, mz + (f.alongX ? oz * 0.1 : winW / 2), ry, 1, thisH / winH, 1));
-      // mid vertical for a two-pane window
-      mullVM.push(compose(mx, cy, mz, ry, 0.7, thisH / winH, 1));
-      mullHM.push(compose(mx, y + 0.08 + (door ? 0 : 0.12), mz, ry));
-      mullHM.push(compose(mx, cy + thisH / 2, mz, ry));
-      if (!door) mullHM.push(compose(mx, cy, mz, ry));
+      const half = (door ? winW * 1.2 : winW) / 2;
+      mullVM.push(compose(mx + (f.alongX ? -half : 0), cy, mz + (f.alongX ? 0 : -half), ry, 1, thisH / winH, 1));
+      mullVM.push(compose(mx + (f.alongX ? half : 0), cy, mz + (f.alongX ? 0 : half), ry, 1, thisH / winH, 1));
+      mullVM.push(compose(mx, cy, mz, ry, 0.65, thisH / winH, 1));
+      mullHM.push(compose(mx, cy - thisH / 2, mz, ry, door ? 1.2 : 1, 1, 1));
+      mullHM.push(compose(mx, cy + thisH / 2, mz, ry, door ? 1.2 : 1, 1, 1));
+      if (!door) {
+        mullHM.push(compose(mx, cy, mz, ry));
+        // Projecting stone sill
+        sillM.push(compose(mx, y + sillY - 0.04, mz + (f.alongX ? oz * 1.4 : 0) + (f.alongX ? 0 : ox * 1.4), ry, 1.15, 0.7, 1.6));
+        // Extra solid spandrel panel sitting slightly proud of the cladding
+        spanM.push(compose(px + ox * 0.4, y + sillY / 2 - 0.02, pz + oz * 0.4, ry, 0.98, (sillY - 0.08) / h, 1.05));
+      }
     }
   }
   const clad = instanced(shared.clad, M.facade, cladM);
   clad.userData.facade = true;
   clad.userData.ghostable = true;
   g.add(clad);
+  if (spanM.length) {
+    const span = instanced(shared.clad, M.facade, spanM);
+    span.userData.facade = true;
+    span.userData.ghostable = true;
+    g.add(span);
+  }
   const gl = instanced(shared.win, M.glass, glassM, { shadows: false });
   gl.userData.facade = true;
   gl.userData.windowGlow = true;
@@ -852,6 +957,11 @@ function addFacadeInstanced(
   const mh = instanced(shared.mullH, M.mullion, mullHM, { shadows: false });
   mh.userData.facade = true;
   g.add(mh);
+  if (sillM.length) {
+    const si = instanced(shared.mullH, M.facade, sillM, { shadows: false });
+    si.userData.facade = true;
+    g.add(si);
+  }
 }
 
 function addDeepBalconies(
@@ -860,10 +970,10 @@ function addDeepBalconies(
   M: { slabMat: THREE.Material; soffit: THREE.Material; railGlass: THREE.Material; capRail: THREE.Material },
   shared: SharedGeos,
 ) {
-  const xs = [5.4, 16.6];
-  const z = 19.2;
-  const w = 5.0;
-  const d = 2.05;
+  const xs = [5.35, 16.55];
+  const z = 19.05;
+  const w = 5.15;
+  const d = 2.25;
   const slabM: THREE.Matrix4[] = [];
   const soffM: THREE.Matrix4[] = [];
   const railNM: THREE.Matrix4[] = [];
@@ -873,17 +983,18 @@ function addDeepBalconies(
   const capSM: THREE.Matrix4[] = [];
   for (const x of xs) {
     const cx = x + w / 2;
-    const cz = z + d / 2;
-    const sy = y0 + 0.18;
+    const cz = z + d / 2 + 0.08; // slab projects past the rail
+    const sy = y0 + 0.16;
     slabM.push(compose(cx, sy, cz));
-    soffM.push(compose(cx, sy - 0.1, cz, 0, 1, 0.4, 1));
-    const rh = sy + 0.08 + 1.1 / 2;
-    railNM.push(compose(cx, rh, z + d));
-    railWM.push(compose(x, rh, cz));
-    railEM.push(compose(x + w, rh, cz));
-    capNM.push(compose(cx, sy + 0.08 + 1.1, z + d));
-    capSM.push(compose(x, sy + 0.08 + 1.1, cz));
-    capSM.push(compose(x + w, sy + 0.08 + 1.1, cz));
+    soffM.push(compose(cx, sy - 0.16, cz, 0, 0.96, 0.35, 0.96));
+    const rh = sy + 0.16 + 1.1 / 2;
+    // Rails sit inset from the slab edge so the white slab lip reads clearly.
+    railNM.push(compose(cx, rh, z + d - 0.12));
+    railWM.push(compose(x + 0.12, rh, cz - 0.04));
+    railEM.push(compose(x + w - 0.12, rh, cz - 0.04));
+    capNM.push(compose(cx, sy + 0.16 + 1.1, z + d - 0.12));
+    capSM.push(compose(x + 0.12, sy + 0.16 + 1.1, cz - 0.04));
+    capSM.push(compose(x + w - 0.12, sy + 0.16 + 1.1, cz - 0.04));
   }
   const sl = instanced(shared.balSlab, M.slabMat, slabM);
   sl.userData.facade = true;
@@ -915,7 +1026,7 @@ function addDeepBalconies(
     g.add(bulb);
     const pl = new THREE.PointLight("#ffd0a0", 0, 4.5, 2);
     pl.position.copy(bulb.position);
-    pl.userData.nightI = 1.35;
+    pl.userData.nightI = 1.85;
     pl.userData.goldenI = 0.2;
     pl.userData.practical = true;
     // picked up later? these are inside the floor group; setTime traverses intensity via practicals array.
@@ -1119,26 +1230,28 @@ function addVerticalFins(
   structure: THREE.Object3D[],
   finMat: THREE.Material,
 ) {
+  // A handful of champagne accent fins at corners and mid-span — not a cage.
+  // They start at the transfer slab (LOBBY_H) so the tower is not on stilts.
   const y0 = floorY(1);
   const y1 = floorY(TYPICAL_FLOORS) + FLOOR_TO_FLOOR;
   const h = y1 - y0;
   const cy = (y0 + y1) / 2;
   const mats: THREE.Matrix4[] = [];
   for (const f of facadeFaces()) {
-    // Skip the south lobby face (z=0, alongX) — fins would clash with the curtain wall
     if (f.alongX && Math.abs(f.z - 0) < 0.2) continue;
-    const n = Math.max(2, Math.floor(f.len / 1.5) + 1);
+    // One fin every ~9 m, always including both ends (corners).
+    const n = Math.max(1, Math.round(f.len / 9));
     for (let i = 0; i <= n; i++) {
       const u = i / n;
       const px = f.alongX ? f.x + u * f.len : f.x;
       const pz = f.alongX ? f.z : f.z + u * f.len;
-      const ox = f.alongX ? 0 : f.inward * 0.28;
-      const oz = f.alongX ? f.inward * 0.28 : 0;
+      const ox = f.alongX ? 0 : f.inward * 0.32;
+      const oz = f.alongX ? f.inward * 0.32 : 0;
       const ry = f.alongX ? 0 : Math.PI / 2;
-      mats.push(compose(px + ox, cy, pz + oz, ry, 1, h / (FLOOR_TO_FLOOR - 0.42), 1));
+      mats.push(compose(px + ox, cy, pz + oz, ry, 1.15, h / (FLOOR_TO_FLOOR - 0.42), 1.15));
     }
   }
-  const mesh = instanced(new THREE.BoxGeometry(0.08, FLOOR_TO_FLOOR - 0.42, 0.34), finMat, mats);
+  const mesh = instanced(new THREE.BoxGeometry(0.1, FLOOR_TO_FLOOR - 0.42, 0.42), finMat, mats);
   mesh.userData.structure = true;
   group.add(mesh);
   structure.push(mesh);
@@ -1166,24 +1279,32 @@ function addLobby(
     return o;
   };
 
-  // Podium slab under the whole plate
+  // Full-footprint stone podium — same plan as the tower, so it is grounded
+  // (not a cream box, not a stilted cage). The lobby curtain is a framed
+  // opening in the south face, not a separate volume.
   const podium = plateMesh(stone, PLINTH, 0);
   mark(podium);
-
-  // Solid podium volume (inset so the south curtain wall stays in front).
-  // Without this the residential floors floated on an empty 6.4 m stilt and
-  // the lobby's back wall read as a stray cream box from the north.
-  const podiumFill = plateMesh(stone, LOBBY_H - 0.25, 0.05);
-  podiumFill.scale.set(0.94, 1, 0.94);
-  podiumFill.position.x = 13.7 * (1 - 0.94);
-  podiumFill.position.z = 10.6 * (1 - 0.94);
+  // Solid podium, with a punched south opening so the lobby curtain can read
+  // (a full-plate fill was a blank cream wall at the arrival).
+  const podiumFillGeo = plateGeo(LOBBY_H - 0.35, shapePodiumOpen());
+  const podiumFill = new THREE.Mesh(podiumFillGeo, stone);
+  podiumFill.position.y = 0.02;
+  podiumFill.castShadow = true;
+  podiumFill.receiveShadow = true;
   mark(podiumFill);
-  // Expressed transfer slab the first residential floor sits on.
-  const transfer = plateMesh(slabMat, 0.55, LOBBY_H - 0.55);
-  transfer.scale.set(1.05, 1, 1.05);
-  transfer.position.x = 13.7 * (1 - 1.05);
-  transfer.position.z = 10.6 * (1 - 1.05);
+  // Transfer cornice the first residential floor sits on — projects so the
+  // tower clearly rests on a base.
+  const transfer = plateMesh(slabMat, 0.5, LOBBY_H - 0.5);
+  transfer.scale.set(1.04, 1, 1.04);
+  transfer.position.x = 13.7 * (1 - 1.04);
+  transfer.position.z = 10.6 * (1 - 1.04);
   mark(transfer);
+  // Rusticated base band at grade, wrapping the plate.
+  const rust = plateMesh(stone, 0.85, 0);
+  rust.scale.set(1.04, 1, 1.04);
+  rust.position.x = 13.7 * (1 - 1.04);
+  rust.position.z = 10.6 * (1 - 1.04);
+  mark(rust);
 
   // Rusticated stone cladding on every podium face, with a punched opening
   // left on the south lobby curtain.
@@ -1225,7 +1346,7 @@ function addLobby(
   const sideE = sideW.clone();
   sideE.position.x = lx + lw / 2;
   mark(sideE);
-  const back = new THREE.Mesh(new THREE.BoxGeometry(lw, lh, 0.35), facade);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(lw, lh, 0.35), stone);
   back.position.set(lx, lh / 2, lz + ld / 2);
   back.castShadow = true;
   mark(back);
@@ -1284,15 +1405,21 @@ function addLobby(
   mark(instanced(new THREE.BoxGeometry(1, 1, 1), mullion, mullVM));
   mark(instanced(new THREE.BoxGeometry(1, 1, 1), mullion, mullHM));
 
-  // Stone portal around the curtain
-  const portal = new THREE.Mesh(new THREE.BoxGeometry(lw + 0.7, lh + 0.35, 0.45), stone);
-  portal.position.set(lx, lh / 2, zFace + 0.18);
-  mark(portal);
-  // Punch is visual — the glass sits in front. Add a header band.
-  const header = new THREE.Mesh(new THREE.BoxGeometry(lw + 0.9, 0.55, 0.7), slabMat);
-  header.position.set(lx, lh + 0.1, zFace + 0.1);
+  // Stone frame around the curtain (jambs + header + sill) — a portal, not a solid box.
+  const jambL = new THREE.Mesh(new THREE.BoxGeometry(0.65, lh + 0.2, 0.8), stone);
+  jambL.position.set(lx - lw / 2 - 0.05, lh / 2, zFace + 0.15);
+  jambL.castShadow = true;
+  mark(jambL);
+  const jambR = jambL.clone();
+  jambR.position.x = lx + lw / 2 + 0.05;
+  mark(jambR);
+  const header = new THREE.Mesh(new THREE.BoxGeometry(lw + 1.4, 0.65, 0.95), slabMat);
+  header.position.set(lx, lh + 0.15, zFace + 0.12);
   header.castShadow = true;
   mark(header);
+  const sill = new THREE.Mesh(new THREE.BoxGeometry(lw + 0.8, 0.18, 0.7), stone);
+  sill.position.set(lx, 0.12, zFace + 0.05);
+  mark(sill);
 
   // Reception desk (simple stone block)
   const desk = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.05, 0.7), stone);
@@ -1373,61 +1500,132 @@ function addLobby(
   }
 }
 
-function addInstancedTrees(
-  group: THREE.Group,
-  structure: THREE.Object3D[],
-  mats: Materials,
-  bark: THREE.Material,
-) {
-  // Keep the south arrival axis (x≈13.7, z<−6) clear so the porte-cochère reads.
-  const spots: [number, number, number][] = [
-    [-10, 6, 6.2], [-12, 18, 7.0], [-9, 30, 5.8],
-    [36, 6, 6.6], [38, 18, 7.1], [35, 31, 5.9],
-    [1, 40, 5.6], [26, 40, 6.1], [13.7, 44, 6.8],
-    [-12, -10, 6.2], [38, -10, 6.0],
-    [-8, 24, 5.2], [35, 24, 5.5],
-    [-6, -26, 5.0], [34, -26, 5.3],
-    [2, 32, 5.4], [26, 32, 5.6],
-    [-14, 2, 6.0], [40, 2, 5.8],
+async function loadSiteTrees(group: THREE.Group, structure: THREE.Object3D[]): Promise<void> {
+  const loader = new GLTFLoader();
+  const files = [
+    "CommonTree_1.glb",
+    "CommonTree_2.glb",
+    "CommonTree_3.glb",
+    "PalmTree_1.glb",
+    "PalmTree_2.glb",
+    "Bush_1.glb",
+    "Bush_2.glb",
+    "BushBerries_1.glb",
   ];
-  const trunkM: THREE.Matrix4[] = [];
-  const can1: THREE.Matrix4[] = [];
-  const can2: THREE.Matrix4[] = [];
-  const can3: THREE.Matrix4[] = [];
-  for (const [x, z, h] of spots) {
-    const s = 0.85 + ((x * 13 + z * 7) % 10) * 0.02;
-    trunkM.push(compose(x, h * 0.22 * s, z, 0, 0.85 * s, h * 0.45 * s, 0.85 * s));
-    can1.push(compose(x, h * 0.62 * s, z, 0, h * 0.36 * s, h * 0.32 * s, h * 0.36 * s));
-    can2.push(compose(x + 0.45 * s, h * 0.52 * s, z - 0.25 * s, 0, h * 0.26 * s, h * 0.24 * s, h * 0.26 * s));
-    can3.push(compose(x - 0.35 * s, h * 0.55 * s, z + 0.3 * s, 0, h * 0.22 * s, h * 0.22 * s, h * 0.22 * s));
-  }
-  const leaf = mats.plant.clone();
-  leaf.color.set("#245232");
-  leaf.roughness = 0.88;
-  const leaf2 = leaf.clone();
-  leaf2.color.set("#2e5a36");
-  const t1 = instanced(new THREE.CylinderGeometry(0.18, 0.26, 1, 8), bark, trunkM);
-  const c1 = instanced(new THREE.SphereGeometry(1, 12, 10), leaf, can1);
-  const c2 = instanced(new THREE.SphereGeometry(1, 10, 8), leaf2, can2);
-  const c3 = instanced(new THREE.SphereGeometry(1, 10, 8), leaf, can3);
-  for (const m of [t1, c1, c2, c3]) {
-    m.userData.structure = true;
-    group.add(m);
-    structure.push(m);
-  }
+  const protos: THREE.Object3D[] = [];
+  const bushes: THREE.Object3D[] = [];
+  const palms: THREE.Object3D[] = [];
+  await Promise.all(
+    files.map(async (f) => {
+      try {
+        const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/trees/${f}`);
+        const root = gltf.scene;
+        root.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(root);
+        const size = box.getSize(new THREE.Vector3());
+        const h = size.y || 1;
+        // Sit on y=0 and normalise height; caller scales from there.
+        const wrap = new THREE.Group();
+        wrap.add(root);
+        root.position.y = -box.min.y;
+        const target = f.startsWith("Bush") ? 1.05 : f.startsWith("Palm") ? 7.2 : 7.8;
+        wrap.scale.setScalar(target / h);
+        wrap.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (!m.isMesh) return;
+          m.castShadow = true;
+          m.receiveShadow = true;
+          const list = (Array.isArray(m.material) ? m.material : [m.material]) as THREE.Material[];
+          for (const raw of list) {
+            if (!(raw instanceof THREE.MeshStandardMaterial)) continue;
+            raw.metalness = 0.02;
+            raw.roughness = 0.86;
+            raw.envMapIntensity = 0.35;
+            const n = (raw.name || "").toLowerCase();
+            if (n.includes("green")) {
+              raw.color.set("#2d6a34");
+              raw.roughness = 0.9;
+            } else if (n.includes("wood")) {
+              raw.color.set("#4a2e1c");
+              raw.roughness = 0.82;
+            }
+          }
+        });
+        if (f.startsWith("Bush")) bushes.push(wrap);
+        else if (f.startsWith("Palm")) palms.push(wrap);
+        else protos.push(wrap);
+      } catch (err) {
+        console.warn("[tower] tree failed", f, err);
+      }
+    }),
+  );
+  if (!protos.length && !palms.length) return;
+
+  const place = (proto: THREE.Object3D, x: number, z: number, yaw: number, s = 1) => {
+    const c = proto.clone(true);
+    c.position.set(x, 0, z);
+    c.rotation.y = yaw;
+    c.scale.multiplyScalar(s);
+    c.userData.structure = true;
+    group.add(c);
+    structure.push(c);
+  };
+
+  // Street trees along the public road (south of the wall).
+  const street: [number, number, number][] = [
+    [-22, -52.5, 0.95], [-8, -52.5, 1.05], [6, -52.5, 1.0],
+    [22, -52.5, 1.08], [36, -52.5, 0.98], [50, -52.5, 1.05],
+  ];
+  street.forEach(([x, z, s], i) => {
+    const proto = protos[i % Math.max(1, protos.length)];
+    if (proto) place(proto, x, z, i * 0.7, s);
+  });
+
+  // Palms along the arrival drive (Indian residential language).
+  const palmSpots: [number, number][] = [
+    [4.6, -24], [22.8, -24], [4.6, -12], [22.8, -12], [3.2, -4], [24.2, -4],
+  ];
+  palmSpots.forEach(([x, z], i) => {
+    const proto = palms[i % Math.max(1, palms.length)] ?? protos[0];
+    if (proto) place(proto, x, z, i * 0.5, 0.95 + (i % 3) * 0.06);
+  });
+
+  // Grove clusters at campus corners and along the north lawn (keep the drive clear).
+  const groves: [number, number, number][] = [
+    [-12, 36, 1.15], [-11, 28, 0.95], [-13, 18, 1.05], [-11, 8, 1.0],
+    [40, 36, 1.12], [39, 26, 0.98], [41, 16, 1.08], [39, 6, 0.95],
+    [2, 40, 1.05], [13.7, 42, 1.2], [26, 40, 1.0],
+    [-10, -18, 0.95], [38, -18, 1.0],
+    [-8, 32, 0.85], [36, 32, 0.9],
+  ];
+  groves.forEach(([x, z, s], i) => {
+    const proto = protos[i % Math.max(1, protos.length)];
+    if (proto) place(proto, x, z, i * 1.15, s);
+  });
+
+  // Shrubs at hedge ends and around the pool.
+  const shrubSpots: [number, number][] = [
+    [6.4, -31], [21, -31], [6.4, -13], [21, -13],
+    [6, 26], [21.4, 26], [8, 33], [19, 33],
+    [-14, -28], [42, -28], [-14, 40], [42, 40],
+  ];
+  shrubSpots.forEach(([x, z], i) => {
+    const proto = bushes[i % Math.max(1, bushes.length)];
+    if (proto) place(proto, x, z, i * 0.9, 1.05);
+  });
 }
 
 function addDistantCity(group: THREE.Group, structure: THREE.Object3D[], mobile: boolean) {
   const dayTex = cityWindowTexture(false);
   const nightTex = cityWindowTexture(true);
-  dayTex.repeat.set(4, 8);
-  nightTex.repeat.set(4, 8);
+  dayTex.repeat.set(2, 3);
+  nightTex.repeat.set(2, 3);
   const mat = new THREE.MeshStandardMaterial({
-    color: "#7a828c",
+    color: "#4a5360",
     map: dayTex,
-    roughness: 0.82,
-    metalness: 0.08,
-    envMapIntensity: 0.35,
+    roughness: 0.9,
+    metalness: 0.05,
+    envMapIntensity: 0.22,
     emissiveMap: nightTex,
     emissive: "#000000",
     emissiveIntensity: 0,
@@ -1441,31 +1639,37 @@ function addDistantCity(group: THREE.Group, structure: THREE.Object3D[], mobile:
     const x = Math.sin(s * 127.1 + 311.7) * 43758.5453;
     return x - Math.floor(x);
   };
-  // A ring of city blocks, leaving a campus clear around the tower (~70 m)
-  const count = mobile ? 28 : 48;
+  // Distant skyline only (min ~280 m) so it reads as a silhouette, not a
+  // neighbouring Minecraft block. Denser on the north so balcony views
+  // see city lights at night.
+  const count = mobile ? 36 : 64;
   for (let i = 0; i < count; i++) {
-    const ang = (i / count) * Math.PI * 2 + rng(i) * 0.2;
-    const rad = 200 + rng(i + 3) * 160 + (i % 5) * 12;
+    // Prefer the northern half (balcony look-out) but wrap a full ring.
+    const preferN = i < count * 0.55;
+    const ang = preferN
+      ? (-Math.PI * 0.15) + rng(i) * Math.PI * 1.3
+      : (i / count) * Math.PI * 2 + rng(i) * 0.25;
+    const rad = 290 + rng(i + 3) * 150 + (i % 7) * 8;
     const x = 13.7 + Math.cos(ang) * rad;
     const z = 8 + Math.sin(ang) * rad;
-    const w = 8 + rng(i + 7) * 16;
-    const d = 8 + rng(i + 11) * 14;
-    const h = 12 + rng(i + 17) * (rng(i) > 0.7 ? 70 : 36);
+    const w = 14 + rng(i + 7) * 22;
+    const d = 12 + rng(i + 11) * 18;
+    const h = 22 + rng(i + 17) * (rng(i) > 0.72 ? 70 : 38);
     matrices.push(compose(x, h / 2, z, ang + Math.PI / 2, w, h, d));
   }
   const mesh = instanced(new THREE.BoxGeometry(1, 1, 1), mat, matrices, { shadows: false });
   mesh.userData.structure = true;
   mesh.userData.cityMat = mat;
+  mesh.frustumCulled = false;
   group.add(mesh);
   structure.push(mesh);
 
-  // Night setTime will swap emissive — hook via a dummy light-less tag
   mesh.userData.setCityNight = (night: boolean, golden: boolean) => {
     mat.map = night ? nightTex : dayTex;
     mat.emissiveMap = nightTex;
     mat.emissive.set(night ? "#ffd8a0" : golden ? "#1a1008" : "#000000");
-    mat.emissiveIntensity = night ? 0.55 : golden ? 0.08 : 0;
-    mat.color.set(night ? "#151820" : golden ? "#7a7068" : "#7a828c");
+    mat.emissiveIntensity = night ? 1.15 : golden ? 0.1 : 0;
+    mat.color.set(night ? "#10141a" : golden ? "#5a554c" : "#4a5360");
     mat.needsUpdate = true;
   };
 }

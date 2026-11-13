@@ -20,38 +20,18 @@ A programmatic AABB check (`src/occupancy.ts`, `npm run check:layout`) fails the
 
 - `potted_plant_04.glb` — [Potted Plant 04](https://polyhaven.com/a/potted_plant_04) by James Ray Cock. Instanced as corner plants.
 
-### Poly Haven glTF catalog (CC0, on disk, not placed in v3)
+### Show-flat furniture (v5, CC0)
 
-The files below remain in `public/models/` from an earlier pass (1K glTF, Draco + WebP, ~5.4 MB, retrieved 13 November 2026, Asia/Calcutta). They are **not** used for Modern, Minimal or Luxury: several read as Victorian / Gothic (notably `sofa_03`, `Sofa_01`, `sofa_02`, `GothicBed_01`, `ornate_mirror_01`, `painted_wooden_cabinet`). They are kept for possible Traditional accents or a later swap, and are listed for licence completeness.
+Wired into `furnishFromPlacements` for every style, with per-preset material retints and InstancedMesh for repeated chairs and nightstands. Kitchen runs stay procedural (arbitrary lengths).
 
+- `public/models/v5/` — [3dassets.dev](https://3dassets.dev) packs *Bedroom and Living Room Furniture* and *Fitted Kitchen and Bathroom Builder*, licence **CC0 1.0 Universal**. AI-generated untextured glTF (Muse Spark / T3 Code); style tints and scanned PBR maps are applied at runtime.
+- `potted_plant_04.glb` — [Potted Plant 04](https://polyhaven.com/a/potted_plant_04) by James Ray Cock, CC0.
 
-| File | Asset | Author |
-| --- | --- | --- |
-| `sofa_03.glb` | [Sofa 03](https://polyhaven.com/a/sofa_03) | Fran Calvente |
-| `Sofa_01.glb` | [Sofa 01](https://polyhaven.com/a/Sofa_01) | Kirill Sannikov |
-| `sofa_02.glb` | [Sofa 02](https://polyhaven.com/a/sofa_02) | Kirill Sannikov |
-| `modern_coffee_table_01.glb` | [Modern Coffee Table 01](https://polyhaven.com/a/modern_coffee_table_01) | Amin |
-| `CoffeeTable_01.glb` | [Coffee Table 01](https://polyhaven.com/a/CoffeeTable_01) | Fernando Quinn |
-| `ArmChair_01.glb` | [Arm Chair 01](https://polyhaven.com/a/ArmChair_01) | Kirill Sannikov |
-| `Ottoman_01.glb` | [Ottoman 01](https://polyhaven.com/a/Ottoman_01) | Caspian Fortune |
-| `dining_chair_02.glb` | [Dining Chair 02](https://polyhaven.com/a/dining_chair_02) | James Ray Cock |
-| `WoodenChair_01.glb` | [Wooden Chair 01](https://polyhaven.com/a/WoodenChair_01) | Jake Mobley |
-| `round_wooden_table_01.glb` | [Round Wooden Table 01](https://polyhaven.com/a/round_wooden_table_01) | Ulan Cabanilla |
-| `WoodenTable_01.glb` | [Wooden Table 01](https://polyhaven.com/a/WoodenTable_01) | Ethan Place |
-| `GothicBed_01.glb` | [Gothic Bed 01](https://polyhaven.com/a/GothicBed_01) | Kirill Sannikov |
-| `ClassicNightstand_01.glb` | [Classic Nightstand 01](https://polyhaven.com/a/ClassicNightstand_01) | Kirill Sannikov |
-| `ClassicConsole_01.glb` | [Classic Console 01](https://polyhaven.com/a/ClassicConsole_01) | Kirill Sannikov |
-| `side_table_01.glb` | [Side Table 01](https://polyhaven.com/a/side_table_01) | James Ray Cock |
-| `painted_wooden_cabinet.glb` | [Painted Wooden Cabinet](https://polyhaven.com/a/painted_wooden_cabinet) | Kirill Sannikov |
-| `hanging_picture_frame_01.glb` | [Hanging Picture Frame 01](https://polyhaven.com/a/hanging_picture_frame_01) | James Ray Cock |
-| `hanging_picture_frame_02.glb` | [Hanging Picture Frame 02](https://polyhaven.com/a/hanging_picture_frame_02) | James Ray Cock |
-| `modern_ceiling_lamp_01.glb` | [Modern Ceiling Lamp 01](https://polyhaven.com/a/modern_ceiling_lamp_01) | James Ray Cock |
-| `Chandelier_01.glb` | [Chandelier 01](https://polyhaven.com/a/Chandelier_01) | Kirill Sannikov |
-| `ornate_mirror_01.glb` | [Ornate Mirror 01](https://polyhaven.com/a/ornate_mirror_01) | James Ray Cock |
-| `electric_stove.glb` | [Electric Stove](https://polyhaven.com/a/electric_stove) | Kuutti Siitonen |
-| `potted_plant_04.glb` | [Potted Plant 04](https://polyhaven.com/a/potted_plant_04) | James Ray Cock |
+The earlier Poly Haven Victorian / Gothic furniture set (`sofa_03`, `GothicBed_01`, `ornate_mirror_01`, etc.) has been removed from `public/models/`.
 
-The packed catalog on disk is about **5.4 MB**. Only the potted plant is instantiated in v3; kitchens, beds, sofas, bathrooms and the rest of the furniture are the procedural set above, tinted with the same Poly Haven PBR wood / marble / fabric materials.
+### Site trees (CC0)
+
+`public/models/trees/` — [Ultimate Nature Pack](https://quaternius.com/packs/ultimatenature.html) by [Quaternius](https://quaternius.com), licence **CC0 1.0**. Common trees, palms and bushes, instanced on the campus and along the street.
 
 ## Textures and HDRI
 
@@ -59,7 +39,9 @@ From [Poly Haven](https://polyhaven.com), CC0. See `public/textures/CREDITS.txt`
 
 - Floor, wall and ground textures as listed in that file (wood, marble, tile, terracotta, granite, plaster, concrete, grass, paving).
 - Indoor studio HDRI: [Studio Small 08](https://polyhaven.com/a/studio_small_08) by Greg Zaal, 1K HDR, in `public/hdris/studio_small_08_1k.hdr`. Used only as a reflection environment.
-- City / skyline HDRI: [Modern Buildings 2](https://polyhaven.com/a/modern_buildings_2) by Alexander Scholten, 1K HDR, in `public/hdris/modern_buildings_2_1k.hdr`. Used as the sky (window views). Morning / golden hour / night change exposure, rotation and intensity; there is no separate night-city HDRI.
+- Day sky: [Kloofendal 43d Clear Puresky](https://polyhaven.com/a/kloofendal_43d_clear_puresky) by Greg Zaal, 1K HDR. Sky only — the city is a distant 3D silhouette.
+- Golden-hour sky: [Qwantani Sunset Puresky](https://polyhaven.com/a/qwantani_sunset_puresky) by Greg Zaal, 1K HDR.
+- Night sky: [Kloppenheim 02 Puresky](https://polyhaven.com/a/kloppenheim_02_puresky) by Greg Zaal, 1K HDR (dark blue, stars, moon). Never a city photograph.
 - Fabric weave (normal + roughness only): [Fabric Pattern 07](https://polyhaven.com/a/fabric_pattern_07) by Rob Tuytel, 1K JPEG, CC0. Applied to sofas, beds, curtains and mattresses; colour is a style tint, not the original gingham albedo.
 - Veined white marble: [Marble001](https://ambientcg.com/a/Marble001) from ambientCG, CC0, 1K JPEG. Used for the Marble flooring option.
 - Brushed metal (normal + roughness): [Metal032](https://ambientcg.com/a/Metal032) from ambientCG, CC0, 1K JPEG. Used for brushed-brass and matte-black hardware.
@@ -78,7 +60,7 @@ Skirting boards, living/master cove ceilings with recessed downlights, folded cu
 
 ### HDRIs (Poly Haven, CC0)
 
-- [Shanghai Bund](https://polyhaven.com/a/shanghai_bund) — 1K HDR, night-city skyline used as the walk-mode and exterior night sky. Day sky remains [Modern Buildings 2](https://polyhaven.com/a/modern_buildings_2). Indoor reflections remain [Studio Small 08](https://polyhaven.com/a/studio_small_08) by Greg Zaal.
+- [Kloofendal 43d Clear Puresky](https://polyhaven.com/a/kloofendal_43d_clear_puresky), [Qwantani Sunset Puresky](https://polyhaven.com/a/qwantani_sunset_puresky), [Kloppenheim 02 Puresky](https://polyhaven.com/a/kloppenheim_02_puresky) — sky-only 1K HDRs by Greg Zaal. The city is a distant 3D mesh. Indoor reflections remain [Studio Small 08](https://polyhaven.com/a/studio_small_08) by Greg Zaal.
 
 ### Floors (Poly Haven, CC0)
 

@@ -34,8 +34,10 @@ export interface Engine {
   aimWalkLighting: (center: THREE.Vector3 | null, incoming: THREE.Vector3 | null, radius: number) => void;
   cityBg: THREE.Texture | null;
   cityBgNight: THREE.Texture | null;
+  cityBgGolden: THREE.Texture | null;
   cityEnv: THREE.Texture | null;
   cityEnvNight: THREE.Texture | null;
+  cityEnvGolden: THREE.Texture | null;
   walkLit: boolean;
   setOutlined: (objects: THREE.Object3D[]) => void;
   dispose: () => void;
@@ -140,8 +142,10 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   let aoOn = highTier;
   let cityBg: THREE.Texture | null = null;
   let cityBgNight: THREE.Texture | null = null;
+  let cityBgGolden: THREE.Texture | null = null;
   let cityEnv: THREE.Texture | null = null;
   let cityEnvNight: THREE.Texture | null = null;
+  let cityEnvGolden: THREE.Texture | null = null;
   let outlinePass: OutlinePass | null = null;
 
   if (highTier) {
@@ -292,10 +296,14 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
     set cityBg(t) { cityBg = t; },
     get cityBgNight() { return cityBgNight; },
     set cityBgNight(t) { cityBgNight = t; },
+    get cityBgGolden() { return cityBgGolden; },
+    set cityBgGolden(t) { cityBgGolden = t; },
     get cityEnv() { return cityEnv; },
     set cityEnv(t) { cityEnv = t; },
     get cityEnvNight() { return cityEnvNight; },
     set cityEnvNight(t) { cityEnvNight = t; },
+    get cityEnvGolden() { return cityEnvGolden; },
+    set cityEnvGolden(t) { cityEnvGolden = t; },
     walkLit: false,
     setOutlined(objects: THREE.Object3D[]) {
       if (outlinePass) outlinePass.selectedObjects = objects;
@@ -452,24 +460,27 @@ export type TimeOfDay = "morning" | "golden" | "night";
 
 export function applyTimeOfDay(engine: Engine, time: TimeOfDay): void {
   const { scene, sun, hemi, fill, renderer } = engine;
+  // Sky-only puresky HDRIs: never a city photograph as the background
+  // (those break scale and, at night, read as a yellow-green blur). The
+  // city is a distant 3D silhouette. Blurriness is always 0.
   if (time === "morning") {
     if (!engine.walkLit) sun.position.set(48, 62, 28);
     sun.color.set("#fff6e8");
     sun.intensity = 2.2;
     hemi.color.set("#efe8dc");
-    hemi.groundColor.set("#8a7a68");
+    hemi.groundColor.set("#6a7a58");
     hemi.intensity = 0.58;
     fill.color.set("#f0e0c4");
     fill.intensity = 0.42;
     renderer.toneMappingExposure = 1.08;
-    scene.fog = new THREE.Fog("#c5d4e3", 160, 480);
+    scene.fog = new THREE.Fog("#c8d6e4", 220, 560);
     if (engine.cityBg) {
       scene.background = engine.cityBg;
       scene.backgroundIntensity = 1.05;
-      scene.backgroundBlurriness = 0.015;
+      scene.backgroundBlurriness = 0;
       scene.backgroundRotation.set(0, 0.35, 0);
     } else {
-      scene.background = new THREE.Color("#b9cbe0");
+      scene.background = new THREE.Color("#8fb4d8");
     }
   } else if (time === "golden") {
     if (!engine.walkLit) sun.position.set(62, 16, 22);
@@ -481,37 +492,37 @@ export function applyTimeOfDay(engine: Engine, time: TimeOfDay): void {
     fill.color.set("#ffb07a");
     fill.intensity = 0.38;
     renderer.toneMappingExposure = 1.0;
-    scene.fog = new THREE.Fog("#e0a070", 150, 420);
-    if (engine.cityBg) {
-      scene.background = engine.cityBg;
-      scene.backgroundIntensity = 0.78;
-      scene.backgroundBlurriness = 0.04;
-      scene.backgroundRotation.set(0, 1.1, 0);
+    scene.fog = new THREE.Fog("#d8b090", 220, 540);
+    const goldenBg = engine.cityBgGolden ?? engine.cityBg;
+    if (goldenBg) {
+      scene.background = goldenBg;
+      scene.backgroundIntensity = 1.0;
+      scene.backgroundBlurriness = 0;
+      scene.backgroundRotation.set(0, 0.15, 0);
     } else {
       scene.background = new THREE.Color("#eeb07a");
     }
   } else {
-    // Night is a real night-city HDRI plus practicals (rooms, lamps, facade),
-    // not a darkened day sky. Exposure stays in a dusk-render range so the
-    // balcony and lobby still read.
-    if (!engine.walkLit) sun.position.set(-24, 42, 36);
-    sun.color.set("#b8c8e8");
-    sun.intensity = 0.32;
-    hemi.color.set("#3a4c78");
-    hemi.groundColor.set("#1a1520");
-    hemi.intensity = 0.42;
+    // Dark-blue night sky (stars + moon), sharp, no city HDRI. Warm
+    // practicals on the balcony and a far 3D skyline carry the lights.
+    if (!engine.walkLit) sun.position.set(-30, 48, 20);
+    sun.color.set("#c8d4f0");
+    sun.intensity = 0.12;
+    hemi.color.set("#1e2c50");
+    hemi.groundColor.set("#0a0c12");
+    hemi.intensity = 0.28;
     fill.color.set("#ffb070");
-    fill.intensity = 0.38;
-    renderer.toneMappingExposure = 0.98;
-    scene.fog = new THREE.Fog("#0c1220", 180, 480);
+    fill.intensity = 0.22;
+    renderer.toneMappingExposure = 0.92;
+    scene.fog = new THREE.Fog("#081018", 240, 620);
     const nightBg = engine.cityBgNight ?? engine.cityBg;
     if (nightBg) {
       scene.background = nightBg;
-      scene.backgroundIntensity = 0.7;
-      scene.backgroundBlurriness = 0.045;
-      scene.backgroundRotation.set(0, 0.85, 0);
+      scene.backgroundIntensity = 0.42;
+      scene.backgroundBlurriness = 0;
+      scene.backgroundRotation.set(0, 0.55, 0);
     } else {
-      scene.background = new THREE.Color("#0b1020");
+      scene.background = new THREE.Color("#071018");
     }
   }
   if (!engine.walkLit) {
@@ -537,7 +548,7 @@ export async function loadHdriEnvironment(engine: Engine, url: string): Promise<
   }
 }
 
-/** City / skyline HDRI used as the sky (window views), and as a PMREM for facade glass. */
+/** Sky-only (puresky) HDRI used as the day background, and as a PMREM for facade glass. */
 export async function loadCityBackground(engine: Engine, url: string): Promise<void> {
   try {
     const loader = new RGBELoader();
@@ -546,17 +557,32 @@ export async function loadCityBackground(engine: Engine, url: string): Promise<v
     engine.cityBg = tex;
     engine.scene.background = tex;
     engine.scene.backgroundIntensity = 1.05;
-    engine.scene.backgroundBlurriness = 0.015;
+    engine.scene.backgroundBlurriness = 0;
     engine.scene.backgroundRotation.set(0, 0.35, 0);
     const pmrem = new THREE.PMREMGenerator(engine.renderer);
     engine.cityEnv = pmrem.fromEquirectangular(tex).texture;
     pmrem.dispose();
   } catch (err) {
-    console.warn("[engine] city HDRI failed, keeping solid sky", err);
+    console.warn("[engine] sky HDRI failed, keeping solid sky", err);
   }
 }
 
-/** Night-city HDRI (lit windows, dusk sky) — never a darkened day sky. */
+/** Sunset puresky for golden hour. */
+export async function loadGoldenBackground(engine: Engine, url: string): Promise<void> {
+  try {
+    const loader = new RGBELoader();
+    const tex = await loader.loadAsync(url);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    engine.cityBgGolden = tex;
+    const pmrem = new THREE.PMREMGenerator(engine.renderer);
+    engine.cityEnvGolden = pmrem.fromEquirectangular(tex).texture;
+    pmrem.dispose();
+  } catch (err) {
+    console.warn("[engine] golden sky HDRI failed", err);
+  }
+}
+
+/** Night puresky (dark blue, stars, moon) — never a city photograph. */
 export async function loadNightBackground(engine: Engine, url: string): Promise<void> {
   try {
     const loader = new RGBELoader();
@@ -567,7 +593,7 @@ export async function loadNightBackground(engine: Engine, url: string): Promise<
     engine.cityEnvNight = pmrem.fromEquirectangular(tex).texture;
     pmrem.dispose();
   } catch (err) {
-    console.warn("[engine] night HDRI failed", err);
+    console.warn("[engine] night sky HDRI failed", err);
   }
 }
 

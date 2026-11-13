@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import type { Materials } from "./materials";
 import { hardwareOf } from "./materials";
 import type { Prefs, StyleId } from "./types";
-import { type Catalog, type PlaceOpts } from "./catalog";
+import { type Catalog, type ModelId, type PlaceOpts, sofaIdFor } from "./catalog";
 import { front } from "./occupancy";
 import { aabb as occAabb, type Placement } from "./planner";
 
@@ -861,6 +861,95 @@ function anchorOf(kind: Anchor["kind"], p: Placement): Anchor {
   return { kind, x: p.x, z: p.z, fx, fz, width: p.w, height: p.h, roomId: p.roomId };
 }
 
+function placeCatalog(
+  catalog: Catalog | null,
+  id: ModelId,
+  p: Placement,
+  group: THREE.Group,
+  mats: Materials,
+  prefs: Prefs,
+): boolean {
+  if (!catalog?.has(id)) return false;
+  const obj = catalog.instantiate(id, {
+    x: p.x,
+    z: p.z,
+    y: 0,
+    rotY: p.rot,
+    width: p.w,
+    depth: p.d,
+    prefs,
+    mats,
+  });
+  if (!obj) return false;
+  group.add(obj);
+  return true;
+}
+
+/** One InstancedMesh per sub-mesh of a repeated CC0 model (chairs, nightstands). */
+function instanceRepeated(
+  catalog: Catalog | null,
+  id: ModelId,
+  placements: Placement[],
+  group: THREE.Group,
+  mats: Materials,
+  prefs: Prefs,
+  fallback: (p: Placement) => void,
+): void {
+  if (!placements.length) return;
+  if (!catalog?.has(id) || placements.length < 2) {
+    let ok = true;
+    for (const p of placements) {
+      if (!placeCatalog(catalog, id, p, group, mats, prefs)) {
+        ok = false;
+        fallback(p);
+      }
+    }
+    void ok;
+    return;
+  }
+  const proto = catalog.instantiate(id, {
+    x: 0, z: 0, y: 0, rotY: 0,
+    width: placements[0].w,
+    depth: placements[0].d,
+    prefs, mats,
+    shareMaterials: true,
+  });
+  if (!proto) {
+    for (const p of placements) fallback(p);
+    return;
+  }
+  proto.updateMatrixWorld(true);
+  const meshes: THREE.Mesh[] = [];
+  proto.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh) meshes.push(m);
+  });
+  const _q = new THREE.Quaternion();
+  const _p = new THREE.Vector3();
+  const _s = new THREE.Vector3(1, 1, 1);
+  const _up = new THREE.Vector3(0, 1, 0);
+  const world = new THREE.Matrix4();
+  for (const mesh of meshes) {
+    const im = new THREE.InstancedMesh(mesh.geometry, mesh.material, placements.length);
+    im.castShadow = true;
+    im.receiveShadow = true;
+    im.name = `instance:${id}:${mesh.name}`;
+    im.userData.role = proto.userData.role;
+    im.userData.modelId = id;
+    const local = mesh.matrixWorld.clone();
+    for (let i = 0; i < placements.length; i++) {
+      const pl = placements[i];
+      _p.set(pl.x, 0, pl.z);
+      _q.setFromAxisAngle(_up, pl.rot);
+      world.compose(_p, _q, _s);
+      world.multiply(local);
+      im.setMatrixAt(i, world);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    group.add(im);
+  }
+}
+
 export function furnishFromPlacements(
   placements: Placement[],
   group: THREE.Group,
@@ -870,62 +959,84 @@ export function furnishFromPlacements(
 ): Anchor[] {
   const anchors: Anchor[] = [];
   const style = prefs.style;
+  const chairs: Placement[] = [];
+  const nights: Placement[] = [];
+  const chairId: ModelId = style === "traditional" ? "woodChair" : "diningChair";
   for (const p of placements) {
     switch (p.kind) {
       case "sofa":
-        modernSofa(p, group, mats, style);
+        if (!placeCatalog(catalog, sofaIdFor(style), p, group, mats, prefs)) {
+          modernSofa(p, group, mats, style);
+        }
         anchors.push(anchorOf("sofa", p));
         break;
       case "sofa-chaise":
-        sofaChaise(p, group, mats, style);
+        if (!placeCatalog(catalog, "sofaChaise", p, group, mats, prefs)) {
+          sofaChaise(p, group, mats, style);
+        }
         break;
       case "armchair":
-        armchair(p, group, mats, style);
+        if (!placeCatalog(catalog, "armchair", p, group, mats, prefs)) {
+          armchair(p, group, mats, style);
+        }
         break;
       case "coffee":
-        coffeeTable(p, group, mats, style);
+        if (!placeCatalog(catalog, style === "traditional" ? "coffeeClassic" : "coffeeModern", p, group, mats, prefs)) {
+          coffeeTable(p, group, mats, style);
+        }
         break;
       case "tv":
-        tvUnit(p, group, mats, style);
+        if (!placeCatalog(catalog, "tv", p, group, mats, prefs)) {
+          tvUnit(p, group, mats, style);
+        }
         anchors.push(anchorOf("tv", p));
         break;
       case "diningTable":
-        diningTable(p, group, mats, style);
+        if (!placeCatalog(catalog, style === "traditional" || style === "minimal" ? "woodTable" : "diningTable", p, group, mats, prefs)) {
+          diningTable(p, group, mats, style);
+        }
         anchors.push(anchorOf("dining", p));
         break;
       case "diningChair":
-        diningChair(p, group, mats, style);
+        chairs.push(p);
         break;
       case "kitchen":
         kitchenRun(p, group, mats, style);
         anchors.push(anchorOf("kitchen", p));
         break;
       case "fridge":
-        fridge(p, group, mats);
+        if (!placeCatalog(catalog, "fridge", p, group, mats, prefs)) fridge(p, group, mats);
         break;
       case "bed":
-        platformBed(p, group, mats, style);
+        if (!placeCatalog(catalog, "bed", p, group, mats, prefs)) {
+          platformBed(p, group, mats, style);
+        }
         anchors.push(anchorOf("bed", p));
         break;
       case "nightstand":
-        nightstand(p, group, mats, style);
+        nights.push(p);
         break;
       case "wardrobe":
-        wardrobe(p, group, mats, style);
+        if (!placeCatalog(catalog, "wardrobe", p, group, mats, prefs)) {
+          wardrobe(p, group, mats, style);
+        }
         anchors.push(anchorOf("wardrobe", p));
         break;
       case "bench":
         bench(p, group, mats, style);
         break;
       case "toilet":
-        toilet(p, group, mats);
+        if (!placeCatalog(catalog, "toilet", p, group, mats, prefs)) toilet(p, group, mats);
         anchors.push(anchorOf("bath", p));
         break;
       case "basin":
-        basin(p, group, mats, style);
+        if (!placeCatalog(catalog, "vanity", p, group, mats, prefs)) {
+          basin(p, group, mats, style);
+        }
         anchors.push(anchorOf("basin", p));
         break;
       case "shower":
+        // 3dassets shower_enclosure scales into a solid partition in these rooms.
         shower(p, group, mats);
         break;
       case "loungeChair":
@@ -936,14 +1047,18 @@ export function furnishFromPlacements(
         outdoorTable(p, group, mats);
         break;
       case "console":
-        consoleTable(p, group, mats);
+        if (!placeCatalog(catalog, "console", p, group, mats, prefs)) {
+          consoleTable(p, group, mats);
+        }
         anchors.push(anchorOf("foyer", p));
         break;
       case "plant":
         plantMesh(p, group, mats, catalog, prefs);
         break;
       case "lamp":
-        floorLamp(p, group, mats, style);
+        if (!placeCatalog(catalog, "lamp", p, group, mats, prefs)) {
+          floorLamp(p, group, mats, style);
+        }
         break;
       case "mandir":
         mandirMesh(p, group, mats);
@@ -952,12 +1067,16 @@ export function furnishFromPlacements(
         artFrame(p, group, mats, style);
         break;
       case "rug":
-        rugMesh(p, group, mats, style);
+        if (!placeCatalog(catalog, "rug", p, group, mats, prefs)) {
+          rugMesh(p, group, mats, style);
+        }
         break;
       default:
         break;
     }
   }
+  instanceRepeated(catalog, chairId, chairs, group, mats, prefs, (p) => diningChair(p, group, mats, style));
+  instanceRepeated(catalog, "nightstand", nights, group, mats, prefs, (p) => nightstand(p, group, mats, style));
   return anchors;
 }
 

@@ -70,7 +70,8 @@ export function applyTriplanar<T extends THREE.MeshStandardMaterial>(
       )
       .replace(
         "#include <roughnessmap_fragment>",
-        `#ifdef USE_ROUGHNESSMAP
+        `float roughnessFactor = roughness;
+        #ifdef USE_ROUGHNESSMAP
           vec3 _rN = normalize(vTripNormal);
           vec3 _rB = tripBlend(_rN);
           vec3 _rP = vTripPos * uTripScale;
@@ -80,7 +81,7 @@ export function applyTriplanar<T extends THREE.MeshStandardMaterial>(
       )
       .replace(
         "#include <normal_fragment_maps>",
-        `#ifdef USE_NORMALMAP
+        `#if defined(USE_NORMALMAP) || defined(USE_NORMALMAP_TANGENTSPACE) || defined(USE_NORMALMAP_OBJECTSPACE)
           vec3 _nN = normalize(vTripNormal);
           vec3 _nB = tripBlend(_nN);
           vec3 _nP = vTripPos * uTripScale;

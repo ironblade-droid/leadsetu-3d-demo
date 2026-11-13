@@ -9,6 +9,7 @@ export type ModelId =
   | "sofaModern"
   | "sofaClassic"
   | "sofaAlt"
+  | "sofaChaise"
   | "coffeeModern"
   | "coffeeClassic"
   | "armchair"
@@ -22,13 +23,18 @@ export type ModelId =
   | "console"
   | "sideTable"
   | "cabinet"
-  | "frame1"
-  | "frame2"
+  | "wardrobe"
+  | "chest"
+  | "tv"
   | "lamp"
-  | "chandelier"
-  | "mirror"
-  | "stove"
-  | "plant";
+  | "plant"
+  | "rug"
+  | "toilet"
+  | "basin"
+  | "vanity"
+  | "shower"
+  | "fridge"
+  | "stool";
 
 export type ModelRole = "fabric" | "wood" | "metal" | "plant" | "art" | "mixed" | "ceramic";
 
@@ -42,29 +48,35 @@ export interface ModelInfo {
 }
 
 export const MODEL_MANIFEST: Record<ModelId, ModelInfo> = {
-  sofaModern:   { file: "sofa_03.glb", role: "fabric", yawOffset: 0, author: "Fran Calvente", source: "https://polyhaven.com/a/sofa_03" },
-  sofaClassic:  { file: "Sofa_01.glb", role: "fabric", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/Sofa_01" },
-  sofaAlt:      { file: "sofa_02.glb", role: "fabric", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/sofa_02" },
-  coffeeModern: { file: "modern_coffee_table_01.glb", role: "wood", yawOffset: 0, author: "Amin", source: "https://polyhaven.com/a/modern_coffee_table_01" },
-  coffeeClassic:{ file: "CoffeeTable_01.glb", role: "wood", yawOffset: 0, author: "Fernando Quinn", source: "https://polyhaven.com/a/CoffeeTable_01" },
-  armchair:     { file: "ArmChair_01.glb", role: "fabric", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/ArmChair_01" },
-  ottoman:      { file: "Ottoman_01.glb", role: "fabric", yawOffset: 0, author: "Caspian Fortune", source: "https://polyhaven.com/a/Ottoman_01" },
-  diningChair:  { file: "dining_chair_02.glb", role: "wood", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/dining_chair_02" },
-  woodChair:    { file: "WoodenChair_01.glb", role: "wood", yawOffset: 0, author: "Jake Mobley", source: "https://polyhaven.com/a/WoodenChair_01" },
-  diningTable:  { file: "round_wooden_table_01.glb", role: "wood", yawOffset: 0, author: "Ulan Cabanilla", source: "https://polyhaven.com/a/round_wooden_table_01" },
-  woodTable:    { file: "WoodenTable_01.glb", role: "wood", yawOffset: 0, author: "Ethan Place", source: "https://polyhaven.com/a/WoodenTable_01" },
-  bed:          { file: "GothicBed_01.glb", role: "wood", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/GothicBed_01" },
-  nightstand:   { file: "ClassicNightstand_01.glb", role: "wood", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/ClassicNightstand_01" },
-  console:      { file: "ClassicConsole_01.glb", role: "wood", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/ClassicConsole_01" },
-  sideTable:    { file: "side_table_01.glb", role: "wood", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/side_table_01" },
-  cabinet:      { file: "painted_wooden_cabinet.glb", role: "wood", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/painted_wooden_cabinet" },
-  frame1:       { file: "hanging_picture_frame_01.glb", role: "art", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/hanging_picture_frame_01" },
-  frame2:       { file: "hanging_picture_frame_02.glb", role: "art", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/hanging_picture_frame_02" },
-  lamp:         { file: "modern_ceiling_lamp_01.glb", role: "metal", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/modern_ceiling_lamp_01" },
-  chandelier:   { file: "Chandelier_01.glb", role: "metal", yawOffset: 0, author: "Kirill Sannikov", source: "https://polyhaven.com/a/Chandelier_01" },
-  mirror:       { file: "ornate_mirror_01.glb", role: "mixed", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/ornate_mirror_01" },
-  stove:        { file: "electric_stove.glb", role: "metal", yawOffset: 0, author: "Kuutti Siitonen", source: "https://polyhaven.com/a/electric_stove" },
+  sofaModern:   { file: "v5/sofa_3seat.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  sofaClassic:  { file: "v5/sofa_3seat.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  sofaAlt:      { file: "v5/sofa_2seat.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  sofaChaise:   { file: "v5/chaise.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  coffeeModern: { file: "v5/coffee_rect.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  coffeeClassic:{ file: "v5/coffee_rect.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  armchair:     { file: "v5/armchair_lounge.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  ottoman:      { file: "v5/cushions.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  diningChair:  { file: "v5/dining_chair_uphol.glb", role: "mixed", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  woodChair:    { file: "v5/dining_chair_timber.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  diningTable:  { file: "v5/dining_table6.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  woodTable:    { file: "v5/dining_table6.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  bed:          { file: "v5/bed_double.glb", role: "mixed", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  nightstand:   { file: "v5/nightstand.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  console:      { file: "v5/console.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  sideTable:    { file: "v5/console.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  cabinet:      { file: "v5/chest_drawers.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  wardrobe:     { file: "v5/wardrobe_sliding.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  chest:        { file: "v5/chest_drawers.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  tv:           { file: "v5/console.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  lamp:         { file: "v5/lamp_floor.glb", role: "metal", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
   plant:        { file: "potted_plant_04.glb", role: "plant", yawOffset: 0, author: "James Ray Cock", source: "https://polyhaven.com/a/potted_plant_04" },
+  rug:          { file: "v5/rug_wool.glb", role: "fabric", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  toilet:       { file: "v5/wc_close.glb", role: "ceramic", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  basin:        { file: "v5/basin_round.glb", role: "ceramic", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  vanity:       { file: "v5/vanity_800.glb", role: "mixed", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  shower:       { file: "v5/shower_enclosure.glb", role: "mixed", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  fridge:       { file: "v5/kit_fridge_housing.glb", role: "metal", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
+  stool:        { file: "v5/dining_chair_timber.glb", role: "wood", yawOffset: 0, author: "3dassets.dev", source: "https://3dassets.dev" },
 };
 
 export interface PlaceOpts {
@@ -72,15 +84,19 @@ export interface PlaceOpts {
   z: number;
   y?: number;
   rotY: number;
-  /** Desired width along the model's facing-right axis, in metres. */
+  /** Desired width along the model's local X, in metres. */
   width?: number;
+  /** Desired depth along the model's local Z, in metres. */
+  depth?: number;
   /** Desired height in metres (used for wall art, lamps). */
   height?: number;
+  /** If true, share materials with the prototype (for InstancedMesh). */
+  shareMaterials?: boolean;
   prefs: Prefs;
   mats: Materials;
 }
 
-interface Proto {
+export interface Proto {
   root: THREE.Object3D;
   size: THREE.Vector3;
   min: THREE.Vector3;
@@ -90,6 +106,8 @@ export interface Catalog {
   ready: boolean;
   has(id: ModelId): boolean;
   instantiate(id: ModelId, opts: PlaceOpts): THREE.Group | null;
+  /** Shared-geometry prototype at the origin, already style-tinted and scaled. */
+  proto(id: ModelId, opts: PlaceOpts): Proto | null;
 }
 
 let loading: Promise<Catalog> | null = null;
@@ -175,13 +193,16 @@ async function actuallyLoad(
       if (!p) return null;
       const info = MODEL_MANIFEST[id];
       const clone = p.root.clone(true);
-      // Unique materials so style tints don't leak across instances.
-      clone.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (!m.isMesh) return;
-        if (Array.isArray(m.material)) m.material = m.material.map((x) => x.clone());
-        else if (m.material) m.material = m.material.clone();
-      });
+      // Unique materials so style tints don't leak across instances,
+      // unless the caller is going to instance and share them.
+      if (!opts.shareMaterials) {
+        clone.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (!m.isMesh) return;
+          if (Array.isArray(m.material)) m.material = m.material.map((x) => x.clone());
+          else if (m.material) m.material = m.material.clone();
+        });
+      }
 
       const group = new THREE.Group();
       group.name = `model:${id}`;
@@ -189,12 +210,14 @@ async function actuallyLoad(
       group.userData.modelId = id;
       group.add(clone);
 
-      // Sit on the floor (y = 0) and scale to the requested width or height.
+      // Sit on the floor (y = 0) and uniform-scale to fit the placement footprint.
       const sx = p.size.x || 1;
       const sy = p.size.y || 1;
       const sz = p.size.z || 1;
       let scale = 1;
-      if (opts.width && opts.width > 0) {
+      if (opts.width && opts.width > 0 && opts.depth && opts.depth > 0) {
+        scale = Math.min(opts.width / sx, opts.depth / sz);
+      } else if (opts.width && opts.width > 0) {
         const footprint = Math.max(sx, sz);
         scale = opts.width / footprint;
       } else if (opts.height && opts.height > 0) {
@@ -212,6 +235,10 @@ async function actuallyLoad(
       applyStyleToModel(group, info.role, opts.prefs, opts.mats);
       return group;
     },
+    proto(id, opts) {
+      const p = proto.get(id);
+      return p ?? null;
+    },
   };
 
   instance = catalog;
@@ -228,7 +255,7 @@ export function applyStyleToModel(
   root: THREE.Object3D,
   role: ModelRole,
   prefs: Prefs,
-  _mats: Materials,
+  mats: Materials,
 ): void {
   const d = STYLE_DEFAULTS[prefs.style];
   const fabric = new THREE.Color(d.fabric);
@@ -241,24 +268,41 @@ export function applyStyleToModel(
     for (const raw of list) {
       if (!(raw instanceof THREE.MeshStandardMaterial) && !(raw instanceof THREE.MeshPhysicalMaterial)) continue;
       const m = raw;
-      // Remember the original colour once.
       if (!m.userData.baseColor) m.userData.baseColor = m.color.clone();
       const base = m.userData.baseColor as THREE.Color;
       m.color.copy(base);
       const metal = m.metalness;
       const rough = m.roughness;
-      if (role === "fabric" || (role === "mixed" && metal < 0.25 && rough > 0.45)) {
-        m.color.lerp(fabric, prefs.style === "minimal" ? 0.35 : 0.5);
-      } else if (role === "wood" || (role === "mixed" && metal < 0.25)) {
-        m.color.lerp(wood, 0.4);
+      const n = `${m.name || ""} ${mesh.name || ""}`.toLowerCase();
+      const isFab = /fabric|linen|mustard|velvet|cushion|uphol|grey|gray|blue/.test(n);
+      const isWood = /walnut|oak|wood|carcass|front/.test(n);
+      const isMetal = /metal|chrome|steel|black/.test(n);
+      const isCer = /ceramic/.test(n);
+      if (isCer) {
+        // leave sanitaryware alone
+      } else if (isFab || (role === "fabric" && !isWood && !isMetal)) {
+        m.color.lerp(fabric, prefs.style === "minimal" ? 0.45 : 0.7);
+        if (mats.fabric.normalMap && !m.normalMap) {
+          m.normalMap = mats.fabric.normalMap;
+          m.roughnessMap = mats.fabric.roughnessMap;
+          m.normalScale = new THREE.Vector2(0.55, 0.55);
+        }
+        m.roughness = Math.max(0.82, rough);
+        m.metalness = 0;
+      } else if (isWood || role === "wood" || (role === "mixed" && metal < 0.25 && !isMetal && !isFab)) {
+        m.color.lerp(wood, prefs.style === "traditional" ? 0.65 : 0.5);
+        if (mats.wood.map && !m.map) {
+          m.map = mats.wood.map;
+          m.normalMap = mats.wood.normalMap;
+          m.roughnessMap = mats.wood.roughnessMap;
+          m.normalScale = new THREE.Vector2(0.45, 0.45);
+        }
+        if (prefs.style === "traditional") m.color.lerp(new THREE.Color("#5c3310"), 0.25);
       }
-      if (prefs.style === "luxury" && metal > 0.45) {
-        m.color.lerp(gold, 0.4);
-        m.metalness = Math.min(1, metal + 0.1);
-        m.roughness = Math.max(0.15, rough - 0.1);
-      }
-      if (prefs.style === "traditional" && role === "wood") {
-        m.color.lerp(new THREE.Color("#5c3310"), 0.2);
+      if (prefs.style === "luxury" && (isMetal || metal > 0.45)) {
+        m.color.lerp(gold, 0.5);
+        m.metalness = Math.min(1, metal + 0.15);
+        m.roughness = Math.max(0.15, rough - 0.12);
       }
       m.needsUpdate = true;
     }

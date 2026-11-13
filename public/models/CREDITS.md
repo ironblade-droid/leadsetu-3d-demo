@@ -12,7 +12,13 @@ From the [Innerscene Drawing Library](https://www.innerscene.com/tools/library/d
 
 ## Furniture models (glTF)
 
-From [Poly Haven](https://polyhaven.com/models), CC0. Downloaded as 1K glTF, packed with Draco geometry and WebP textures (KTX2 was skipped because the `ktx` encoder is not in this environment). Self-hosted in `public/models/`. Retrieved 13 November 2026, Asia/Calcutta.
+Show-flat furniture is the CC0 3dassets.dev set in `v5/` (wired for every style, retinted per preset). Corner plants remain Poly Haven `potted_plant_04`. The earlier Victorian Poly Haven set has been deleted.
+
+Site trees in `trees/` are from Quaternius Ultimate Nature Pack, CC0 1.0 (https://quaternius.com/packs/ultimatenature.html).
+
+### Historical note — removed Poly Haven Victorian set
+
+The files below were previously self-hosted and have been removed.
 
 | File | Asset | Author |
 | --- | --- | --- |

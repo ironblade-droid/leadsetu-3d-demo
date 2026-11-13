@@ -1,7 +1,7 @@
 import "./styles.css";
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBackground, loadHdriEnvironment, loadNightBackground, portraitPitchBias, type Engine } from "./engine";
+import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBackground, loadGoldenBackground, loadHdriEnvironment, loadNightBackground, portraitPitchBias, type Engine } from "./engine";
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
@@ -86,11 +86,12 @@ class App {
     this.mats = await loadMaterials(this.engine.renderer, (p) => setLoad(0.05 + p * 0.55));
     const catP = loadCatalog(this.engine.renderer, (p) => setLoad(0.6 + p * 0.2));
     const hdriP = loadHdriEnvironment(this.engine, `${import.meta.env.BASE_URL}hdris/studio_small_08_1k.hdr`);
-    const cityP = loadCityBackground(this.engine, `${import.meta.env.BASE_URL}hdris/modern_buildings_2_1k.hdr`);
-    const nightP = loadNightBackground(this.engine, `${import.meta.env.BASE_URL}hdris/shanghai_bund_1k.hdr`);
+    const cityP = loadCityBackground(this.engine, `${import.meta.env.BASE_URL}hdris/kloofendal_43d_clear_puresky_1k.hdr`);
+    const goldenP = loadGoldenBackground(this.engine, `${import.meta.env.BASE_URL}hdris/qwantani_sunset_puresky_1k.hdr`);
+    const nightP = loadNightBackground(this.engine, `${import.meta.env.BASE_URL}hdris/kloppenheim_02_puresky_1k.hdr`);
     this.plans = await loadPlans();
     this.catalog = await catP;
-    await Promise.all([hdriP, cityP, nightP]);
+    await Promise.all([hdriP, cityP, goldenP, nightP]);
     setLoad(0.88);
 
     this.engine.scene.add(this.world);
@@ -98,6 +99,7 @@ class App {
 
     this.tower = buildTower(this.mats, { mobile: this.engine.mobile });
     this.tower.setEnv(this.engine.cityEnv, this.engine.cityEnvNight);
+    await this.tower.loadTrees();
     this.world.add(this.tower.group);
     this.walkMarker = makeWalkMarker();
     this.engine.scene.add(this.walkMarker);

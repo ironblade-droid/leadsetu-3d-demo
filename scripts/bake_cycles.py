@@ -531,38 +531,93 @@ def ensure_uv2(obj):
     uvs["UVLightmap"].active_render = False
 
 
-def _axis(c, name):
-    return c.x if name == "x" else c.y if name == "y" else c.z
+def _basis(normal):
+    helper = Vector((0, 0, 1)) if abs(normal.z) < 0.85 else Vector((1, 0, 0))
+    u = normal.cross(helper)
+    if u.length < 1e-6:
+        u = normal.cross(Vector((0, 1, 0)))
+    u.normalize()
+    v = normal.cross(u)
+    v.normalize()
+    return u, v
 
 
-def project_island(obj):
-    """World-space plane projection: floors/ceils on XY, walls on the two
-    longest axes. Returns (loop_uvs, width_m, height_m) with local UVs in 0-1."""
-    kind = obj.get("ls_shell")
-    mw = obj.matrix_world
+def face_islands(obj, min_area=0.02):
+    """One island per connected coplanar face group. Skips the dark back
+    of floor/ceiling slabs (those overwrote the lit face when both were
+    projected onto the same XY rectangle)."""
+    from collections import defaultdict
     mesh = obj.data
+    mw = obj.matrix_world
+    rot = mw.to_3x3()
+    kind = obj.get("ls_shell")
     coords = [mw @ v.co for v in mesh.vertices]
-    if kind in ("floor", "ceil"):
-        axes = (("x", min(c.x for c in coords), max(c.x for c in coords)),
-                ("y", min(c.y for c in coords), max(c.y for c in coords)))
-    else:
-        extents = [
-            ("x", min(c.x for c in coords), max(c.x for c in coords)),
-            ("y", min(c.y for c in coords), max(c.y for c in coords)),
-            ("z", min(c.z for c in coords), max(c.z for c in coords)),
-        ]
-        extents.sort(key=lambda e: e[2] - e[1], reverse=True)
-        axes = (extents[0], extents[1])
-    a, b = axes
-    w = max(a[2] - a[1], 1e-4)
-    h = max(b[2] - b[1], 1e-4)
-    uvs = []
-    for li, loop in enumerate(mesh.loops):
-        c = coords[loop.vertex_index]
-        u = (_axis(c, a[0]) - a[1]) / w
-        v = (_axis(c, b[0]) - b[1]) / h
-        uvs.append((li, u, v))
-    return uvs, w, h
+    normals = [(rot @ p.normal).normalized() for p in mesh.polygons]
+
+    edge_faces = defaultdict(list)
+    for pi, p in enumerate(mesh.polygons):
+        vs = list(p.vertices)
+        for i in range(len(vs)):
+            e = tuple(sorted((vs[i], vs[(i + 1) % len(vs)])))
+            edge_faces[e].append(pi)
+    adj = defaultdict(set)
+    for faces in edge_faces.values():
+        for a in faces:
+            for b in faces:
+                if a != b:
+                    adj[a].add(b)
+
+    visited = [False] * len(mesh.polygons)
+    groups = []
+    for i, p in enumerate(mesh.polygons):
+        if visited[i]:
+            continue
+        visited[i] = True
+        ref = normals[i]
+        # Drop the unlit back of a thin floor/ceiling slab.
+        if kind == "floor" and ref.z < 0.5:
+            continue
+        if kind == "ceil" and ref.z > -0.5:
+            continue
+        stack = [i]
+        group = []
+        while stack:
+            fi = stack.pop()
+            group.append(fi)
+            for nb in adj[fi]:
+                if not visited[nb] and normals[nb].dot(ref) > 0.92:
+                    visited[nb] = True
+                    stack.append(nb)
+        area = sum(mesh.polygons[fi].area for fi in group)
+        if area < min_area:
+            continue
+        groups.append((group, ref, area))
+
+    islands = []
+    for group, ref, area in groups:
+        axis_u, axis_v = _basis(ref)
+        pts = []
+        for fi in group:
+            for vi in mesh.polygons[fi].vertices:
+                c = coords[vi]
+                pts.append((c.dot(axis_u), c.dot(axis_v)))
+        us = [p[0] for p in pts]
+        vs = [p[1] for p in pts]
+        min_u, max_u = min(us), max(us)
+        min_v, max_v = min(vs), max(vs)
+        w = max(max_u - min_u, 1e-4)
+        h = max(max_v - min_v, 1e-4)
+        # loops of these faces only
+        uvs = []
+        for fi in group:
+            poly = mesh.polygons[fi]
+            for li in range(poly.loop_start, poly.loop_start + poly.loop_total):
+                c = coords[mesh.loops[li].vertex_index]
+                u = (c.dot(axis_u) - min_u) / w
+                v = (c.dot(axis_v) - min_v) / h
+                uvs.append((li, u, v))
+        islands.append((uvs, w, h, area, ref))
+    return islands
 
 
 def pack_uv2(objs, margin=0.015):
@@ -575,27 +630,38 @@ def pack_uv2(objs, margin=0.015):
     ]
     if not meshes:
         return
-    items = []
+    items = []  # (obj, uvs, w, h, tag)
     for o in meshes:
         ensure_uv2(o)
-        uvs, w, h = project_island(o)
-        items.append((o, uvs, w, h))
+        # Park every loop in the black margin; lit islands overwrite.
+        layer = o.data.uv_layers["UVLightmap"]
+        for d in layer.data:
+            d.uv = (0.002, 0.002)
+        islands = face_islands(o)
+        if not islands:
+            print(f"  UV {o.name}: no islands", flush=True)
+        for idx, (uvs, w, h, area, ref) in enumerate(islands):
+            tag = f"{o.name}#{idx}"
+            items.append((o, uvs, w, h, tag))
 
     def sort_key(it):
-        o, _, w, h = it
+        o, _, w, h, tag = it
         pri = 0 if o.get("ls_shell") == "floor" else 1 if o.get("ls_shell") == "ceil" else 2
         return (pri, -(w * h))
     items.sort(key=sort_key)
+    if not items:
+        print("  UV pack: no islands", flush=True)
+        return
 
     def try_pack(S, gap):
         shelves = []  # [y, height, x_cursor]
         y_top = 0.0
         positions = []
-        for o, uvs, w, h in items:
+        for o, uvs, w, h, tag in items:
             placed = False
             for sh in shelves:
                 if h <= sh[1] + 1e-8 and sh[2] + w + gap <= S + 1e-8:
-                    positions.append((o, uvs, sh[2], sh[0], w, h))
+                    positions.append((o, uvs, sh[2], sh[0], w, h, tag))
                     sh[2] += w + gap
                     placed = True
                     break
@@ -603,12 +669,12 @@ def pack_uv2(objs, margin=0.015):
                 if y_top + h > S + 1e-8:
                     return None
                 shelves.append([y_top, h, w + gap])
-                positions.append((o, uvs, 0.0, y_top, w, h))
+                positions.append((o, uvs, 0.0, y_top, w, h, tag))
                 y_top += h + gap
         return positions
 
-    area = sum(w * h for _, _, w, h in items)
-    S = max(math.sqrt(area) * 1.15, max(max(w, h) for _, _, w, h in items))
+    area = sum(w * h for _, _, w, h, _ in items)
+    S = max(math.sqrt(area) * 1.15, max(max(w, h) for _, _, w, h, _ in items))
     positions = None
     for _ in range(24):
         gap = max(S * margin, 0.04)
@@ -619,12 +685,12 @@ def pack_uv2(objs, margin=0.015):
     if not positions:
         raise RuntimeError("UV shelf pack failed")
 
-    used_w = max(x + w for _, _, x, _, w, _ in positions)
-    used_h = max(y + h for _, _, _, y, _, h in positions)
+    used_w = max(x + w for _, _, x, _, w, _, _ in positions)
+    used_h = max(y + h for _, _, _, y, _, h, _ in positions)
     inner = 1.0 - 2.0 * margin
     scale = inner / max(used_w, used_h)
     rects = []
-    for o, uvs, x, y, w, h in positions:
+    for o, uvs, x, y, w, h, tag in positions:
         u0 = margin + x * scale
         v0 = margin + y * scale
         du = w * scale
@@ -633,17 +699,16 @@ def pack_uv2(objs, margin=0.015):
         for li, u, v in uvs:
             layer.data[li].uv = (u0 + u * du, v0 + v * dv)
         print(
-            f"  UV {o.name} ({o.get('ls_shell')}) "
+            f"  UV {tag} ({o.get('ls_shell')}) "
             f"x={u0:.3f}..{u0+du:.3f} y={v0:.3f}..{v0+dv:.3f} "
             f"spans={du:.3f}x{dv:.3f} world={w:.2f}x{h:.2f}m",
             flush=True,
         )
-        # overlap check against already placed
         for r in rects:
             if (u0 < r[2] - 1e-4 and u0 + du > r[0] + 1e-4 and
                     v0 < r[3] - 1e-4 and v0 + dv > r[1] + 1e-4):
-                print(f"  WARNING overlap {o.name} vs {r[4]}", flush=True)
-        rects.append((u0, v0, u0 + du, v0 + dv, o.name))
+                print(f"  WARNING overlap {tag} vs {r[4]}", flush=True)
+        rects.append((u0, v0, u0 + du, v0 + dv, tag))
 
 
 def attach_bake_target(obj, img):

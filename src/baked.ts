@@ -66,10 +66,13 @@ export function bakedKey(planId: string, style: string): string {
   return `${planId}-${style}`;
 }
 
-export function hasBaked(planId: string, style: string): boolean {
-  // Temporary local QA flip for v6d. Revert / do not deploy until living,
-  // kitchen and bedroom clearly beat v5 and match the Cycles preview.
-  return planId === "2bhk" && style === "modern";
+export function hasBaked(planId: string, style: string, wallColor?: string): boolean {
+  // Off until shared-wall occlusion is rebaked (black slabs in living
+  // and bedroom) and the in-engine look clearly beats v5. When flipping,
+  // only 2BHK Modern at the baked wall colour (#f4f1ea); other styles,
+  // units, and a different wall colour fall back to procedural v5.
+  void wallColor;
+  return false;
 }
 
 export function loadBaked(

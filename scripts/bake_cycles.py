@@ -1418,10 +1418,29 @@ def bake_meshes(rid, meshes, size, samples, out_path, pack=True, apply_filmic=Tr
     # The joined copy sits exactly on the originals. If those stay
     # visible, they occlude every ray and the atlas bakes almost black
     # (0.45% of pixels lit — the first joined-UVLightmap run).
+    # Other rooms' *wall copies* sit on the same plane (walls are
+    # duplicated per touching room). Those are not in `meshes`, so
+    # they stayed visible and baked shared walls almost black — the
+    # black slabs in the living and bedroom walkthroughs.
     hidden = []
-    for o in meshes:
+    hide_set = set()
+    def hide(o):
+        if o is None or o.name in hide_set:
+            return
         hidden.append((o, o.hide_render))
         o.hide_render = True
+        hide_set.add(o.name)
+    for o in meshes:
+        hide(o)
+    for o in bpy.data.objects:
+        if o.type != "MESH":
+            continue
+        if o.name.startswith("_BAKE") or o.name.startswith("_baketmp"):
+            continue
+        kind = o.get("ls_shell")
+        if kind == "wall":
+            hide(o)
+    print(f"  hid {len(hidden)} occluders (room originals + all walls)", flush=True)
     t0 = time.time()
     print(f"BAKE {rid} {size}px {samples}spp COMBINED joined from {len(meshes)} meshes ...", flush=True)
     try:

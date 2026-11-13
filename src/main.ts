@@ -182,6 +182,7 @@ class App {
     applyTimeOfDay(this.engine, this.time);
     this.tower.setTime(this.time);
     for (const i of this.interiors) i.setTime(this.time);
+    for (const b of this.bakedUnits) b.setTime(this.time === "night");
     const night = this.time === "night";
     const golden = this.time === "golden";
     const walk = this.view.kind === "flat" && this.view.cam === "walk";
@@ -560,8 +561,10 @@ class App {
           hideProceduralVisuals(built.group);
           this.interiorRoot.add(baked.group);
           baked.setWallColor(this.prefs.wallColor);
+          baked.setTime(this.time === "night");
           this.bakedUnits.push(baked);
-          fill.intensity = 0.32;
+          // MeshBasic ignores lights; keep a faint fill for leftover glass only.
+          fill.intensity = 0.12;
         }
       } catch (e) {
         console.warn("baked unit failed, falling back to procedural", e);

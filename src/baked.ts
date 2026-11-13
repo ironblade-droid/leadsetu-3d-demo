@@ -1,6 +1,12 @@
 /**
- * Lazy-load a Cycles-baked unit (glTF + per-room irradiance on UV1/uv2).
- * Wall colour multiplies over the neutral-albedo lightmap at runtime.
+ * Lazy-load a Cycles-baked unit (glTF + per-room combined-color lightmaps on UV1/uv2).
+ *
+ * Combined-color path (manifest.combinedColor): the atlas already contains
+ * albedo × lighting, Filmic-tonemapped. MeshBasicMaterial { map, toneMapped:false }
+ * so three.js ACES is not applied on top. Wall-colour changes need a per-colour
+ * rebake — setWallColor is a no-op.
+ *
+ * Legacy irradiance path (neutralAlbedo): lightMap × cream, kept for older assets.
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -14,6 +20,15 @@ export interface BakedRoom {
   polygon: [number, number][];
 }
 
+export interface LightmapInfo {
+  file: string;
+  bytes: number;
+  size: number;
+  type: string;
+  name: string;
+  time?: string;
+}
+
 export interface BakedManifest {
   planId: string;
   style: string;
@@ -21,10 +36,14 @@ export interface BakedManifest {
   glb?: string;
   glbBytes?: number;
   totalMB: number;
-  lightmaps: Record<string, { file: string; bytes: number; size: number; type: string; name: string }>;
+  lightmaps: Record<string, LightmapInfo>;
+  nightLightmaps?: Record<string, LightmapInfo>;
   rooms?: BakedRoom[];
   lightMapIntensity?: number;
   neutralAlbedo?: boolean;
+  combinedColor?: boolean;
+  filmic?: boolean;
+  toneMapped?: boolean;
   zFlip?: boolean;
 }
 
@@ -32,19 +51,25 @@ export interface BakedUnit {
   group: THREE.Group;
   manifest: BakedManifest;
   setWallColor: (hex: string) => void;
+  setTime: (night: boolean) => void;
   dispose: () => void;
 }
 
-const cache = new Map<string, Promise<BakedUnit | null>>();
+interface LoadedBaked extends BakedUnit {
+  dayMaps: Map<string, THREE.Texture>;
+  nightMaps: Map<string, THREE.Texture>;
+}
+
+const cache = new Map<string, Promise<LoadedBaked | null>>();
 
 export function bakedKey(planId: string, style: string): string {
   return `${planId}-${style}`;
 }
 
 export function hasBaked(planId: string, style: string): boolean {
-  // Off until the in-engine look is clearly better than v5 procedural.
-  // Pipeline is ready (public/baked/2bhk-modern, 2.58 MB); flip this to
-  // `planId === "2bhk" && style === "modern"` after a visual pass lands.
+  // Off until the in-engine look is clearly better than v5 procedural
+  // AND matches the Cycles preview (soft GI, sun patches, clean walls).
+  // Flip this to `planId === "2bhk" && style === "modern"` after that pass.
   return false;
 }
 
@@ -61,24 +86,70 @@ export function loadBaked(
     const clone = u.group.clone(true);
     applyUnitTransform(clone, t, y);
     const walls: Array<{ color: THREE.Color }> = [];
+    const assignments: Array<{ mat: THREE.MeshBasicMaterial; rid: string }> = [];
     clone.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
       const mats = (Array.isArray(m.material) ? m.material : [m.material]) as THREE.Material[];
       for (const raw of mats) {
-        if ((raw as THREE.MeshBasicMaterial).userData?.lsWall) walls.push(raw as THREE.MeshBasicMaterial);
+        const b = raw as THREE.MeshBasicMaterial;
+        if (b.userData?.lsWall) walls.push(b);
+        if (b.userData?.lsRid) assignments.push({ mat: b, rid: b.userData.lsRid as string });
       }
     });
+    const combined = !!u.manifest.combinedColor;
     return {
       group: clone,
       manifest: u.manifest,
-      setWallColor: (hex: string) => { for (const w of walls) w.color.set(hex); },
+      setWallColor: (hex: string) => {
+        // Combined-color atlases already contain the cream wall; a multiply
+        // would tint them twice. Per-colour looks need a rebake.
+        if (combined) return;
+        for (const w of walls) w.color.set(hex);
+      },
+      setTime: (night: boolean) => {
+        const src = night ? u.nightMaps : u.dayMaps;
+        if (!src || src.size === 0) return;
+        for (const a of assignments) {
+          const tex = src.get(a.rid);
+          if (tex) {
+            a.mat.map = tex;
+            a.mat.needsUpdate = true;
+          }
+        }
+      },
       dispose: () => {},
     };
   });
 }
 
-async function actuallyLoad(planId: string, style: string): Promise<BakedUnit | null> {
+async function loadAtlasSet(
+  base: string,
+  entries: Record<string, LightmapInfo> | undefined,
+  combined: boolean,
+): Promise<Map<string, THREE.Texture>> {
+  const out = new Map<string, THREE.Texture>();
+  if (!entries) return out;
+  const texLoader = new THREE.TextureLoader();
+  await Promise.all(
+    Object.entries(entries).map(async ([rid, info]) => {
+      const tex = await texLoader.loadAsync(`${base}${info.file}`);
+      // Combined Filmic 8-bit is already display-referred sRGB.
+      // Legacy irradiance is linear.
+      tex.colorSpace = combined ? THREE.SRGBColorSpace : THREE.LinearSRGBColorSpace;
+      tex.channel = 2;
+      tex.flipY = false; // glTF-exported UV1 is already V-flipped
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = true;
+      tex.needsUpdate = true;
+      out.set(rid, tex);
+    }),
+  );
+  return out;
+}
+
+async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked | null> {
   const base = `${import.meta.env.BASE_URL}baked/`;
   const prefix = `${planId}-${style}`;
   let manifest: BakedManifest;
@@ -97,44 +168,31 @@ async function actuallyLoad(planId: string, style: string): Promise<BakedUnit | 
   const group = gltf.scene;
   group.name = `baked-${prefix}`;
 
-  // Blender Y-up export maps plan Z → glTF −Z. Do NOT scale the
-  // root here — applyUnitTransform wraps a z-flip so the slot
-  // offset stays at the plan origin. Room assignment uses −Z.
   const zFlip = manifest.zFlip !== false;
   group.updateMatrixWorld(true);
 
-  const texLoader = new THREE.TextureLoader();
-  const lms = new Map<string, THREE.Texture>();
-  await Promise.all(
-    Object.entries(manifest.lightmaps).map(async ([rid, info]) => {
-      const tex = await texLoader.loadAsync(`${base}${info.file}`);
-      tex.colorSpace = THREE.LinearSRGBColorSpace;
-      // r152+: lightMap no longer auto-uses uv2; bind the lightmap UV set.
-      tex.channel = 2;
-      tex.flipY = false; // glTF-exported UV1 is already V-flipped
-      tex.needsUpdate = true;
-      lms.set(rid, tex);
-    }),
-  );
+  const combined = !!manifest.combinedColor;
+  const toneMapped = manifest.toneMapped ?? !combined;
+  const dayMaps = await loadAtlasSet(base, manifest.lightmaps, combined);
+  const nightMaps = await loadAtlasSet(base, manifest.nightLightmaps, combined);
 
-  // Oak albedo for floors (the bake is irradiance; colour lives on the material).
   let oakMap: THREE.Texture | null = null;
-  try {
-    oakMap = await texLoader.loadAsync(`${import.meta.env.BASE_URL}textures/oakplank_diff.jpg`);
-    oakMap.colorSpace = THREE.SRGBColorSpace;
-    oakMap.wrapS = oakMap.wrapT = THREE.RepeatWrapping;
-    oakMap.repeat.set(1, 1);
-    oakMap.anisotropy = 8;
-  } catch { /* optional */ }
+  if (!combined) {
+    try {
+      const texLoader = new THREE.TextureLoader();
+      oakMap = await texLoader.loadAsync(`${import.meta.env.BASE_URL}textures/oakplank_diff.jpg`);
+      oakMap.colorSpace = THREE.SRGBColorSpace;
+      oakMap.wrapS = oakMap.wrapT = THREE.RepeatWrapping;
+      oakMap.repeat.set(1, 1);
+      oakMap.anisotropy = 8;
+    } catch { /* optional */ }
+  }
 
-  // Shells use MeshBasicMaterial so the lightmap is the only light
-  // (the walk-mode sun would otherwise double-light and blow walls).
-  // Furniture keeps PBR without a lightmap — furniture UV islands in
-  // the shared atlas were too messy to ship.
-  const intensity = manifest.lightMapIntensity ?? 1.15;
+  const intensity = manifest.lightMapIntensity ?? (combined ? 1.0 : 1.15);
   const rooms = manifest.rooms ?? [];
   const woodRooms = new Set(["living", "bedroom1", "bedroom2"]);
   const walls: Array<{ color: THREE.Color }> = [];
+  const assignments: Array<{ mat: THREE.MeshBasicMaterial; rid: string }> = [];
 
   group.traverse((o) => {
     const mesh = o as THREE.Mesh;
@@ -144,35 +202,74 @@ async function actuallyLoad(planId: string, style: string): Promise<BakedUnit | 
       g.setAttribute("uv2", g.getAttribute("uv1"));
     }
     const rid = roomIdOf(mesh, rooms, zFlip);
-    const lm = rid ? lms.get(rid) : undefined;
+    const lm = rid ? dayMaps.get(rid) : undefined;
     const isFloor = /^floor-/.test(mesh.name) || /^OakFloor$/i.test((mesh.material as THREE.Material).name ?? "");
     const isCeil = /^ceil-/.test(mesh.name);
     const matsIn = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as THREE.Material[];
     const isWall = matsIn.some((m) => /^wall/i.test(m.name)) || /^wall-/i.test(mesh.name);
-    const isShell = isFloor || isCeil || isWall;
+    const isGlass = /^glass-/i.test(mesh.name) || matsIn.some((m) => /^glass/i.test(m.name));
     const next: THREE.Material[] = [];
     for (const raw of matsIn) {
-      if (isShell && lm) {
-        const src = raw as THREE.MeshStandardMaterial;
-        const basic = new THREE.MeshBasicMaterial({
-          name: src.name,
-          color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
-          map: src.map ?? null,
-          lightMap: lm,
-          lightMapIntensity: intensity,
+      if (isGlass) {
+        const glass = new THREE.MeshPhysicalMaterial({
+          name: raw.name,
+          color: 0x8aa4b0,
+          transparent: true,
+          opacity: 0.18,
+          roughness: 0.05,
+          metalness: 0.08,
+          transmission: 0.7,
+          thickness: 0.02,
           side: THREE.DoubleSide,
-          toneMapped: true,
+          depthWrite: false,
         });
-        if (isFloor && woodRooms.has(rid ?? "") && oakMap) {
-          basic.map = oakMap;
-          basic.color.set(0xffffff);
+        next.push(glass);
+        continue;
+      }
+      if (lm) {
+        const src = raw as THREE.MeshStandardMaterial;
+        if (combined) {
+          // The atlas is the complete appearance (albedo × lighting, Filmic).
+          const basic = new THREE.MeshBasicMaterial({
+            name: src.name,
+            color: 0xffffff,
+            map: lm,
+            side: THREE.DoubleSide,
+            toneMapped: toneMapped,
+          });
+          // Bind UV2 (TEXCOORD_1) as the color-map channel.
+          lm.channel = 2;
+          if (isWall) {
+            basic.userData.lsWall = true;
+            walls.push(basic);
+          }
+          if (rid) {
+            basic.userData.lsRid = rid;
+            assignments.push({ mat: basic, rid });
+          }
+          basic.needsUpdate = true;
+          next.push(basic);
+        } else {
+          const basic = new THREE.MeshBasicMaterial({
+            name: src.name,
+            color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
+            map: src.map ?? null,
+            lightMap: lm,
+            lightMapIntensity: intensity,
+            side: THREE.DoubleSide,
+            toneMapped: true,
+          });
+          if (isFloor && woodRooms.has(rid ?? "") && oakMap) {
+            basic.map = oakMap;
+            basic.color.set(0xffffff);
+          }
+          if (isWall) {
+            basic.userData.lsWall = true;
+            walls.push(basic);
+          }
+          basic.needsUpdate = true;
+          next.push(basic);
         }
-        if (isWall) {
-          basic.userData.lsWall = true;
-          walls.push(basic);
-        }
-        basic.needsUpdate = true;
-        next.push(basic);
       } else {
         const mat = raw.clone() as THREE.MeshStandardMaterial;
         if (mat.isMeshStandardMaterial) {
@@ -185,15 +282,31 @@ async function actuallyLoad(planId: string, style: string): Promise<BakedUnit | 
       }
     }
     mesh.material = next.length === 1 ? next[0] : next;
-    mesh.castShadow = !isShell;
-    mesh.receiveShadow = true;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
     mesh.frustumCulled = false;
   });
 
   return {
     group,
     manifest,
-    setWallColor: (hex: string) => { for (const w of walls) w.color.set(hex); },
+    dayMaps,
+    nightMaps,
+    setWallColor: (hex: string) => {
+      if (combined) return;
+      for (const w of walls) w.color.set(hex);
+    },
+    setTime: (night: boolean) => {
+      const src = night ? nightMaps : dayMaps;
+      if (!src || src.size === 0) return;
+      for (const a of assignments) {
+        const tex = src.get(a.rid);
+        if (tex) {
+          a.mat.map = tex;
+          a.mat.needsUpdate = true;
+        }
+      }
+    },
     dispose: () => {},
   };
 }
@@ -216,14 +329,17 @@ function meshPlanXZ(mesh: THREE.Mesh): [number, number] {
 
 function roomIdOf(mesh: THREE.Mesh, rooms: BakedRoom[], zFlip = false): string | null {
   const n = mesh.name || "";
-  const m = /^(?:floor|ceil|wall|furn|glass|frame|shell)-([A-Za-z0-9_]+)/.exec(n);
+  const m = /^(?:floor|ceil|wall|furn|glass|frame|shell|curtain|rail|cabinet|rod|krun)-([A-Za-z0-9_]+)/.exec(n);
   if (m && rooms.some((r) => r.id === m[1])) return m[1];
-  if (typeof mesh.userData.ls_room === "string") return mesh.userData.ls_room as string;
+  const extras = (mesh.userData ?? {}) as Record<string, unknown>;
+  // glTF extras may be nested under userData.extras
+  const extras2 = (extras.extras ?? extras) as Record<string, unknown>;
+  if (typeof extras.ls_room === "string") return extras.ls_room as string;
+  if (typeof extras2.ls_room === "string") return extras2.ls_room as string;
   if (!rooms.length) return null;
   const [x, rawZ] = meshPlanXZ(mesh);
   const z = zFlip ? -rawZ : rawZ;
   for (const r of rooms) if (pointInPoly(r.polygon, x, z)) return r.id;
-  // nearest centroid
   let best: string | null = null;
   let bd = 1e9;
   for (const r of rooms) {
@@ -235,20 +351,8 @@ function roomIdOf(mesh: THREE.Mesh, rooms: BakedRoom[], zFlip = false): string |
   return best;
 }
 
-function guessLightmap(
-  mesh: THREE.Mesh,
-  rooms: BakedRoom[],
-  lms: Map<string, THREE.Texture>,
-): THREE.Texture | undefined {
-  const rid = roomIdOf(mesh, rooms, true);
-  return rid ? lms.get(rid) : undefined;
-}
-
 /** Match buildInterior's planToWorld: mirror, rotate about plan centre, then ox/oz. */
 export function applyUnitTransform(group: THREE.Group, t: Transform, y: number, zFlip = true) {
-  // content (optional z-flip at the plan origin)
-  //   → inner (shift by −centre; mirrors about the centre via scale+offset)
-  //     → group (rotY, then ox/oz + centre)  — matches planToWorld.
   const content = new THREE.Group();
   content.name = "baked-content";
   if (zFlip) content.scale.z = -1;
@@ -256,8 +360,6 @@ export function applyUnitTransform(group: THREE.Group, t: Transform, y: number, 
 
   const inner = new THREE.Group();
   inner.name = "baked-inner";
-  // Mirrors about the plan centre: world = S*(plan − centre) + centre + origin
-  // is T*R*S with a flip-parent around an inner offset of −centre.
   if (t.mirrorX || t.mirrorZ) {
     const flip = new THREE.Group();
     flip.name = "baked-mirror";

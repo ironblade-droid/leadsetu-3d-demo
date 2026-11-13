@@ -203,6 +203,7 @@ NEUTRAL = (0.80, 0.80, 0.80, 1)
 SHELL_KINDS = ("floor", "ceil", "wall")
 FURN_KINDS = ("furn", "frame", "curtain", "rail", "cabinet", "counter")
 BAKE_KINDS = SHELL_KINDS + FURN_KINDS
+EXPORT_KINDS = BAKE_KINDS + ("glass",)
 
 
 def hex_rgba(h, linear=True):
@@ -827,11 +828,15 @@ def kitchen_run(p, coll, mats, shells, rid):
         shells[rid]["objs"].append(o)
         return o
 
-    add(f"{p['id']}-base", 0, 0.01, 0.43, length, depth - 0.02, 0.86, mats["cabinet"])
+    add(f"{p['id']}-base", 0, 0.0, 0.43, length, depth - 0.04, 0.86, mats["cabinet"])
     doors = max(2, round(length / 0.55))
-    for i in range(1, doors):
-        lx = -length / 2 + (length / doors) * i
-        add(f"{p['id']}-seam-{i}", lx, depth / 2 - 0.005, 0.42, 0.008, 0.01, 0.72, mats["frame"], "frame")
+    gap = 0.005
+    door_w = (length - gap * (doors + 1)) / doors
+    door_t = 0.018
+    front_y = depth / 2 - door_t / 2 - 0.002
+    for i in range(doors):
+        lx = -length / 2 + gap + door_w / 2 + i * (door_w + gap)
+        add(f"{p['id']}-door-{i}", lx, front_y, 0.44, door_w, door_t, 0.78, mats["cabinet"])
     add(f"{p['id']}-top", 0, 0.01, 0.885, length + 0.02, depth + 0.03, 0.05, mats["counter"], "cabinet")
     splash_h = 0.58
     add(f"{p['id']}-splash", 0, -depth / 2 + 0.02, 0.91 + splash_h / 2,
@@ -858,6 +863,42 @@ def kitchen_run(p, coll, mats, shells, rid):
     return empty
 
 
+
+def shower_enclosure(p, coll, mats, shells, rid):
+    """Match src/furniture.ts shower: tray + two glass screens on the back walls."""
+    x, y = p["x"], p["z"]
+    s = p["w"]
+    rot = p.get("rot") or 0
+    bpy.ops.object.empty_add(location=(x, y, 0), rotation=(0, 0, rot))
+    empty = bpy.context.active_object
+    empty.name = f"shower-{rid}-{p['id']}"
+    link_to(empty, coll)
+    empty["ls_room"] = rid
+
+    def add(name, lx, ly, lz, sx, sy, sz, mat, kind):
+        o = local_box(name, empty, lx, ly, lz, sx, sy, sz, coll, mat, rid, kind)
+        if kind in BAKE_KINDS or kind == "glass":
+            if rid in shells:
+                shells[rid]["objs"].append(o)
+        return o
+
+    add(f"furn-{rid}-shower-tray", 0, 0, 0.03, s, s, 0.05, mats["ceramic"], "furn")
+    # Screens on local -X and -Z (back walls of the chosen corner).
+    add(f"glass-{rid}-shower-z", 0, -s / 2 + 0.01, 1.02, s, 0.02, 1.95, mats["glass"], "glass")
+    add(f"glass-{rid}-shower-x", -s / 2 + 0.01, 0, 1.02, 0.02, s, 1.95, mats["glass"], "glass")
+    metal = mats["darksteel"]
+    add(f"frame-{rid}-shower-topz", 0, -s / 2 + 0.01, 2.00, s, 0.02, 0.02, metal, "frame")
+    add(f"frame-{rid}-shower-topx", -s / 2 + 0.01, 0, 2.00, 0.02, s, 0.02, metal, "frame")
+    add(f"frame-{rid}-shower-post-o", s / 2 - 0.01, -s / 2 + 0.01, 1.02, 0.02, 0.02, 2.00, metal, "frame")
+    add(f"frame-{rid}-shower-post-y", -s / 2 + 0.01, s / 2 - 0.01, 1.02, 0.02, 0.02, 2.00, metal, "frame")
+    add(f"frame-{rid}-shower-post-c", -s / 2 + 0.01, -s / 2 + 0.01, 1.02, 0.02, 0.02, 2.00, metal, "frame")
+    ax, az = -s / 2 + 0.12, -s / 2 + 0.12
+    add(f"frame-{rid}-shower-arm", ax, az + s * 0.14, 2.18, 0.012, s * 0.28, 0.012, metal, "frame")
+    add(f"frame-{rid}-shower-head", ax, az + s * 0.28, 2.17, 0.22, 0.22, 0.02, metal, "frame")
+    print(f"  shower {p['id']} at={(x, y)} rot={rot:.2f} s={s:.2f}", flush=True)
+    return empty
+
+
 def place_furniture(scene, root, mats, shells):
     furn_coll = ensure_coll("furniture")
     placed = []
@@ -869,6 +910,9 @@ def place_furniture(scene, root, mats, shells):
         kind = p["kind"]
         if kind == "kitchen":
             placed.append(kitchen_run(p, coll, mats, shells, rid))
+            continue
+        if kind == "shower":
+            placed.append(shower_enclosure(p, coll, mats, shells, rid))
             continue
         if fpath:
             full = root / "public" / "models" / fpath
@@ -1575,7 +1619,7 @@ def export_glb(path):
     bpy.ops.object.select_all(action="DESELECT")
     n = 0
     for o in bpy.data.objects:
-        if o.type == "MESH" and o.get("ls_shell") in BAKE_KINDS:
+        if o.type == "MESH" and o.get("ls_shell") in EXPORT_KINDS:
             o.hide_set(False)
             o.select_set(True)
             n += 1

@@ -415,13 +415,17 @@ function kitchenRun(p: Placement, g: THREE.Group, mats: Materials, style: StyleI
   const len = p.w, depth = p.d;
   const hasHob = (p.variant ?? "").includes("hob");
   const handleless = style === "modern" || style === "minimal";
-  // Base cabinets
-  box(len, 0.86, depth - 0.02, mats.cabinet, 0, 0.43, 0.01, root);
-  // Door seams (vertical reveals) so it reads as modular, not a slab
+  // Base carcass, with door slabs proud of it so the 5 mm reveals read as
+  // even shadow lines (thin black seam boxes baked as irregular slashes).
+  box(len, 0.86, depth - 0.04, mats.cabinet, 0, 0.43, 0.0, root);
   const doors = Math.max(2, Math.round(len / 0.55));
-  for (let i = 1; i < doors; i++) {
-    const lx = -len / 2 + (len / doors) * i;
-    box(0.008, 0.72, 0.01, mats.frame, lx, 0.42, depth / 2 - 0.005, root);
+  const gap = 0.005;
+  const doorW = (len - gap * (doors + 1)) / doors;
+  const doorT = 0.018;
+  const frontZ = depth / 2 - doorT / 2 - 0.002;
+  for (let i = 0; i < doors; i++) {
+    const lx = -len / 2 + gap + doorW / 2 + i * (doorW + gap);
+    box(doorW, 0.78, doorT, mats.cabinet, lx, 0.44, frontZ, root);
   }
   if (!handleless) {
     for (let i = 0; i < doors; i++) {

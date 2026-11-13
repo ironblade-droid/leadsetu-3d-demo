@@ -5,7 +5,7 @@ import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBac
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
-import { hasBaked, loadBaked, hideProceduralVisuals, type BakedUnit } from "./baked";
+import { hasBaked, loadBaked, hideProceduralVisuals, hideBakedMovables, type BakedUnit } from "./baked";
 import { loadCatalog, type Catalog } from "./catalog";
 import { Walker, attachJoystick } from "./walker";
 import { HUD, storeLead, areaLabel, type TourState } from "./ui";
@@ -560,6 +560,7 @@ class App {
         const baked = await loadBaked(planId, this.prefs.style, slot.transform, 0);
         if (baked) {
           hideProceduralVisuals(built.group);
+          hideBakedMovables(baked.group);
           this.interiorRoot.add(baked.group);
           baked.setWallColor(this.prefs.wallColor);
           await Promise.resolve(baked.setTime(this.time === "night"));

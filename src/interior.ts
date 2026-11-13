@@ -3,7 +3,7 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { Materials } from "./materials";
 import { applyKitchen, applyStyleLook, applyWorldXZUVs, assignFloorMaps, flooringSet, hardwareOf, makeFloorMaterial, uvScaleFor } from "./materials";
 import { applyTriplanar } from "./triplanar";
-import { addFalseCeiling, addRoomSkirting } from "./deco";
+import { addDoorFrame, addFalseCeiling, addRoomSkirting, addSwitchPlate } from "./deco";
 import { furnishFromPlacements, aabb, addCurtains, type Anchor } from "./furniture";
 import { planUnit } from "./planner";
 import { assertLayout } from "./occupancy";
@@ -213,6 +213,13 @@ export function buildInterior(
     }
   }
 
+  const switchPlate = new THREE.MeshStandardMaterial({
+    color: "#ece8e1", roughness: 0.42, metalness: 0.18, envMapIntensity: 0.4,
+  });
+  const switchRocker = new THREE.MeshStandardMaterial({
+    color: "#f7f4ef", roughness: 0.5, metalness: 0.08,
+  });
+
   // Doors — open leaf + frame
   for (const d of plan.doors) {
     const a = t ? planToWorld(d.ax, d.az, t) : [d.ax, d.az] as [number, number];
@@ -238,19 +245,13 @@ export function buildInterior(
     handle.position.set(0.03, 1.0, len * 0.8);
     leaf.add(handle);
     group.add(leaf);
-    // lintel
     if (!opts.cutaway) {
-      const lintel = new THREE.Mesh(new THREE.BoxGeometry(alongLen(dx, dz, 0.12), 0.08, alongLen(dz, dx, 0.12) || 0.12), wallMat);
-      // simpler lintel aligned to opening
-      const alongX = Math.abs(dx) > Math.abs(dz);
-      const lg = new THREE.Mesh(
-        new THREE.BoxGeometry(alongX ? len : 0.15, 0.1, alongX ? 0.15 : len),
-        wallMat,
-      );
-      lg.position.set(mx, DOOR_H + 0.05, mz);
-      group.add(lg);
+      addDoorFrame(a[0], a[1], b2[0], b2[1], DOOR_H, group, mats.woodFur, geos);
+      addSwitchPlate(a[0], a[1], b2[0], b2[1], group, switchPlate, switchRocker, geos);
     }
     void ang;
+    void mx;
+    void mz;
   }
 
   // Railings for balcony / terrace

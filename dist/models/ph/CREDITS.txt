@@ -1,0 +1,8 @@
+Poly Haven models and textures in this folder are CC0 (public domain).
+https://polyhaven.com
+
+Models: modern_arm_chair_01, coffee_table_round_01, side_table_01,
+modern_wooden_cabinet, ceramic_vase_01, potted_plant_02, Ottoman_01.
+
+Textures (public/textures/ph): poly_wool_herringbone, polar_fleece,
+wool_boucle, cotton_jersey, beige_wall_001.

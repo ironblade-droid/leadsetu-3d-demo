@@ -412,6 +412,8 @@ function diningChair(p: Placement, g: THREE.Group, mats: Materials, style: Style
 
 function kitchenRun(p: Placement, g: THREE.Group, mats: Materials, style: StyleId): void {
   const root = groupAt(p.x, p.z, p.rot, g);
+  root.name = "kitchen-run";
+  root.userData.bakeHide = true;
   const len = p.w, depth = p.d;
   const hasHob = (p.variant ?? "").includes("hob");
   const handleless = style === "modern" || style === "minimal";
@@ -558,7 +560,7 @@ function platformBed(p: Placement, g: THREE.Group, mats: Materials, style: Style
   // Duvet
   const duvet = (style === "luxury" ? velvet("#5c1a1a", mats) : mats.fabric.clone()) as THREE.Material;
   if (duvet instanceof THREE.MeshStandardMaterial && style !== "luxury") {
-    duvet.color.set(style === "traditional" ? "#7a2e1f" : style === "minimal" ? "#e8e4db" : "#3d4f63");
+    duvet.color.set(style === "traditional" ? "#7a2e1f" : style === "minimal" ? "#e8e4db" : "#d6cfc4");
     duvet.roughness = 0.9;
   }
   rbox(w + 0.04, 0.09, len * 0.7, 0.04, duvet, 0, 0.54, len * 0.08, root);
@@ -740,13 +742,17 @@ function consoleTable(p: Placement, g: THREE.Group, mats: Materials): void {
 function plantMesh(
   p: Placement, g: THREE.Group, mats: Materials, cat: Catalog | null, prefs: Prefs,
 ): void {
-  if (cat?.has("plant")) {
-    const opts: PlaceOpts = { x: p.x, z: p.z, y: 0, rotY: p.rot, width: 0.55, prefs, mats };
-    const obj = cat.instantiate("plant", opts);
+  {
+    const useAlt = !!(cat?.has("plantAlt") && (Math.abs(Math.round(p.x * 10 + p.z * 7)) % 2 === 1));
+    const pid: ModelId = useAlt ? "plantAlt" : "plant";
+    if (cat?.has(pid)) {
+    const opts: PlaceOpts = { x: p.x, z: p.z, y: 0, rotY: p.rot, width: useAlt ? 0.7 : 0.55, prefs, mats };
+    const obj = cat.instantiate(pid, opts);
     if (obj) {
       g.add(obj);
       contactShadow(p.x, p.z, 0.45, 0.45, g);
       return;
+    }
     }
   }
   const root = groupAt(p.x, p.z, p.rot, g);
@@ -855,10 +861,18 @@ function rugMesh(p: Placement, g: THREE.Group, mats: Materials, style: StyleId):
   const col =
     style === "luxury" ? "#6b1d1d" :
     style === "traditional" ? "#7a3a1a" :
-    style === "minimal" ? "#d8d2c8" : "#3d4a58";
+    style === "minimal" ? "#d8d2c8" : "#7d7468";
   const mat = mats.fabric.clone();
+  const rugTex = mats.boucle ?? mats.wool ?? mats.fabricTex;
+  if (rugTex?.map) {
+    mat.map = rugTex.map;
+    mat.normalMap = rugTex.normalMap;
+    mat.roughnessMap = rugTex.roughnessMap;
+    mat.normalScale = new THREE.Vector2(0.7, 0.7);
+  }
   mat.color.set(col);
-  mat.roughness = 0.95;
+  mat.roughness = 0.92;
+  mat.envMapIntensity = 0.18;
   const root = groupAt(p.x, p.z, p.rot, g);
   box(p.w, 0.015, p.d, mat, 0, 0.012, 0, root);
 }
@@ -889,6 +903,7 @@ function placeCatalog(
   });
   if (!obj) return false;
   group.add(obj);
+  contactShadow(p.x, p.z, (p.w || 0.6) + 0.08, (p.d || 0.6) + 0.08, group, p.rot);
   return true;
 }
 
@@ -955,6 +970,83 @@ function instanceRepeated(
     im.instanceMatrix.needsUpdate = true;
     group.add(im);
   }
+  for (const pl of placements) {
+    contactShadow(pl.x, pl.z, (pl.w || 0.5) + 0.06, (pl.d || 0.5) + 0.06, group, pl.rot);
+  }
+}
+
+
+function styleSofa(p: Placement, g: THREE.Group, mats: Materials, style: StyleId): void {
+  const root = groupAt(p.x, p.z, p.rot, g);
+  const cushTex = mats.boucle ?? mats.wool ?? mats.fabricTex;
+  const wool = mats.fabric.clone();
+  if (cushTex?.map) {
+    wool.map = cushTex.map;
+    wool.normalMap = cushTex.normalMap;
+    wool.roughnessMap = cushTex.roughnessMap;
+  }
+  const a = wool.clone();
+  a.color = new THREE.Color(style === "luxury" ? "#6a3030" : style === "traditional" ? "#8a5a3a" : "#c9c2b6");
+  const b = wool.clone();
+  b.color = new THREE.Color(style === "luxury" ? "#3d2018" : "#9a9186");
+  const throwM = mats.fabric.clone();
+  if (mats.wool?.map) {
+    throwM.map = mats.wool.map;
+    throwM.normalMap = mats.wool.normalMap;
+    throwM.roughnessMap = mats.wool.roughnessMap;
+  }
+  throwM.color.set(style === "luxury" ? "#4a1c1c" : style === "traditional" ? "#7a3a1a" : "#b7a894");
+  const w = p.w, d = p.d;
+  const seatY = 0.46;
+  rbox(0.32, 0.16, 0.32, 0.06, a, -w * 0.22, seatY + 0.1, -d * 0.12, root);
+  rbox(0.3, 0.15, 0.3, 0.06, b, w * 0.18, seatY + 0.1, -d * 0.1, root, 0.25);
+  rbox(0.28, 0.14, 0.26, 0.05, a, 0.02, seatY + 0.12, -d * 0.18, root, -0.2);
+  // folded throw over one arm
+  rbox(0.18, 0.05, d * 0.62, 0.02, throwM, -w / 2 + 0.08, seatY + 0.16, 0.02, root, 0.08);
+  rbox(0.22, 0.04, 0.36, 0.02, throwM, -w / 2 + 0.2, seatY + 0.04, d * 0.18, root, 0.4);
+}
+
+function styleBed(p: Placement, g: THREE.Group, mats: Materials, style: StyleId): void {
+  const root = groupAt(p.x, p.z, p.rot, g);
+  const linen = mats.mattress.clone();
+  const throwM = mats.fabric.clone();
+  if (mats.wool?.map) {
+    throwM.map = mats.wool.map;
+    throwM.normalMap = mats.wool.normalMap;
+    throwM.roughnessMap = mats.wool.roughnessMap;
+  }
+  throwM.color.set(style === "luxury" ? "#5c1a1a" : style === "traditional" ? "#7a3a1a" : "#8a8176");
+  const w = p.w, len = p.d;
+  rbox(w * 0.32, 0.12, 0.28, 0.05, linen, -w * 0.18, 0.68, -len / 2 + 0.38, root, 0.15);
+  rbox(w * 0.32, 0.12, 0.28, 0.05, linen, w * 0.18, 0.68, -len / 2 + 0.38, root, -0.12);
+  rbox(w * 0.92, 0.05, len * 0.28, 0.03, throwM, 0, 0.56, len / 2 - len * 0.16, root);
+}
+
+function styleTableTop(
+  p: Placement, g: THREE.Group, mats: Materials, cat: Catalog | null, prefs: Prefs, topY = 0.42,
+): void {
+  const root = groupAt(p.x, p.z, p.rot, g);
+  const spines = ["#5c4033", "#6b5344", "#3f4a3c", "#8a6a4a", "#4a3a32"];
+  let y = topY;
+  for (let i = 0; i < 3; i++) {
+    const mat = new THREE.MeshStandardMaterial({ color: spines[i % spines.length], roughness: 0.82, metalness: 0 });
+    const bw = 0.15 + (i % 2) * 0.03;
+    const bd = 0.22 - i * 0.015;
+    const bh = 0.025;
+    box(bw, bh, bd, mat, -p.w * 0.12, y + bh / 2, 0.02, root, (i - 1) * 0.12);
+    y += bh;
+  }
+  if (cat?.has("vase")) {
+    const vase = cat.instantiate("vase", {
+      x: 0, z: 0, y: 0, rotY: 0.4,
+      height: 0.26,
+      prefs, mats,
+    });
+    if (vase) {
+      vase.position.set(p.w * 0.16, topY, -0.02);
+      root.add(vase);
+    }
+  }
 }
 
 export function furnishFromPlacements(
@@ -975,6 +1067,7 @@ export function furnishFromPlacements(
         if (!placeCatalog(catalog, sofaIdFor(style), p, group, mats, prefs)) {
           modernSofa(p, group, mats, style);
         }
+        styleSofa(p, group, mats, style);
         anchors.push(anchorOf("sofa", p));
         break;
       case "sofa-chaise":
@@ -991,6 +1084,7 @@ export function furnishFromPlacements(
         if (!placeCatalog(catalog, style === "traditional" ? "coffeeClassic" : "coffeeModern", p, group, mats, prefs)) {
           coffeeTable(p, group, mats, style);
         }
+        styleTableTop(p, group, mats, catalog, prefs);
         break;
       case "tv":
         if (!placeCatalog(catalog, "tv", p, group, mats, prefs)) {
@@ -1018,6 +1112,7 @@ export function furnishFromPlacements(
         if (!placeCatalog(catalog, "bed", p, group, mats, prefs)) {
           platformBed(p, group, mats, style);
         }
+        styleBed(p, group, mats, style);
         anchors.push(anchorOf("bed", p));
         break;
       case "nightstand":
@@ -1058,6 +1153,7 @@ export function furnishFromPlacements(
         if (!placeCatalog(catalog, "console", p, group, mats, prefs)) {
           consoleTable(p, group, mats);
         }
+        styleTableTop(p, group, mats, catalog, prefs, 0.82);
         anchors.push(anchorOf("foyer", p));
         break;
       case "plant":
@@ -1075,9 +1171,7 @@ export function furnishFromPlacements(
         artFrame(p, group, mats, style);
         break;
       case "rug":
-        if (!placeCatalog(catalog, "rug", p, group, mats, prefs)) {
-          rugMesh(p, group, mats, style);
-        }
+        rugMesh(p, group, mats, style);
         break;
       default:
         break;
@@ -1095,11 +1189,17 @@ export function addCurtains(
 ): void {
   const alongX = w >= d;
   const fabric = mats.fabric.clone();
-  fabric.color.set(style === "luxury" ? "#5c1a1a" : style === "traditional" ? "#7a3a1a" : style === "minimal" ? "#efeae2" : "#3d4a58");
+  fabric.color.set(style === "luxury" ? "#5c1a1a" : style === "traditional" ? "#7a3a1a" : style === "minimal" ? "#efeae2" : "#c4bbb0");
+  const curtainTex = mats.wool ?? mats.fabricTex;
+  if (curtainTex?.map) {
+    fabric.map = curtainTex.map;
+    fabric.normalMap = curtainTex.normalMap;
+    fabric.roughnessMap = curtainTex.roughnessMap;
+  }
   fabric.side = THREE.DoubleSide;
-  fabric.roughness = 0.9;
+  fabric.roughness = 0.88;
   fabric.transparent = false;
-  fabric.normalScale = new THREE.Vector2(0.85, 0.85);
+  fabric.normalScale = new THREE.Vector2(1.1, 1.1);
   const height = Math.min(2.15, wallH - 0.35);
   const y = 0.25 + height / 2;
   const rod = hardwareOf(mats, style);
@@ -1108,13 +1208,15 @@ export function addCurtains(
     for (let i = 0; i < folds; i++) {
       const t = (i + 0.5) / folds;
       const wave = Math.sin(i * 1.35) * 0.018;
+      let meshObj: THREE.Mesh;
       if (alongX) {
         const ww = (pw / folds) * 1.2;
-        box(ww, height, 0.03, fabric, px - pw / 2 + t * pw, y, pz + wave, g);
+        meshObj = box(ww, height, 0.03, fabric, px - pw / 2 + t * pw, y, pz + wave, g);
       } else {
         const dd = (pd / folds) * 1.2;
-        box(0.03, height, dd, fabric, px + wave, y, pz - pd / 2 + t * pd, g);
+        meshObj = box(0.03, height, dd, fabric, px + wave, y, pz - pd / 2 + t * pd, g);
       }
+      meshObj.name = "curtain";
     }
   };
   if (alongX) {

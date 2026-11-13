@@ -21,6 +21,10 @@ export interface Materials {
   pave: TexSet;
   fabricTex: TexSet;
   brushed: TexSet;
+  wool: TexSet;
+  linen: TexSet;
+  boucle: TexSet;
+  wallPaint: TexSet;
   wall: THREE.MeshStandardMaterial;
   ceiling: THREE.MeshStandardMaterial;
   glass: THREE.MeshPhysicalMaterial;
@@ -92,6 +96,20 @@ async function set(
   return { map, normalMap, roughnessMap };
 }
 
+async function setPh(
+  loader: THREE.TextureLoader,
+  name: string,
+  aniso: number,
+  repeat: number,
+): Promise<TexSet> {
+  const [map, normalMap, roughnessMap] = await Promise.all([
+    loadTex(loader, `ph/${name}_diff.webp`, true, repeat, aniso),
+    loadTex(loader, `ph/${name}_nor.webp`, false, repeat, aniso),
+    loadTex(loader, `ph/${name}_rough.webp`, false, repeat, aniso),
+  ]);
+  return { map, normalMap, roughnessMap };
+}
+
 export async function loadMaterials(
   renderer: THREE.WebGLRenderer,
   onProgress: (p: number) => void,
@@ -102,7 +120,7 @@ export async function loadMaterials(
   loader.manager = manager;
   manager.onProgress = (_u, loaded, total) => onProgress(total ? loaded / total : 0);
 
-  const [wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed] =
+  const [wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed, wool, linen, boucle, wallPaint] =
     await Promise.all([
       set(loader, "oakplank", aniso, 1),
       set(loader, "marblevein", aniso, 1),
@@ -130,14 +148,18 @@ export async function loadMaterials(
         const map = whiteTex();
         return { map, normalMap, roughnessMap };
       })(),
+      setPh(loader, "poly_wool_herringbone", aniso, 4),
+      setPh(loader, "polar_fleece", aniso, 3),
+      setPh(loader, "wool_boucle", aniso, 3),
+      setPh(loader, "beige_wall_001", aniso, 2),
     ]);
 
   const std = (color: string, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.05, ...extra });
 
   return {
-    wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed,
-    wall: applyTriplanar(std("#f4f1ea", { roughness: 0.85, metalness: 0, map: plaster.map, normalMap: plaster.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), roughnessMap: plaster.roughnessMap }), 0.42),
+    wood, marble, tile, terra, granite, concrete, concfloor, plaster, grass, pave, fabricTex, brushed, wool, linen, boucle, wallPaint,
+    wall: applyTriplanar(std("#f4f1ea", { roughness: 0.88, metalness: 0, map: wallPaint.map, normalMap: wallPaint.normalMap, normalScale: new THREE.Vector2(0.28, 0.28), roughnessMap: wallPaint.roughnessMap, envMapIntensity: 0.12 }), 0.55),
     ceiling: std("#f7f4ee", { roughness: 0.92, metalness: 0, envMapIntensity: 0.2 }),
     glass: new THREE.MeshPhysicalMaterial({
       color: "#eef4f8",
@@ -180,15 +202,16 @@ export async function loadMaterials(
       normalScale: new THREE.Vector2(0.5, 0.2),
       envMapIntensity: 0.4,
     }),
-    fabric: std("#4a5560", {
-      roughness: 0.86,
+    fabric: std("#8e8578", {
+      roughness: 0.84,
       metalness: 0,
-      normalMap: fabricTex.normalMap,
-      roughnessMap: fabricTex.roughnessMap,
-      normalScale: new THREE.Vector2(0.7, 0.7),
-      envMapIntensity: 0.22,
+      map: wool.map,
+      normalMap: wool.normalMap,
+      roughnessMap: wool.roughnessMap,
+      normalScale: new THREE.Vector2(0.85, 0.85),
+      envMapIntensity: 0.28,
     }),
-    mattress: std("#ece6da", { roughness: 0.9, normalMap: fabricTex.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), roughnessMap: fabricTex.roughnessMap }),
+    mattress: std("#d8d0c4", { roughness: 0.94, map: linen.map, normalMap: linen.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), roughnessMap: linen.roughnessMap, envMapIntensity: 0.12 }),
     plant: std("#2d5a3d", { roughness: 0.8 }),
     soil: std("#3a2a1c", { roughness: 1 }),
     counter: new THREE.MeshPhysicalMaterial({
@@ -203,7 +226,7 @@ export async function loadMaterials(
       roughnessMap: wood.roughnessMap,
       normalMap: wood.normalMap,
       normalScale: new THREE.Vector2(0.55, 0.55),
-      envMapIntensity: 0.35,
+      envMapIntensity: 0.55,
     }),
     ceramic: new THREE.MeshPhysicalMaterial({
       color: "#f4f6f7", roughness: 0.2, metalness: 0.03,
@@ -233,7 +256,7 @@ export const STYLE_DEFAULTS: Record<
   StyleId,
   { flooring: FlooringId; wall: string; kitchen: KitchenId; fabric: string; wood: string }
 > = {
-  modern: { flooring: "wood", wall: "#f4f1ea", kitchen: "white", fabric: "#4a5560", wood: "#7a5a38" },
+  modern: { flooring: "wood", wall: "#f4f1ea", kitchen: "white", fabric: "#8e8578", wood: "#7a5a38" },
   luxury: { flooring: "marble", wall: "#f3ebe0", kitchen: "walnut", fabric: "#5c1a1a", wood: "#3f2a1a" },
   minimal: { flooring: "tile", wall: "#f7f7f5", kitchen: "white", fabric: "#d0cbc2", wood: "#c4b7a0" },
   traditional: { flooring: "marble", wall: "#f3e6d0", kitchen: "granite", fabric: "#7a2e1f", wood: "#5c3310" },

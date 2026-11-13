@@ -5,7 +5,7 @@ import { aabb, type Anchor } from "./furniture";
 import { doorInward } from "./occupancy";
 import { worldDoors } from "./planner";
 
-export const EYE = 1.6;
+export const EYE = 1.55;
 export const LOOK_Y = 0.92;
 
 export interface RoomStop {
@@ -182,12 +182,12 @@ function isSmallRoom(kind: RoomStop["type"], area: number): boolean {
 }
 
 function defaultFov(kind: RoomStop["type"], area: number): number {
-  return isSmallRoom(kind, area) ? 85 : 70;
+  return isSmallRoom(kind, area) ? 88 : 73;
 }
 
 /**
- * Show-flat room camera: stand at the doorway or a corner, eye height 1.6 m,
- * look at the centroid (or a far-wall bias), pitched ~-8°. Never aims at a
+ * Show-flat room camera: stand at the doorway or a corner, eye height 1.55 m,
+ * look at the centroid (or a far-wall bias), pitched ~-8°, eye height 1.55 m. Never aims at a
  * single furniture anchor. Small rooms use the widest stand-back and ~85° FOV.
  */
 

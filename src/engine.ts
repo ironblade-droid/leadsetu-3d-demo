@@ -8,6 +8,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { GTAOPass } from "three/examples/jsm/postprocessing/GTAOPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
 export interface Engine {
   renderer: THREE.WebGLRenderer;
@@ -71,8 +72,8 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = mobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMapping = THREE.AgXToneMapping;
+  renderer.toneMappingExposure = 1.15;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const softwareGpu = detectSoftwareGpu(renderer);
@@ -179,7 +180,17 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
     outlinePass.pulsePeriod = 2.4;
     outlinePass.downSampleRatio = 1.5;
     composer.addPass(outlinePass);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.16, 0.42, 0.84);
+    composer.addPass(bloom);
     composer.addPass(new OutputPass());
+  }
+
+  // Subtle vignette over the canvas, under the HUD (works on software GPUs too).
+  const host = canvas.parentElement;
+  if (host && !host.querySelector("#vignette")) {
+    const vig = document.createElement("div");
+    vig.id = "vignette";
+    host.appendChild(vig);
   }
 
   let last = performance.now();
@@ -241,11 +252,11 @@ export function createEngine(canvas: HTMLCanvasElement, labelLayer: HTMLElement)
         const offsetY = fullH - h; // show the lower slice: crop ceiling
         camera.setViewOffset(w, fullH, 0, offsetY, w, h);
       } else {
-        camera.fov = walkFov >= 80 ? 75 : 60;
+        camera.fov = walkFov >= 80 ? 78 : 63;
         camera.clearViewOffset();
       }
     } else {
-      camera.fov = isMobileViewport() ? 58 : 50;
+      camera.fov = isMobileViewport() ? 60 : 53;
       camera.clearViewOffset();
     }
     camera.near = 0.05;

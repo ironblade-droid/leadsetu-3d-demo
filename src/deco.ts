@@ -194,3 +194,75 @@ export function addFalseCeiling(
   }
   void SOFFIT;
 }
+
+
+/** Architrave around a door opening: two jambs, a lintel and a threshold. */
+export function addDoorFrame(
+  ax: number, az: number, bx: number, bz: number,
+  doorH: number,
+  group: THREE.Group,
+  mat: THREE.Material,
+  geos: THREE.BufferGeometry[],
+): void {
+  const dx = bx - ax, dz = bz - az;
+  const len = Math.hypot(dx, dz) || 0.9;
+  const alongX = Math.abs(dx) > Math.abs(dz);
+  const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+  const T = 0.07, D = 0.11;
+  const jamb = (x: number, z: number) => {
+    const geo = new THREE.BoxGeometry(alongX ? T : D, doorH, alongX ? D : T);
+    geos.push(geo);
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, doorH / 2, z);
+    m.castShadow = false;
+    m.receiveShadow = true;
+    m.name = "door-frame";
+    group.add(m);
+  };
+  jamb(ax, az);
+  jamb(bx, bz);
+  const lintelGeo = new THREE.BoxGeometry(alongX ? len + T : D, T, alongX ? D : len + T);
+  geos.push(lintelGeo);
+  const lintel = new THREE.Mesh(lintelGeo, mat);
+  lintel.position.set(mx, doorH + T / 2, mz);
+  lintel.name = "door-lintel";
+  lintel.receiveShadow = true;
+  group.add(lintel);
+  const thGeo = new THREE.BoxGeometry(alongX ? len + T : D, 0.018, alongX ? D : len + T);
+  geos.push(thGeo);
+  const th = new THREE.Mesh(thGeo, mat);
+  th.position.set(mx, 0.009, mz);
+  th.name = "door-threshold";
+  group.add(th);
+}
+
+/** A 2-gang switch / socket plate just inside a door, at 1.15 m. */
+export function addSwitchPlate(
+  ax: number, az: number, bx: number, bz: number,
+  group: THREE.Group,
+  plateMat: THREE.Material,
+  rockerMat: THREE.Material,
+  geos: THREE.BufferGeometry[],
+): void {
+  const dx = bx - ax, dz = bz - az;
+  const len = Math.hypot(dx, dz) || 1;
+  const nx = -dz / len, nz = dx / len;
+  const x = ax + dx * 0.18 + nx * 0.05;
+  const z = az + dz * 0.18 + nz * 0.05;
+  const ang = Math.atan2(nx, nz);
+  const y = 1.15;
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.086, 0.126, 0.01), plateMat);
+  geos.push(plate.geometry);
+  plate.position.set(x, y, z);
+  plate.rotation.y = ang;
+  plate.name = "switch-plate";
+  group.add(plate);
+  for (const oy of [0.022, -0.022]) {
+    const rocker = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.032, 0.012), rockerMat);
+    geos.push(rocker.geometry);
+    rocker.position.set(x + nx * 0.008, y + oy, z + nz * 0.008);
+    rocker.rotation.y = ang;
+    rocker.name = "switch-rocker";
+    group.add(rocker);
+  }
+}

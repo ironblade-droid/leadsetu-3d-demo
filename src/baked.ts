@@ -99,7 +99,7 @@ export function loadBaked(
     const clone = u.group.clone(true);
     applyUnitTransform(clone, t, y);
     const walls: Array<{ color: THREE.Color }> = [];
-    const assignments: Array<{ mat: THREE.MeshBasicMaterial; rid: string }> = [];
+    const assignments: Array<{ mat: THREE.MeshBasicMaterial | THREE.MeshStandardMaterial; rid: string }> = [];
     clone.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
@@ -211,22 +211,28 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
   };
 
   let oakMap: THREE.Texture | null = null;
-  if (!combined) {
-    try {
-      const texLoader = new THREE.TextureLoader();
+  let oakRough: THREE.Texture | null = null;
+  try {
+    const texLoader = new THREE.TextureLoader();
+    if (!combined) {
       oakMap = await texLoader.loadAsync(`${import.meta.env.BASE_URL}textures/oakplank_diff.jpg`);
       oakMap.colorSpace = THREE.SRGBColorSpace;
       oakMap.wrapS = oakMap.wrapT = THREE.RepeatWrapping;
-      oakMap.repeat.set(1, 1);
+      oakMap.repeat.set(2, 2);
       oakMap.anisotropy = 8;
-    } catch { /* optional */ }
-  }
+    }
+    oakRough = await texLoader.loadAsync(`${import.meta.env.BASE_URL}textures/oakplank_rough.jpg`);
+    oakRough.colorSpace = THREE.LinearSRGBColorSpace;
+    oakRough.wrapS = oakRough.wrapT = THREE.RepeatWrapping;
+    oakRough.repeat.set(3, 3);
+    oakRough.anisotropy = 8;
+  } catch { /* optional */ }
 
   const intensity = manifest.lightMapIntensity ?? (combined ? 1.0 : 1.15);
   const rooms = manifest.rooms ?? [];
   const woodRooms = new Set(["living", "bedroom1", "bedroom2"]);
   const walls: Array<{ color: THREE.Color }> = [];
-  const assignments: Array<{ mat: THREE.MeshBasicMaterial; rid: string }> = [];
+  const assignments: Array<{ mat: THREE.MeshBasicMaterial | THREE.MeshStandardMaterial; rid: string }> = [];
 
   group.traverse((o) => {
     const mesh = o as THREE.Mesh;
@@ -255,6 +261,7 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
           metalness: 0.08,
           transmission: 0.7,
           thickness: 0.02,
+          envMapIntensity: 1.1,
           side: THREE.DoubleSide,
           depthWrite: false,
         });
@@ -280,6 +287,30 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
         const src = raw as THREE.MeshStandardMaterial;
         if (combined) {
           // The atlas is the complete appearance (albedo × lighting, Filmic).
+          // Floors are MeshPhysical so env/SSR-like reflections and roughness
+          // variation can sit on top of the baked colour without retone-mapping it.
+          if (isFloor) {
+            const floor = new THREE.MeshPhysicalMaterial({
+              name: src.name,
+              color: 0xffffff,
+              map: lm,
+              roughness: 0.32,
+              roughnessMap: oakRough,
+              metalness: 0.02,
+              envMapIntensity: 0.55,
+              clearcoat: 0.18,
+              clearcoatRoughness: 0.45,
+              side: THREE.DoubleSide,
+              toneMapped: false,
+            });
+            lm.channel = 2;
+            if (rid) {
+              floor.userData.lsRid = rid;
+              assignments.push({ mat: floor, rid });
+            }
+            floor.needsUpdate = true;
+            next.push(floor);
+          } else {
           const basic = new THREE.MeshBasicMaterial({
             name: src.name,
             color: 0xffffff,
@@ -299,6 +330,7 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
           }
           basic.needsUpdate = true;
           next.push(basic);
+          }
         } else {
           const basic = new THREE.MeshBasicMaterial({
             name: src.name,
@@ -334,7 +366,7 @@ async function actuallyLoad(planId: string, style: string): Promise<LoadedBaked 
     mesh.material = next.length === 1 ? next[0] : next;
     const live = kind === "furn" || isGlass;
     mesh.castShadow = live;
-    mesh.receiveShadow = live;
+    mesh.receiveShadow = live || isFloor;
     mesh.frustumCulled = false;
   });
 
@@ -446,11 +478,37 @@ export function applyUnitTransform(group: THREE.Group, t: Transform, y: number, 
   group.position.set(t.ox + t.width / 2, y, t.oz + t.depth / 2);
 }
 
+const KEEP_LIVE = /^(furniture|skirting|door-frame|door-lintel|door-threshold|switch-plate|switch-rocker|cove-soffit|cove-lip|downlight|downlight-centre|contact-ao|curtain|unit-outline)$/i;
+
+/** Hide procedural shells (walls/floors/ceilings) that the bake replaces,
+ *  but keep live furniture, curtains, skirting, door frames and switches.
+ *  Kitchen carcasses stay hidden — those come from the lightmapped bake. */
 export function hideProceduralVisuals(root: THREE.Object3D) {
   root.traverse((o) => {
     const m = o as THREE.Mesh;
     if (!m.isMesh) return;
-    if (m.name === "unit-outline" || m.userData.hotspot) return;
+    if (m.userData.hotspot) return;
+    let p: THREE.Object3D | null = o;
+    let underFurniture = false;
+    let bakeHide = false;
+    let keep = false;
+    while (p) {
+      if (p.name === "furniture") underFurniture = true;
+      if (p.userData?.bakeHide) bakeHide = true;
+      if (KEEP_LIVE.test(p.name || "")) keep = true;
+      p = p.parent;
+    }
+    if ((underFurniture || keep) && !bakeHide) return;
     m.visible = false;
+  });
+}
+
+/** Avoid double furniture: bake glTF keeps shells/cabinets; live catalog draws the rest. */
+export function hideBakedMovables(root: THREE.Object3D) {
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh) return;
+    const kind = (m.userData?.ls_shell as string) || shellKind(m);
+    if (kind === "furn" || kind === "curtain") m.visible = false;
   });
 }

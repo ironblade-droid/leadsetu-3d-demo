@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { Collision } from "./types";
 import { hitsCollision, inRooms } from "./rooms";
 
-const EYE = 1.6;
+const EYE = 1.55;
 const RADIUS = 0.3;
 const SPEED = 3.4;
 const SPRINT = 5.4;

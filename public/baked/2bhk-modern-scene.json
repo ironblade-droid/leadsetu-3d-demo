@@ -1,0 +1,1204 @@
+{
+  "planId": "2bhk",
+  "style": "modern",
+  "prefs": {
+    "style": "modern",
+    "flooring": "wood",
+    "wallColor": "#f4f1ea",
+    "kitchen": "white",
+    "furniture": true
+  },
+  "wallHeight": 2.8,
+  "bounds": {
+    "min": [
+      0,
+      -1.5
+    ],
+    "max": [
+      11,
+      9
+    ]
+  },
+  "walls": [
+    {
+      "x": 0,
+      "z": 0.25,
+      "w": 0.25,
+      "d": 3.35
+    },
+    {
+      "x": 0,
+      "z": 4.55,
+      "w": 0.25,
+      "d": 0.2
+    },
+    {
+      "x": 0,
+      "z": 4.85,
+      "w": 0.25,
+      "d": 1.15
+    },
+    {
+      "x": 0,
+      "z": 8,
+      "w": 0.25,
+      "d": 0.75
+    },
+    {
+      "x": 0,
+      "z": 0,
+      "w": 0.9,
+      "d": 0.25
+    },
+    {
+      "x": 0,
+      "z": 8.75,
+      "w": 1.2,
+      "d": 0.25
+    },
+    {
+      "x": 0,
+      "z": 4.75,
+      "w": 4.5,
+      "d": 0.1
+    },
+    {
+      "x": 3.3,
+      "z": 8.75,
+      "w": 1.4,
+      "d": 0.25
+    },
+    {
+      "x": 4.25,
+      "z": 4.85,
+      "w": 0.1,
+      "d": 0.15
+    },
+    {
+      "x": 4.25,
+      "z": 5.8,
+      "w": 0.1,
+      "d": 0.75
+    },
+    {
+      "x": 4.25,
+      "z": 6.65,
+      "w": 0.1,
+      "d": 2.1
+    },
+    {
+      "x": 4.25,
+      "z": 6.55,
+      "w": 0.25,
+      "d": 0.1
+    },
+    {
+      "x": 5.1,
+      "z": 0,
+      "w": 2.3,
+      "d": 0.25
+    },
+    {
+      "x": 5.3,
+      "z": 6.55,
+      "w": 0.85,
+      "d": 0.1
+    },
+    {
+      "x": 5.7,
+      "z": 8.75,
+      "w": 1.1,
+      "d": 0.25
+    },
+    {
+      "x": 5.8,
+      "z": 4.75,
+      "w": 3.65,
+      "d": 0.1
+    },
+    {
+      "x": 6.05,
+      "z": 4.85,
+      "w": 0.1,
+      "d": 0.45
+    },
+    {
+      "x": 6.05,
+      "z": 6.1,
+      "w": 0.1,
+      "d": 0.45
+    },
+    {
+      "x": 6.05,
+      "z": 6.65,
+      "w": 0.1,
+      "d": 2.1
+    },
+    {
+      "x": 6.55,
+      "z": 0.25,
+      "w": 0.1,
+      "d": 0.75
+    },
+    {
+      "x": 6.55,
+      "z": 3,
+      "w": 0.1,
+      "d": 0.25
+    },
+    {
+      "x": 6.55,
+      "z": 3.25,
+      "w": 0.75,
+      "d": 0.1
+    },
+    {
+      "x": 8.2,
+      "z": 3.25,
+      "w": 1.4,
+      "d": 0.1
+    },
+    {
+      "x": 8.8,
+      "z": 8.75,
+      "w": 2.2,
+      "d": 0.25
+    },
+    {
+      "x": 9.35,
+      "z": 3.35,
+      "w": 0.1,
+      "d": 1.4
+    },
+    {
+      "x": 9.35,
+      "z": 4.85,
+      "w": 0.1,
+      "d": 1.3
+    },
+    {
+      "x": 9.35,
+      "z": 6.25,
+      "w": 0.1,
+      "d": 0.15
+    },
+    {
+      "x": 9.35,
+      "z": 7.2,
+      "w": 0.1,
+      "d": 1.55
+    },
+    {
+      "x": 9.35,
+      "z": 6.15,
+      "w": 1.65,
+      "d": 0.1
+    },
+    {
+      "x": 10.2,
+      "z": 0,
+      "w": 0.8,
+      "d": 0.25
+    },
+    {
+      "x": 10.4,
+      "z": 3.25,
+      "w": 0.6,
+      "d": 0.1
+    },
+    {
+      "x": 10.75,
+      "z": 0.25,
+      "w": 0.25,
+      "d": 0.65
+    },
+    {
+      "x": 10.75,
+      "z": 2.4,
+      "w": 0.25,
+      "d": 0.85
+    },
+    {
+      "x": 10.75,
+      "z": 3.35,
+      "w": 0.25,
+      "d": 0.95
+    },
+    {
+      "x": 10.75,
+      "z": 5.1,
+      "w": 0.25,
+      "d": 1.05
+    },
+    {
+      "x": 10.75,
+      "z": 6.25,
+      "w": 0.25,
+      "d": 0.75
+    },
+    {
+      "x": 10.75,
+      "z": 8.2,
+      "w": 0.25,
+      "d": 0.55
+    }
+  ],
+  "doors": [
+    {
+      "ax": 0.25,
+      "az": 4.55,
+      "bx": 1.2,
+      "bz": 4.55,
+      "width": 0.95
+    },
+    {
+      "ax": 4.25,
+      "az": 5.8,
+      "bx": 3.45,
+      "bz": 5.8,
+      "width": 0.8
+    },
+    {
+      "ax": 4.5,
+      "az": 6.65,
+      "bx": 4.5,
+      "bz": 7.45,
+      "width": 0.8
+    },
+    {
+      "ax": 6.15,
+      "az": 5.3,
+      "bx": 6.95,
+      "bz": 5.3,
+      "width": 0.8
+    },
+    {
+      "ax": 8.2,
+      "az": 3.25,
+      "bx": 8.2,
+      "bz": 2.35,
+      "width": 0.9
+    },
+    {
+      "ax": 10.4,
+      "az": 3.35,
+      "bx": 10.4,
+      "bz": 4.15,
+      "width": 0.8
+    },
+    {
+      "ax": 9.45,
+      "az": 6.4,
+      "bx": 10.25,
+      "bz": 6.4,
+      "width": 0.8
+    }
+  ],
+  "windows": [
+    {
+      "x": 0.9,
+      "z": 0,
+      "w": 4.2,
+      "d": 0.25
+    },
+    {
+      "x": 7.4,
+      "z": 0,
+      "w": 2.8,
+      "d": 0.25
+    },
+    {
+      "x": 10.75,
+      "z": 0.9,
+      "w": 0.25,
+      "d": 1.5
+    },
+    {
+      "x": 10.75,
+      "z": 4.3,
+      "w": 0.25,
+      "d": 0.8
+    },
+    {
+      "x": 0,
+      "z": 6,
+      "w": 0.25,
+      "d": 2
+    },
+    {
+      "x": 1.2,
+      "z": 8.75,
+      "w": 2.1,
+      "d": 0.25
+    },
+    {
+      "x": 4.7,
+      "z": 8.75,
+      "w": 1,
+      "d": 0.25
+    },
+    {
+      "x": 6.8,
+      "z": 8.75,
+      "w": 2,
+      "d": 0.25
+    },
+    {
+      "x": 10.75,
+      "z": 7,
+      "w": 0.25,
+      "d": 1.2
+    }
+  ],
+  "balcony": {
+    "x": 0.6,
+    "z": -1.5,
+    "w": 4.8,
+    "d": 1.5
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "Living / dining",
+      "type": "living",
+      "area_m2": 32.3,
+      "area_m2_from_polygon": 32.41,
+      "polygon": [
+        [
+          0.25,
+          0.25
+        ],
+        [
+          6.55,
+          0.25
+        ],
+        [
+          6.55,
+          3.25
+        ],
+        [
+          9.35,
+          3.35
+        ],
+        [
+          9.35,
+          4.75
+        ],
+        [
+          0.25,
+          4.75
+        ]
+      ]
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "type": "kitchen",
+      "area_m2": 12.3,
+      "area_m2_from_polygon": 12.41,
+      "polygon": [
+        [
+          6.65,
+          0.25
+        ],
+        [
+          10.75,
+          0.25
+        ],
+        [
+          10.75,
+          3.25
+        ],
+        [
+          10.4,
+          3.35
+        ],
+        [
+          9.45,
+          3.35
+        ],
+        [
+          9.45,
+          3.25
+        ],
+        [
+          6.65,
+          3.25
+        ]
+      ]
+    },
+    {
+      "id": "utility",
+      "name": "Utility",
+      "type": "utility",
+      "area_m2": 3.6,
+      "area_m2_from_polygon": 1.69,
+      "polygon": [
+        [
+          9.45,
+          4.85
+        ],
+        [
+          10.75,
+          4.85
+        ],
+        [
+          10.75,
+          6.15
+        ],
+        [
+          9.45,
+          6.15
+        ]
+      ]
+    },
+    {
+      "id": "bedroom1",
+      "name": "Bedroom 1",
+      "type": "bedroom",
+      "area_m2": 15.6,
+      "area_m2_from_polygon": 15.6,
+      "polygon": [
+        [
+          0.25,
+          4.85
+        ],
+        [
+          4.25,
+          4.85
+        ],
+        [
+          4.25,
+          8.75
+        ],
+        [
+          0.25,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "lobby",
+      "name": "Lobby",
+      "type": "lobby",
+      "area_m2": 2.9,
+      "area_m2_from_polygon": 2.89,
+      "polygon": [
+        [
+          4.35,
+          4.85
+        ],
+        [
+          6.05,
+          4.85
+        ],
+        [
+          6.05,
+          6.55
+        ],
+        [
+          4.35,
+          6.55
+        ]
+      ]
+    },
+    {
+      "id": "bathroom",
+      "name": "Bathroom",
+      "type": "bathroom",
+      "area_m2": 3.6,
+      "area_m2_from_polygon": 3.57,
+      "polygon": [
+        [
+          4.35,
+          6.65
+        ],
+        [
+          6.05,
+          6.65
+        ],
+        [
+          6.05,
+          8.75
+        ],
+        [
+          4.35,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "bedroom2",
+      "name": "Bedroom 2",
+      "type": "bedroom",
+      "area_m2": 12.5,
+      "area_m2_from_polygon": 12.48,
+      "polygon": [
+        [
+          6.15,
+          4.85
+        ],
+        [
+          9.35,
+          4.85
+        ],
+        [
+          9.35,
+          8.75
+        ],
+        [
+          6.15,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "ensuite",
+      "name": "En-suite",
+      "type": "bathroom",
+      "area_m2": 3.2,
+      "area_m2_from_polygon": 3.25,
+      "polygon": [
+        [
+          9.45,
+          6.25
+        ],
+        [
+          10.75,
+          6.25
+        ],
+        [
+          10.75,
+          8.75
+        ],
+        [
+          9.45,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "balcony",
+      "name": "Balcony",
+      "type": "balcony",
+      "area_m2": 7.2,
+      "area_m2_from_polygon": 7.2,
+      "polygon": [
+        [
+          0.6,
+          -1.5
+        ],
+        [
+          5.4,
+          -1.5
+        ],
+        [
+          5.4,
+          0
+        ],
+        [
+          0.6,
+          0
+        ]
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "id": "sofa",
+      "kind": "sofa",
+      "x": 4.8,
+      "z": 0.78,
+      "rot": 0,
+      "w": 2.45,
+      "d": 0.9,
+      "h": 0.82,
+      "wallHug": true,
+      "group": "sofa",
+      "variant": "l-shape",
+      "roomId": "living",
+      "file": "v5/sofa_3seat.glb"
+    },
+    {
+      "id": "sofa-chaise",
+      "kind": "sofa-chaise",
+      "x": 3.9949999999999997,
+      "z": 1.055,
+      "rot": 0,
+      "w": 0.84,
+      "d": 1.45,
+      "h": 0.82,
+      "wallHug": true,
+      "group": "sofa",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/chaise.glb"
+    },
+    {
+      "id": "coffee",
+      "kind": "coffee",
+      "x": 5.12,
+      "z": 1.935,
+      "rot": 0,
+      "w": 0.95,
+      "d": 0.55,
+      "h": 0.38,
+      "variant": "wood",
+      "roomId": "living",
+      "file": "v5/coffee_rect.glb"
+    },
+    {
+      "id": "tv",
+      "kind": "tv",
+      "x": 4.8,
+      "z": 4.47,
+      "rot": 3.141592653589793,
+      "w": 1.7,
+      "d": 0.4,
+      "h": 0.44,
+      "wallHug": true,
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/console.glb"
+    },
+    {
+      "id": "rug",
+      "kind": "rug",
+      "x": 4.8,
+      "z": 1.93,
+      "rot": 0,
+      "w": 2.4,
+      "d": 1.8,
+      "h": 0.02,
+      "ghost": true,
+      "tight": true,
+      "roomId": "living",
+      "file": "v5/rug_wool.glb"
+    },
+    {
+      "id": "dining",
+      "kind": "diningTable",
+      "x": 2.45,
+      "z": 2.5,
+      "rot": 0,
+      "w": 1.8,
+      "d": 0.9,
+      "h": 0.75,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_table6.glb"
+    },
+    {
+      "id": "chair-0",
+      "kind": "diningChair",
+      "x": 1.9460000000000002,
+      "z": 3.33,
+      "rot": 3.141592653589793,
+      "w": 0.44,
+      "d": 0.48,
+      "h": 0.85,
+      "tight": true,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_chair_uphol.glb"
+    },
+    {
+      "id": "chair-1",
+      "kind": "diningChair",
+      "x": 2.954,
+      "z": 3.33,
+      "rot": 3.141592653589793,
+      "w": 0.44,
+      "d": 0.48,
+      "h": 0.85,
+      "tight": true,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_chair_uphol.glb"
+    },
+    {
+      "id": "chair-2",
+      "kind": "diningChair",
+      "x": 1.9460000000000002,
+      "z": 1.67,
+      "rot": 0,
+      "w": 0.44,
+      "d": 0.48,
+      "h": 0.85,
+      "tight": true,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_chair_uphol.glb"
+    },
+    {
+      "id": "chair-3",
+      "kind": "diningChair",
+      "x": 2.954,
+      "z": 1.67,
+      "rot": 0,
+      "w": 0.44,
+      "d": 0.48,
+      "h": 0.85,
+      "tight": true,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_chair_uphol.glb"
+    },
+    {
+      "id": "chair-4",
+      "kind": "diningChair",
+      "x": 1.1700000000000002,
+      "z": 2.5,
+      "rot": 1.5707963267948966,
+      "w": 0.44,
+      "d": 0.48,
+      "h": 0.85,
+      "tight": true,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_chair_uphol.glb"
+    },
+    {
+      "id": "chair-5",
+      "kind": "diningChair",
+      "x": 3.7300000000000004,
+      "z": 2.5,
+      "rot": -1.5707963267948966,
+      "w": 0.44,
+      "d": 0.48,
+      "h": 0.85,
+      "tight": true,
+      "group": "dining",
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/dining_chair_uphol.glb"
+    },
+    {
+      "id": "plant",
+      "kind": "plant",
+      "x": 8.99,
+      "z": 4.39,
+      "rot": 0,
+      "w": 0.52,
+      "d": 0.52,
+      "h": 1.15,
+      "tight": true,
+      "wallHug": true,
+      "roomId": "living",
+      "file": "potted_plant_04.glb"
+    },
+    {
+      "id": "lamp",
+      "kind": "lamp",
+      "x": 0.61,
+      "z": 0.61,
+      "rot": 0,
+      "w": 0.32,
+      "d": 0.32,
+      "h": 1.5,
+      "tight": true,
+      "wallHug": true,
+      "variant": "modern",
+      "roomId": "living",
+      "file": "v5/lamp_floor.glb"
+    },
+    {
+      "id": "art",
+      "kind": "art",
+      "x": 0.29,
+      "z": 2.5,
+      "rot": 1.5707963267948966,
+      "w": 0.9,
+      "d": 0.04,
+      "h": 0.65,
+      "wallHug": true,
+      "tight": true,
+      "ghost": true,
+      "variant": "modern",
+      "roomId": "living",
+      "file": null
+    },
+    {
+      "id": "kitchen-south",
+      "kind": "kitchen",
+      "x": 8.7,
+      "z": 0.6000000000000001,
+      "rot": 0,
+      "w": 3.8499999999999996,
+      "d": 0.6,
+      "h": 2.2,
+      "wallHug": true,
+      "group": "kitchen",
+      "variant": "white-hob",
+      "roomId": "kitchen",
+      "file": null
+    },
+    {
+      "id": "kitchen-east",
+      "kind": "kitchen",
+      "x": 10.399999999999999,
+      "z": 1.85,
+      "rot": -1.5707963267948966,
+      "w": 2,
+      "d": 0.6,
+      "h": 2.2,
+      "wallHug": true,
+      "group": "kitchen",
+      "variant": "white",
+      "roomId": "kitchen",
+      "file": null
+    },
+    {
+      "id": "fridge",
+      "kind": "fridge",
+      "x": 10.37,
+      "z": 2.97,
+      "rot": -1.5707963267948966,
+      "w": 0.6,
+      "d": 0.64,
+      "h": 1.85,
+      "wallHug": true,
+      "group": "kitchen",
+      "roomId": "kitchen",
+      "file": "v5/kit_fridge_housing.glb"
+    },
+    {
+      "id": "bed",
+      "kind": "bed",
+      "x": 2.25,
+      "z": 7.64,
+      "rot": 3.141592653589793,
+      "w": 1.9,
+      "d": 2.1,
+      "h": 0.95,
+      "wallHug": true,
+      "group": "bed",
+      "variant": "modern-master",
+      "roomId": "bedroom1",
+      "file": "v5/bed_double.glb"
+    },
+    {
+      "id": "night-l",
+      "kind": "nightstand",
+      "x": 1,
+      "z": 8.34,
+      "rot": 0,
+      "w": 0.44,
+      "d": 0.4,
+      "h": 0.5,
+      "tight": true,
+      "wallHug": true,
+      "group": "bed",
+      "variant": "modern",
+      "roomId": "bedroom1",
+      "file": "v5/nightstand.glb"
+    },
+    {
+      "id": "night-r",
+      "kind": "nightstand",
+      "x": 3.5000000000000004,
+      "z": 8.34,
+      "rot": 0,
+      "w": 0.44,
+      "d": 0.4,
+      "h": 0.5,
+      "tight": true,
+      "wallHug": true,
+      "group": "bed",
+      "variant": "modern",
+      "roomId": "bedroom1",
+      "file": "v5/nightstand.glb"
+    },
+    {
+      "id": "wardrobe",
+      "kind": "wardrobe",
+      "x": 0.575,
+      "z": 5.8775,
+      "rot": 1.5707963267948966,
+      "w": 1.7550000000000001,
+      "d": 0.55,
+      "h": 2.2,
+      "wallHug": true,
+      "variant": "modern",
+      "roomId": "bedroom1",
+      "file": "v5/wardrobe_sliding.glb"
+    },
+    {
+      "id": "bench",
+      "kind": "bench",
+      "x": 2.25,
+      "z": 6.31,
+      "rot": 0,
+      "w": 1.2349999999999999,
+      "d": 0.38,
+      "h": 0.42,
+      "tight": true,
+      "group": "bed",
+      "variant": "modern",
+      "roomId": "bedroom1",
+      "file": null
+    },
+    {
+      "id": "rug",
+      "kind": "rug",
+      "x": 2.25,
+      "z": 7.64,
+      "rot": 0,
+      "w": 2.35,
+      "d": 2.45,
+      "h": 0.02,
+      "ghost": true,
+      "tight": true,
+      "roomId": "bedroom1",
+      "file": "v5/rug_wool.glb"
+    },
+    {
+      "id": "console",
+      "kind": "console",
+      "x": 4.63,
+      "z": 5.699999999999999,
+      "rot": 1.5707963267948966,
+      "w": 1.02,
+      "d": 0.38,
+      "h": 0.85,
+      "wallHug": true,
+      "tight": true,
+      "roomId": "lobby",
+      "file": "v5/console.glb"
+    },
+    {
+      "id": "plant",
+      "kind": "plant",
+      "x": 5.71,
+      "z": 6.21,
+      "rot": 0,
+      "w": 0.52,
+      "d": 0.52,
+      "h": 1.1,
+      "tight": true,
+      "wallHug": true,
+      "roomId": "lobby",
+      "file": "potted_plant_04.glb"
+    },
+    {
+      "id": "shower",
+      "kind": "shower",
+      "x": 5.561999999999999,
+      "z": 8.262,
+      "rot": 0,
+      "w": 0.8160000000000001,
+      "d": 0.8160000000000001,
+      "h": 2.1,
+      "wallHug": true,
+      "tight": true,
+      "group": "bath",
+      "roomId": "bathroom",
+      "file": null
+    },
+    {
+      "id": "basin",
+      "kind": "basin",
+      "x": 5.199999999999999,
+      "z": 8.44,
+      "rot": 3.141592653589793,
+      "w": 0.7,
+      "d": 0.46,
+      "h": 1.15,
+      "wallHug": true,
+      "tight": true,
+      "group": "bath",
+      "variant": "modern",
+      "roomId": "bathroom",
+      "file": "v5/basin_round.glb"
+    },
+    {
+      "id": "toilet",
+      "kind": "toilet",
+      "x": 5.199999999999999,
+      "z": 8.290000000000001,
+      "rot": 3.141592653589793,
+      "w": 0.4,
+      "d": 0.68,
+      "h": 0.8,
+      "wallHug": true,
+      "tight": true,
+      "group": "bath",
+      "roomId": "bathroom",
+      "file": "v5/wc_close.glb"
+    },
+    {
+      "id": "bed",
+      "kind": "bed",
+      "x": 7.75,
+      "z": 7.6899999999999995,
+      "rot": 3.141592653589793,
+      "w": 1.5,
+      "d": 2,
+      "h": 0.95,
+      "wallHug": true,
+      "group": "bed",
+      "variant": "modern",
+      "roomId": "bedroom2",
+      "file": "v5/bed_double.glb"
+    },
+    {
+      "id": "night-l",
+      "kind": "nightstand",
+      "x": 6.7,
+      "z": 8.34,
+      "rot": 0,
+      "w": 0.44,
+      "d": 0.4,
+      "h": 0.5,
+      "tight": true,
+      "wallHug": true,
+      "group": "bed",
+      "variant": "modern",
+      "roomId": "bedroom2",
+      "file": "v5/nightstand.glb"
+    },
+    {
+      "id": "night-r",
+      "kind": "nightstand",
+      "x": 8.8,
+      "z": 8.34,
+      "rot": 0,
+      "w": 0.44,
+      "d": 0.4,
+      "h": 0.5,
+      "tight": true,
+      "wallHug": true,
+      "group": "bed",
+      "variant": "modern",
+      "roomId": "bedroom2",
+      "file": "v5/nightstand.glb"
+    },
+    {
+      "id": "wardrobe",
+      "kind": "wardrobe",
+      "x": 9.024999999999999,
+      "z": 5.8775,
+      "rot": -1.5707963267948966,
+      "w": 1.7550000000000001,
+      "d": 0.55,
+      "h": 2.2,
+      "wallHug": true,
+      "variant": "modern",
+      "roomId": "bedroom2",
+      "file": "v5/wardrobe_sliding.glb"
+    },
+    {
+      "id": "rug",
+      "kind": "rug",
+      "x": 7.75,
+      "z": 7.6899999999999995,
+      "rot": 0,
+      "w": 1.95,
+      "d": 2.35,
+      "h": 0.02,
+      "ghost": true,
+      "tight": true,
+      "roomId": "bedroom2",
+      "file": "v5/rug_wool.glb"
+    },
+    {
+      "id": "shower",
+      "kind": "shower",
+      "x": 10.358,
+      "z": 8.358,
+      "rot": 0,
+      "w": 0.6240000000000003,
+      "d": 0.6240000000000003,
+      "h": 2.1,
+      "wallHug": true,
+      "tight": true,
+      "group": "bath",
+      "roomId": "ensuite",
+      "file": null
+    },
+    {
+      "id": "basin",
+      "kind": "basin",
+      "x": 10.1,
+      "z": 8.44,
+      "rot": 3.141592653589793,
+      "w": 0.7,
+      "d": 0.46,
+      "h": 1.15,
+      "wallHug": true,
+      "tight": true,
+      "group": "bath",
+      "variant": "modern",
+      "roomId": "ensuite",
+      "file": "v5/basin_round.glb"
+    },
+    {
+      "id": "toilet",
+      "kind": "toilet",
+      "x": 10.1,
+      "z": 8.290000000000001,
+      "rot": 3.141592653589793,
+      "w": 0.4,
+      "d": 0.68,
+      "h": 0.8,
+      "wallHug": true,
+      "tight": true,
+      "group": "bath",
+      "roomId": "ensuite",
+      "file": "v5/wc_close.glb"
+    },
+    {
+      "id": "lounge-l",
+      "kind": "loungeChair",
+      "x": 2.5,
+      "z": -0.87,
+      "rot": 0,
+      "w": 0.68,
+      "d": 0.82,
+      "h": 0.75,
+      "group": "outdoor",
+      "roomId": "balcony",
+      "file": "v5/armchair_lounge.glb"
+    },
+    {
+      "id": "lounge-r",
+      "kind": "loungeChair",
+      "x": 3.5,
+      "z": -0.87,
+      "rot": 0,
+      "w": 0.68,
+      "d": 0.82,
+      "h": 0.75,
+      "group": "outdoor",
+      "roomId": "balcony",
+      "file": "v5/armchair_lounge.glb"
+    },
+    {
+      "id": "plant",
+      "kind": "plant",
+      "x": 5.04,
+      "z": -0.36,
+      "rot": 0,
+      "w": 0.52,
+      "d": 0.52,
+      "h": 1.05,
+      "tight": true,
+      "wallHug": true,
+      "roomId": "balcony",
+      "file": "potted_plant_04.glb"
+    }
+  ],
+  "issues": [],
+  "textures": {
+    "oakDiff": "textures/oakplank_diff.jpg",
+    "oakNor": "textures/oakplank_nor.jpg",
+    "oakRough": "textures/oakplank_rough.jpg",
+    "hdri": "hdris/kloofendal_43d_clear_puresky_1k.hdr"
+  }
+}

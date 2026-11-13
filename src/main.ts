@@ -5,6 +5,7 @@ import { applyTimeOfDay, cancelFly, createEngine, flyCamera, flyEye, loadCityBac
 import { loadMaterials, STYLE_DEFAULTS, type Materials } from "./materials";
 import { buildTower, type TowerBuild } from "./tower";
 import { buildInterior, type InteriorBuild, type Hotspot } from "./interior";
+import { hasBaked, loadBaked, hideProceduralVisuals, type BakedUnit } from "./baked";
 import { loadCatalog, type Catalog } from "./catalog";
 import { Walker, attachJoystick } from "./walker";
 import { HUD, storeLead, areaLabel, type TourState } from "./ui";
@@ -53,6 +54,7 @@ class App {
   prefs: Prefs = { ...DEFAULT_PREFS };
   view: View = { kind: "tower", hoverFloor: null };
   interiors: InteriorBuild[] = [];
+  bakedUnits: BakedUnit[] = [];
   unitLabels: CSS2DObject[] = [];
   world = new THREE.Group();
   interiorRoot = new THREE.Group();
@@ -327,6 +329,8 @@ class App {
   clearInteriors() {
     for (const i of this.interiors) i.dispose();
     this.interiors = [];
+    for (const b of this.bakedUnits) b.dispose();
+    this.bakedUnits = [];
     for (const l of this.unitLabels) {
       l.element?.remove();
       l.removeFromParent();
@@ -546,6 +550,23 @@ class App {
     const fill = new THREE.HemisphereLight("#f4efe6", "#8a7a68", cam === "walk" ? 0.28 : 0.4);
     this.interiorRoot.add(fill);
     this.roomLights.push(fill);
+
+    // Cycles-baked 2BHK Modern (walk only): hide procedural visuals and
+    // drop in the pre-lit glTF, lightmaps on uv2, wall colour as a multiply.
+    if (cam === "walk" && hasBaked((plan.id ?? "2bhk"), this.prefs.style)) {
+      try {
+        const baked = await loadBaked("2bhk", this.prefs.style, slot.transform, 0);
+        if (baked) {
+          hideProceduralVisuals(built.group);
+          this.interiorRoot.add(baked.group);
+          baked.setWallColor(this.prefs.wallColor);
+          this.bakedUnits.push(baked);
+          fill.intensity = 0.32;
+        }
+      } catch (e) {
+        console.warn("baked unit failed, falling back to procedural", e);
+      }
+    }
     if (cam === "dollhouse") {
       const sun2 = new THREE.DirectionalLight("#fff4df", 0.75);
       sun2.position.set(8, 12, 6);

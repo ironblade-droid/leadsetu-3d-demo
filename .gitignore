@@ -3,3 +3,15 @@ dist/**/*.map
 .DS_Store
 *.local
 .vscode/
+public/baked/*.png
+public/baked/*.blend
+screens/v5/bake/2bhk-modern-living.png
+screens/v5/bake/2bhk-modern-kitchen.png
+screens/v5/bake/2bhk-modern-utility.png
+screens/v5/bake/2bhk-modern-bedroom1.png
+screens/v5/bake/2bhk-modern-bedroom2.png
+screens/v5/bake/2bhk-modern-lobby.png
+screens/v5/bake/2bhk-modern-bathroom.png
+screens/v5/bake/2bhk-modern-ensuite.png
+screens/v5/bake/2bhk-modern-balcony.png
+screens/v5/bake/2bhk-modern-preview.png

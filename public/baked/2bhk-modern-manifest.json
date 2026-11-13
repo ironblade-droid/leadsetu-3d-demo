@@ -1,0 +1,324 @@
+{
+  "planId": "2bhk",
+  "style": "modern",
+  "prefs": {
+    "style": "modern",
+    "flooring": "wood",
+    "wallColor": "#f4f1ea",
+    "kitchen": "white",
+    "furniture": true
+  },
+  "lightmaps": {
+    "living": {
+      "file": "2bhk-modern-living.webp",
+      "bytes": 457250,
+      "size": 1536,
+      "seconds": 85.97,
+      "type": "living",
+      "name": "Living / dining"
+    },
+    "kitchen": {
+      "file": "2bhk-modern-kitchen.webp",
+      "bytes": 158840,
+      "size": 1024,
+      "seconds": 28.32,
+      "type": "kitchen",
+      "name": "Kitchen"
+    },
+    "utility": {
+      "file": "2bhk-modern-utility.webp",
+      "bytes": 113010,
+      "size": 1024,
+      "seconds": 27.98,
+      "type": "utility",
+      "name": "Utility"
+    },
+    "bedroom1": {
+      "file": "2bhk-modern-bedroom1.webp",
+      "bytes": 130642,
+      "size": 1024,
+      "seconds": 28.38,
+      "type": "bedroom",
+      "name": "Bedroom 1"
+    },
+    "lobby": {
+      "file": "2bhk-modern-lobby.webp",
+      "bytes": 184846,
+      "size": 1024,
+      "seconds": 33.56,
+      "type": "lobby",
+      "name": "Lobby"
+    },
+    "bathroom": {
+      "file": "2bhk-modern-bathroom.webp",
+      "bytes": 225992,
+      "size": 1024,
+      "seconds": 45.42,
+      "type": "bathroom",
+      "name": "Bathroom"
+    },
+    "bedroom2": {
+      "file": "2bhk-modern-bedroom2.webp",
+      "bytes": 194046,
+      "size": 1024,
+      "seconds": 39.72,
+      "type": "bedroom",
+      "name": "Bedroom 2"
+    },
+    "ensuite": {
+      "file": "2bhk-modern-ensuite.webp",
+      "bytes": 190004,
+      "size": 1024,
+      "seconds": 37.69,
+      "type": "bathroom",
+      "name": "En-suite"
+    },
+    "balcony": {
+      "file": "2bhk-modern-balcony.webp",
+      "bytes": 191056,
+      "size": 1024,
+      "seconds": 33.03,
+      "type": "balcony",
+      "name": "Balcony"
+    }
+  },
+  "samples": 96,
+  "engine": "Cycles 4.5.16 OIDN 96spp shells-only face-islands",
+  "neutralAlbedo": true,
+  "glb": "2bhk-modern.glb",
+  "glbBytes": 864624,
+  "totalBytes": 2710310,
+  "totalMB": 2.58,
+  "bakeSeconds": 363.5,
+  "rooms": [
+    {
+      "id": "living",
+      "type": "living",
+      "name": "Living / dining",
+      "polygon": [
+        [
+          0.25,
+          0.25
+        ],
+        [
+          6.55,
+          0.25
+        ],
+        [
+          6.55,
+          3.25
+        ],
+        [
+          9.35,
+          3.35
+        ],
+        [
+          9.35,
+          4.75
+        ],
+        [
+          0.25,
+          4.75
+        ]
+      ]
+    },
+    {
+      "id": "kitchen",
+      "type": "kitchen",
+      "name": "Kitchen",
+      "polygon": [
+        [
+          6.65,
+          0.25
+        ],
+        [
+          10.75,
+          0.25
+        ],
+        [
+          10.75,
+          3.25
+        ],
+        [
+          10.4,
+          3.35
+        ],
+        [
+          9.45,
+          3.35
+        ],
+        [
+          9.45,
+          3.25
+        ],
+        [
+          6.65,
+          3.25
+        ]
+      ]
+    },
+    {
+      "id": "utility",
+      "type": "utility",
+      "name": "Utility",
+      "polygon": [
+        [
+          9.45,
+          4.85
+        ],
+        [
+          10.75,
+          4.85
+        ],
+        [
+          10.75,
+          6.15
+        ],
+        [
+          9.45,
+          6.15
+        ]
+      ]
+    },
+    {
+      "id": "bedroom1",
+      "type": "bedroom",
+      "name": "Bedroom 1",
+      "polygon": [
+        [
+          0.25,
+          4.85
+        ],
+        [
+          4.25,
+          4.85
+        ],
+        [
+          4.25,
+          8.75
+        ],
+        [
+          0.25,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "lobby",
+      "type": "lobby",
+      "name": "Lobby",
+      "polygon": [
+        [
+          4.35,
+          4.85
+        ],
+        [
+          6.05,
+          4.85
+        ],
+        [
+          6.05,
+          6.55
+        ],
+        [
+          4.35,
+          6.55
+        ]
+      ]
+    },
+    {
+      "id": "bathroom",
+      "type": "bathroom",
+      "name": "Bathroom",
+      "polygon": [
+        [
+          4.35,
+          6.65
+        ],
+        [
+          6.05,
+          6.65
+        ],
+        [
+          6.05,
+          8.75
+        ],
+        [
+          4.35,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "bedroom2",
+      "type": "bedroom",
+      "name": "Bedroom 2",
+      "polygon": [
+        [
+          6.15,
+          4.85
+        ],
+        [
+          9.35,
+          4.85
+        ],
+        [
+          9.35,
+          8.75
+        ],
+        [
+          6.15,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "ensuite",
+      "type": "bathroom",
+      "name": "En-suite",
+      "polygon": [
+        [
+          9.45,
+          6.25
+        ],
+        [
+          10.75,
+          6.25
+        ],
+        [
+          10.75,
+          8.75
+        ],
+        [
+          9.45,
+          8.75
+        ]
+      ]
+    },
+    {
+      "id": "balcony",
+      "type": "balcony",
+      "name": "Balcony",
+      "polygon": [
+        [
+          0.6,
+          -1.5
+        ],
+        [
+          5.4,
+          -1.5
+        ],
+        [
+          5.4,
+          0
+        ],
+        [
+          0.6,
+          0
+        ]
+      ]
+    }
+  ],
+  "zFlip": true,
+  "lightMapIntensity": 1.15
+}

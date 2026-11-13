@@ -1043,24 +1043,24 @@ def pack_uv2(objs, margin=0.012):
         for d in layer.data:
             d.uv = (0.002, 0.002)
         kind = o.get("ls_shell")
-        # Boxes (cabinets, curtains, frames, rails, procedural fallbacks)
-        # get coplanar face islands so opposite faces do not share a lightmap.
-        # High-poly glTF furniture uses a normalized UV0 as one rectangle.
-        use_faces = kind in SHELL_KINDS or kind in ("cabinet", "curtain", "rail", "frame", "counter") \
-            or len(o.data.polygons) <= 16
-        if use_faces:
-            islands = face_islands(o, min_area=0.008 if kind not in SHELL_KINDS else 0.02)
-            if not islands:
-                print(f"  UV {o.name}: no islands", flush=True)
-            for idx, (uvs, w, h, area, ref) in enumerate(islands):
-                tag = f"{o.name}#{idx}"
-                if kind == "wall":
-                    w, h = w * 1.6, h * 1.6
-                items.append((o, uvs, w, h, tag, kind))
-        else:
-            print(f"  UV furn unwrap {o.name} ({len(o.data.polygons)} faces)", flush=True)
+        # Coplanar face islands for everything — including high-poly glTF
+        # furniture. Using UV0 as a single rectangle put overlapping albedo
+        # islands on top of each other and produced the X-smears on the
+        # dining table, the torn sofa, and the black diamond bed.
+        min_a = 0.002 if kind == "wall" else (0.005 if kind not in SHELL_KINDS else 0.02)
+        islands = face_islands(o, min_area=min_a)
+        if not islands:
+            print(f"  UV {o.name}: no islands ({len(o.data.polygons)} faces)", flush=True)
+            # Last-resort planar island so the mesh is not left at (0.002,0.002)
+            # (which samples the black atlas margin and reads as a black slab).
             uvs, w, h = furniture_island(o)
-            tag = f"{o.name}#obj"
+            items.append((o, uvs, w, h, f"{o.name}#fallback", kind))
+        for idx, (uvs, w, h, area, ref) in enumerate(islands):
+            tag = f"{o.name}#{idx}"
+            if kind == "wall":
+                w, h = w * 1.6, h * 1.6
+            elif kind not in SHELL_KINDS:
+                w, h = min(w, 2.2), min(h, 2.2)
             items.append((o, uvs, w, h, tag, kind))
 
     def sort_key(it):

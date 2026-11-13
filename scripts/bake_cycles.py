@@ -1026,6 +1026,61 @@ def furniture_island(obj):
     return uvs, w, h
 
 
+
+def furniture_unique_uv(obj):
+    """One 0-1 unique unwrap per furniture mesh, returned as a single
+    atlas rectangle sized to the world AABB (capped). Coplanar face
+    islands are shelf-packed *inside* the rectangle so they do not
+    overlap (unlike a normalized copy of UV0)."""
+    islands = face_islands(obj, min_area=0.002)
+    mn, size = bbox_world([obj])
+    pack_w = max(min(max(size.x, size.y), 2.0), 0.22)
+    pack_h = max(min(max(size.z, min(size.x, size.y)), 1.6), 0.22)
+    if not islands:
+        uvs, w, h = furniture_island(obj)
+        return uvs, pack_w, pack_h
+    items = [(uvs, max(w, 1e-4), max(h, 1e-4)) for uvs, w, h, area, ref in islands]
+    area = sum(w * h for _, w, h in items)
+    S = max(math.sqrt(area) * 1.12, max(max(w, h) for _, w, h in items))
+    positions = None
+    for _ in range(20):
+        gap = max(S * 0.02, 1e-3)
+        shelves, y_top, pos = [], 0.0, []
+        ok = True
+        for uvs, w, h in items:
+            placed = False
+            for sh in shelves:
+                if h <= sh[1] + 1e-8 and sh[2] + w + gap <= S + 1e-8:
+                    pos.append((uvs, sh[2], sh[0], w, h))
+                    sh[2] += w + gap
+                    placed = True
+                    break
+            if not placed:
+                if y_top + h > S + 1e-8:
+                    ok = False
+                    break
+                shelves.append([y_top, h, w + gap])
+                pos.append((uvs, 0.0, y_top, w, h))
+                y_top += h + gap
+        if ok:
+            positions = pos
+            break
+        S *= 1.15
+    if not positions:
+        uvs, w, h = furniture_island(obj)
+        return uvs, pack_w, pack_h
+    used_w = max(x + w for _, x, _, w, _ in positions)
+    used_h = max(y + h for _, _, y, _, h in positions)
+    scale = 0.98 / max(used_w, used_h)
+    out = []
+    for uvs, x, y, w, h in positions:
+        u0, v0 = 0.01 + x * scale, 0.01 + y * scale
+        du, dv = w * scale, h * scale
+        for li, u, v in uvs:
+            out.append((li, u0 + min(max(u, 0), 1) * du, v0 + min(max(v, 0), 1) * dv))
+    return out, pack_w, pack_h
+
+
 def pack_uv2(objs, margin=0.012):
     """Non-overlapping atlas. Shells: coplanar face islands. Furniture:
     one smart-projected rectangle per mesh. Walls get a 1.6x size boost
@@ -1043,25 +1098,21 @@ def pack_uv2(objs, margin=0.012):
         for d in layer.data:
             d.uv = (0.002, 0.002)
         kind = o.get("ls_shell")
-        # Coplanar face islands for everything — including high-poly glTF
-        # furniture. Using UV0 as a single rectangle put overlapping albedo
-        # islands on top of each other and produced the X-smears on the
-        # dining table, the torn sofa, and the black diamond bed.
-        min_a = 0.002 if kind == "wall" else (0.005 if kind not in SHELL_KINDS else 0.02)
-        islands = face_islands(o, min_area=min_a)
-        if not islands:
-            print(f"  UV {o.name}: no islands ({len(o.data.polygons)} faces)", flush=True)
-            # Last-resort planar island so the mesh is not left at (0.002,0.002)
-            # (which samples the black atlas margin and reads as a black slab).
-            uvs, w, h = furniture_island(o)
-            items.append((o, uvs, w, h, f"{o.name}#fallback", kind))
-        for idx, (uvs, w, h, area, ref) in enumerate(islands):
-            tag = f"{o.name}#{idx}"
-            if kind == "wall":
-                w, h = w * 1.6, h * 1.6
-            elif kind not in SHELL_KINDS:
-                w, h = min(w, 2.2), min(h, 2.2)
-            items.append((o, uvs, w, h, tag, kind))
+        if kind in SHELL_KINDS or kind in ("cabinet", "curtain", "rail", "frame", "counter"):
+            min_a = 0.002 if kind == "wall" else 0.02
+            islands = face_islands(o, min_area=min_a)
+            if not islands:
+                print(f"  UV {o.name}: no islands", flush=True)
+            for idx, (uvs, w, h, area, ref) in enumerate(islands):
+                tag = f"{o.name}#{idx}"
+                if kind == "wall":
+                    w, h = w * 1.6, h * 1.6
+                items.append((o, uvs, w, h, tag, kind))
+        else:
+            # One atlas rectangle per furniture mesh. Inside that rectangle,
+            # coplanar islands are uniquely packed (not UV0, which overlaps).
+            uvs, w, h = furniture_unique_uv(o)
+            items.append((o, uvs, w, h, f"{o.name}#obj", kind))
 
     def sort_key(it):
         o, _, w, h, tag, kind = it
